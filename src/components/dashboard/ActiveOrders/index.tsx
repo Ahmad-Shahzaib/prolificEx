@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/common/Card";
+import { Button } from "@/components/common/Button";
 
 interface Order {
   id: string;
@@ -31,9 +32,14 @@ export function ActiveOrders() {
           <h3 className="text-white text-sm sm:text-base font-bold [font-family:'Inter',Helvetica]">
             Active Orders widget
           </h3>
-          <button data-testid="button-view-more-orders" className="text-[#6b7280] text-xs [font-family:'Inter',Helvetica] bg-[#252630] border border-white/10 rounded-md px-3 py-1 cursor-pointer hover:bg-[#2f3040] transition-colors">
+          <Button
+            variant="secondary"
+            size="sm"
+            data-testid="button-view-more-orders"
+            className="text-[#6b7280] text-xs bg-[#252630] border-white/10 px-3 py-1"
+          >
             View More
-          </button>
+          </Button>
         </div>
 
         <div className="overflow-x-auto -mx-4 sm:mx-0">

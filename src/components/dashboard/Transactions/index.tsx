@@ -45,7 +45,7 @@ export function Transactions() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={cn(
-                  "px-3 py-1 text-xs font-medium [font-family:'Inter',Helvetica] transition-all cursor-pointer border-none rounded-md",
+                  "px-3 py-1 text-xs font-medium [font-family:'Inter',Helvetica] transition-all cursor-pointer border-none rounded-xl",
                   activeTab === tab
                     ? "text-violet-400 border-b-2 border-violet-400 bg-transparent"
                     : "text-[#6b7280] bg-transparent hover:text-white"

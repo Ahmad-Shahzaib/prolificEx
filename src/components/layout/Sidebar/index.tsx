@@ -161,8 +161,8 @@ export function Sidebar() {
             <Image
               src="/figmaAssets/h8fhoaokhdjquwmkrvnczlagvyrx5x-2.png"
               alt="Prolific Logo"
-              width={36}
-              height={36}
+              width={48}
+              height={48}
               className="object-contain"
               priority
             />

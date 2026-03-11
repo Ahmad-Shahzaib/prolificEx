@@ -53,12 +53,12 @@ export function PriceChart() {
             Market Prices
           </h3>
           <div className="flex items-center gap-2">
-            <button className="w-8 h-8 flex items-center justify-center bg-[#252630] rounded-lg text-[#6b7280] hover:text-white transition-colors cursor-pointer border-none">
+            <button className="w-8 h-8 flex items-center justify-center bg-[#252630] rounded-xl text-[#6b7280] hover:text-white transition-colors cursor-pointer border-none">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M2 10L5 5L8 7L12 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
-            <div className="flex items-center gap-1.5 bg-[#252630] rounded-lg px-2 py-1.5">
+            <div className="flex items-center gap-1.5 bg-[#252630] rounded-xl px-2 py-1.5">
               <div className="w-5 h-5 rounded-full bg-[#1ecb4f] flex items-center justify-center">
                 <span className="text-white text-[8px] font-bold">$</span>
               </div>
@@ -78,7 +78,7 @@ export function PriceChart() {
                 key={tf}
                 onClick={() => setActiveTimeframe(tf)}
                 className={cn(
-                  "px-2 sm:px-2.5 py-1 rounded-md text-xs font-medium [font-family:'Inter',Helvetica] transition-all cursor-pointer border-none",
+                  "px-2 sm:px-2.5 py-1 rounded-xl text-xs font-medium [font-family:'Inter',Helvetica] transition-all cursor-pointer border-none",
                   activeTimeframe === tf
                     ? "bg-violet-600 text-white"
                     : "bg-transparent text-[#6b7280] hover:text-white"

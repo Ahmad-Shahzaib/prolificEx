@@ -27,13 +27,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variantStyles = {
       primary:
-        "bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-semibold shadow-[0px_8px_20px_-4px_rgba(124,58,237,0.4)]",
+        "bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-semibold shadow-[0px_8px_20px_-4px_rgba(124,58,237,0.4)]",
       secondary:
-        "bg-[#1a1b23] border border-white/10 text-white rounded-lg hover:bg-[#252630]",
+        "bg-[#1a1b23] border border-white/10 text-white rounded-xl hover:bg-[#252630]",
       ghost:
-        "bg-transparent hover:bg-white/5 text-white rounded-lg",
+        "bg-transparent hover:bg-white/5 text-white rounded-xl",
       outline:
-        "bg-transparent border border-violet-500 text-violet-400 rounded-lg hover:bg-violet-500/10",
+        "bg-transparent border border-violet-500 text-violet-400 rounded-xl hover:bg-violet-500/10",
     };
 
     const sizeStyles = {

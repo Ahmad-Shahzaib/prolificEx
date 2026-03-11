@@ -11,9 +11,14 @@ export function PortfolioOverview() {
           <p className="text-[#6b7280] text-sm [font-family:'Inter',Helvetica] font-medium">
             Total Portfolio Value
           </p>
-          <button data-testid="button-view-more-portfolio" className="text-[#6b7280] text-xs [font-family:'Inter',Helvetica] bg-[#252630] border border-white/10 rounded-md px-3 py-1 cursor-pointer hover:bg-[#2f3040] transition-colors">
+          <Button
+            variant="secondary"
+            size="sm"
+            data-testid="button-view-more-portfolio"
+            className="text-[#6b7280] text-xs bg-[#252630] border-white/10 px-3 py-1"
+          >
             View More
-          </button>
+          </Button>
         </div>
         <h2 className="[font-family:'Inter',Helvetica] font-bold text-white text-2xl sm:text-[32px] leading-[44px] tracking-tight mb-5">
           $405,021.00
@@ -22,7 +27,7 @@ export function PortfolioOverview() {
           <Button
             variant="primary"
             size="sm"
-            className="rounded-lg px-4 sm:px-5 py-2 text-sm font-semibold"
+            data-testid="button-deposit"
             leftIcon={
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M7 2V12M7 12L3 8M7 12L11 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -31,18 +36,30 @@ export function PortfolioOverview() {
           >
             Deposit
           </Button>
-          <button data-testid="button-withdraw" className="flex items-center gap-2 px-4 sm:px-5 py-2 bg-transparent border border-violet-500 text-violet-400 rounded-lg text-sm font-semibold [font-family:'Inter',Helvetica] cursor-pointer hover:bg-violet-500/10 transition-colors">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M7 12V2M7 2L3 6M7 2L11 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+          <Button
+            variant="outline"
+            size="sm"
+            data-testid="button-withdraw"
+            leftIcon={
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M7 12V2M7 2L3 6M7 2L11 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            }
+          >
             Withdraw
-          </button>
-          <button data-testid="button-p2p-trade" className="flex items-center gap-2 px-4 sm:px-5 py-2 bg-transparent border border-white/10 text-white rounded-lg text-sm font-semibold [font-family:'Inter',Helvetica] cursor-pointer hover:bg-white/5 transition-colors">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M2 5H12M2 5L5 2M2 5L5 8M12 9H2M12 9L9 6M12 9L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            data-testid="button-p2p-trade"
+            leftIcon={
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M2 5H12M2 5L5 2M2 5L5 8M12 9H2M12 9L9 6M12 9L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            }
+          >
             P2P Trade
-          </button>
+          </Button>
         </div>
       </CardContent>
     </Card>

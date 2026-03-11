@@ -1690,11 +1690,6 @@ body {
   background-color: rgb(37 38 48 / var(--tw-bg-opacity, 1));
 }
 
-.hover\:bg-\[\#2f3040\]:hover {
-  --tw-bg-opacity: 1;
-  background-color: rgb(47 48 64 / var(--tw-bg-opacity, 1));
-}
-
 .hover\:bg-violet-500\/10:hover {
   background-color: rgb(139 92 246 / 0.1);
 }
@@ -1987,11 +1982,6 @@ body {
   .sm\:px-2\.5 {
     padding-left: 0.625rem;
     padding-right: 0.625rem;
-  }
-
-  .sm\:px-5 {
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
   }
 
   .sm\:px-6 {
