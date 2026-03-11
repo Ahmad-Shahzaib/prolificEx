@@ -5,40 +5,44 @@ import { Button } from "@/components/common/Button";
 
 export function PortfolioOverview() {
   return (
-    <Card className="bg-gradient-to-br from-[#1a1b23] to-[#191a23] border border-white/5 rounded-2xl">
-      <CardContent className="p-6 lg:p-8">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div>
-            <p className="text-[#898ca9] text-sm [font-family:'Inter',Helvetica] font-medium mb-1">
-              Total Portfolio Balance
-            </p>
-            <div className="flex items-baseline gap-3">
-              <h2 className="[font-family:'Inter',Helvetica] font-bold text-white text-4xl lg:text-5xl tracking-tight">
-                $24,562.80
-              </h2>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#1ecb4f]/10 rounded-lg text-[#1ecb4f] text-sm font-medium [font-family:'Inter',Helvetica]">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M6 9V3M6 3L3 6M6 3L9 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                +12.5%
-              </span>
-            </div>
-            <p className="text-[#898ca9] text-sm [font-family:'Inter',Helvetica] mt-2">
-              +$2,736.40 this month
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Button variant="primary" size="md">
-              Deposit
-            </Button>
-            <Button variant="secondary" size="md">
-              Withdraw
-            </Button>
-            <Button variant="outline" size="md">
-              Transfer
-            </Button>
-          </div>
+    <Card className="bg-[#1a1b23] border border-white/5 rounded-2xl">
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between mb-1">
+          <p className="text-[#6b7280] text-sm [font-family:'Inter',Helvetica] font-medium">
+            Total Portfolio Value
+          </p>
+          <button data-testid="button-view-more-portfolio" className="text-[#6b7280] text-xs [font-family:'Inter',Helvetica] bg-[#252630] border border-white/10 rounded-md px-3 py-1 cursor-pointer hover:bg-[#2f3040] transition-colors">
+            View More
+          </button>
+        </div>
+        <h2 className="[font-family:'Inter',Helvetica] font-bold text-white text-[32px] leading-[44px] tracking-tight mb-5">
+          $405,021.00
+        </h2>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="primary"
+            size="sm"
+            className="bg-[#f0b90b] hover:bg-[#d4a30a] text-black shadow-none rounded-lg px-5 py-2 text-sm font-semibold"
+            leftIcon={
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M7 2V12M7 12L3 8M7 12L11 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            }
+          >
+            Deposit
+          </Button>
+          <button data-testid="button-withdraw" className="flex items-center gap-2 px-5 py-2 bg-transparent border border-[#f0b90b] text-[#f0b90b] rounded-lg text-sm font-semibold [font-family:'Inter',Helvetica] cursor-pointer hover:bg-[#f0b90b]/10 transition-colors">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M7 12V2M7 2L3 6M7 2L11 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Withdraw
+          </button>
+          <button data-testid="button-p2p-trade" className="flex items-center gap-2 px-5 py-2 bg-transparent border border-white/10 text-white rounded-lg text-sm font-semibold [font-family:'Inter',Helvetica] cursor-pointer hover:bg-white/5 transition-colors">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M2 5H12M2 5L5 2M2 5L5 8M12 9H2M12 9L9 6M12 9L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            P2P Trade
+          </button>
         </div>
       </CardContent>
     </Card>

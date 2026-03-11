@@ -23,23 +23,23 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-medium transition-all duration-200 cursor-pointer border-none focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+      "inline-flex items-center justify-center font-medium transition-all duration-200 cursor-pointer border-none focus:outline-none focus:ring-2 focus:ring-[#f0b90b]/50 focus:ring-offset-2 focus:ring-offset-[#0d0e14] disabled:opacity-50 disabled:cursor-not-allowed [font-family:'Inter',Helvetica]";
 
     const variantStyles = {
       primary:
-        "bg-violet-600 hover:bg-violet-700 text-white rounded-[48px] shadow-[0px_16px_32px_-8px_rgba(124,58,237,0.48),0px_4px_8px_rgba(124,58,237,0.12)]",
+        "bg-[#f0b90b] hover:bg-[#d4a30a] text-black rounded-lg font-semibold",
       secondary:
-        "[background:radial-gradient(50%_50%_at_50%_50%,rgba(255,255,255,0.08)_0%,rgba(255,255,255,0)_100%),linear-gradient(0deg,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.04)_100%)] shadow-[inset_0px_0px_0px_1px_rgba(255,255,255,0.06),inset_1px_1px_0px_rgba(255,255,255,0.08)] text-white rounded-[48px] hover:shadow-[inset_0px_0px_0px_1px_rgba(255,255,255,0.12)]",
+        "bg-[#1a1b23] border border-white/10 text-white rounded-lg hover:bg-[#252630]",
       ghost:
-        "bg-transparent hover:bg-white/10 text-white rounded-[999px]",
+        "bg-transparent hover:bg-white/5 text-white rounded-lg",
       outline:
-        "bg-transparent border border-white/20 hover:bg-white/5 text-white rounded-[48px]",
+        "bg-transparent border border-[#f0b90b] text-[#f0b90b] rounded-lg hover:bg-[#f0b90b]/10",
     };
 
     const sizeStyles = {
       sm: "px-4 py-2 text-sm gap-2",
-      md: "px-6 py-3 text-base gap-3",
-      lg: "pl-6 pr-7 py-4 text-lg gap-3",
+      md: "px-6 py-3 text-sm gap-2",
+      lg: "px-8 py-4 text-base gap-3",
     };
 
     return (

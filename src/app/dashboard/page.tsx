@@ -1,32 +1,32 @@
 import { PortfolioOverview } from "@/components/dashboard/PortfolioOverview";
-import { CryptoCards } from "@/components/dashboard/CryptoCards";
+import { ActiveOrders } from "@/components/dashboard/ActiveOrders";
+import { MyPortfolio } from "@/components/dashboard/MyPortfolio";
 import { PriceChart } from "@/components/dashboard/PriceChart";
-import { QuickTrade } from "@/components/dashboard/QuickTrade";
-import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
-import { MarketOverview } from "@/components/dashboard/MarketOverview";
+import { Transactions } from "@/components/dashboard/Transactions";
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-6 max-w-[1400px]">
-      <PortfolioOverview />
+    <div className="space-y-6">
+      <h2 className="[font-family:'Inter',Helvetica] font-bold text-white text-xl">
+        Welcome back, Henry 👋
+      </h2>
 
-      <CryptoCards />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <PortfolioOverview />
+          <ActiveOrders />
+        </div>
+        <div>
+          <MyPortfolio />
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <PriceChart />
         </div>
         <div>
-          <QuickTrade />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <RecentTransactions />
-        </div>
-        <div>
-          <MarketOverview />
+          <Transactions />
         </div>
       </div>
     </div>
