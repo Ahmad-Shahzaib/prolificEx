@@ -11,82 +11,68 @@ const footerPaymentLogos = [
 
 export function Footer() {
   return (
-    <footer className="absolute left-[calc(50%_-_720px)] bottom-0 w-[1440px] h-[482px] bg-[#0b0e11]">
-      <div className="relative w-full h-full">
-        <div className="absolute top-20 left-[120px]">
-          <Image
-            src="/figmaAssets/h8fhoaokhdjquwmkrvnczlagvyrx5x-2-1.png"
-            alt="ProlificEx Logo"
-            width={129}
-            height={51}
-            className="object-contain"
-          />
+    <footer className="w-full bg-[#0b0e11] mt-8 sm:mt-16">
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 sm:py-20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12">
+          <div>
+            <Image
+              src="/figmaAssets/h8fhoaokhdjquwmkrvnczlagvyrx5x-2-1.png"
+              alt="ProlificEx Logo"
+              width={129}
+              height={51}
+              className="object-contain mb-4"
+            />
+          </div>
+
+          <div className="flex flex-col gap-4 sm:gap-6">
+            <span className="[font-family:'Inter',Helvetica] font-medium text-white text-lg sm:text-xl tracking-[0] leading-[30px]">
+              Products
+            </span>
+            <div className="[font-family:'Inter',Helvetica] font-normal text-[#f2f2f2] text-sm sm:text-base tracking-[0] leading-[38px]">
+              {footerProducts.map((item) => (
+                <div key={item} className="hover:text-white cursor-pointer transition-colors">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4 sm:gap-6">
+            <span className="[font-family:'Inter',Helvetica] font-medium text-white text-lg sm:text-xl tracking-[0] leading-[30px]">
+              Company
+            </span>
+            <div className="[font-family:'Inter',Helvetica] font-normal text-[#e0e0e0] text-sm sm:text-base tracking-[0] leading-[38px]">
+              {footerCompanyLinks.map((item) => (
+                <div key={item} className="hover:text-white cursor-pointer transition-colors">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="[font-family:'Inter',Helvetica] font-medium text-white text-xl sm:text-2xl tracking-[0] leading-tight sm:leading-[48px] mb-4 sm:mb-8">
+              We accept following payment systems
+            </p>
+            <div className="flex items-center gap-3 sm:gap-4">
+              {footerPaymentLogos.map((logo) => (
+                <div key={logo.alt} className="relative w-16 sm:w-24 h-10 sm:h-16">
+                  <Image
+                    src={logo.src}
+                    alt={logo.alt}
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="absolute top-20 left-[426px] w-[104px] flex flex-col gap-6">
-          <span className="[font-family:'Inter',Helvetica] font-medium text-white text-xl tracking-[0] leading-[30px] whitespace-nowrap">
-            Products
+        <div className="mt-8 sm:mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <span className="[font-family:'Rubik',Helvetica] font-normal text-white text-sm sm:text-base tracking-[0.16px] leading-7">
+            © 2026 ProlificEx
           </span>
-          <div className="[font-family:'Inter',Helvetica] font-normal text-[#f2f2f2] text-base tracking-[0] leading-[38px]">
-            {footerProducts.map((item) => (
-              <div key={item} className="hover:text-white cursor-pointer transition-colors">
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="absolute top-20 left-[594px] flex flex-col gap-6">
-          <span className="[font-family:'Inter',Helvetica] font-medium text-white text-xl tracking-[0] leading-[30px] whitespace-nowrap">
-            Company
-          </span>
-          <div className="[font-family:'Inter',Helvetica] font-normal text-[#e0e0e0] text-base tracking-[0] leading-[38px]">
-            {footerCompanyLinks.map((item) => (
-              <div key={item} className="hover:text-white cursor-pointer transition-colors">
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="absolute top-20 left-[756px] flex flex-col gap-6">
-          <span className="[font-family:'Inter',Helvetica] font-medium text-white text-xl tracking-[0] leading-[30px] whitespace-nowrap">
-            Company
-          </span>
-          <div className="[font-family:'Inter',Helvetica] font-normal text-[#e0e0e0] text-base tracking-[0] leading-[38px]">
-            {footerCompanyLinks.map((item) => (
-              <div key={item} className="hover:text-white cursor-pointer transition-colors">
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="absolute top-20 left-[965px] w-[357px]">
-          <p className="[font-family:'Inter',Helvetica] font-medium text-white text-[32px] tracking-[0] leading-[48px] mb-8">
-            We accept following payment systems
-          </p>
-          <div className="flex items-center gap-4">
-            {footerPaymentLogos.map((logo) => (
-              <div key={logo.alt} className="relative w-24 h-16">
-                <Image
-                  src={logo.src}
-                  alt={logo.alt}
-                  fill
-                  className="object-contain"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="absolute top-[370px] left-[120px] w-[1200px] h-px bg-white/10" />
-
-        <div className="absolute top-[389px] left-[120px] [font-family:'Rubik',Helvetica] font-normal text-white text-base tracking-[0.16px] leading-7">
-          © 2026 ProlificEx
-        </div>
-
-        <div className="absolute top-[391px] left-[1072px]">
           <Image
             src="/figmaAssets/socials.png"
             alt="Social media links"

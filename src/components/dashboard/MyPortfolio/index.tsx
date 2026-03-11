@@ -23,7 +23,7 @@ const portfolioItems: PortfolioItem[] = [
 export function MyPortfolio() {
   return (
     <Card className="bg-[#1a1b23] border border-white/5 rounded-2xl h-full">
-      <CardContent className="p-6">
+      <CardContent className="p-4 sm:p-6">
         <h3 className="text-white text-base font-bold [font-family:'Inter',Helvetica] mb-5">
           My Portfolio
         </h3>

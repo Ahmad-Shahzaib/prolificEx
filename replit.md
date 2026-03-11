@@ -48,7 +48,8 @@ src/
 │   │   ├── Navbar/              # Landing page navigation bar
 │   │   └── Sidebar/             # Fixed dashboard sidebar (200px) with 9 main links + Setting/Logout
 │   ├── providers/
-│   │   └── ReduxProvider.tsx    # Client-side Redux store provider
+│   │   ├── ReduxProvider.tsx    # Client-side Redux store provider
+│   │   └── SidebarContext.tsx   # Dashboard sidebar toggle context (open/close/toggle)
 │   └── sections/
 │       ├── CTABanner/           # CTA banner
 │       ├── Hero/                # Hero section
@@ -94,10 +95,17 @@ public/
 - **Text Secondary**: `#6b7280`
 - **Fonts**: Inter (headings/UI), Rubik (body)
 
-## Dashboard Layout
-- **Sidebar**: Fixed, 200px wide, `#11131a` background, left side
-- **Header**: Fixed, 64px tall, starts at left-[200px], `#0d0e14` background
-- **Main Content**: `ml-[200px] pt-[64px]`, height constrained, only this area scrolls
+## Dashboard Layout (Responsive)
+- **Sidebar**: Fixed, 200px wide, `#11131a` background. Hidden on mobile (`-translate-x-full`), slides in as overlay when toggled via `SidebarContext`. Visible on `lg:` breakpoint and above.
+- **Header**: Fixed, 64px tall, `left-0` on mobile / `lg:left-[200px]` on desktop. Includes hamburger toggle button (`lg:hidden`).
+- **Main Content**: No left margin on mobile / `lg:ml-[200px]` on desktop. `pt-[64px]`, height constrained, only this area scrolls.
+- **Mobile sidebar**: Uses `SidebarProvider` context in dashboard layout. Dark backdrop overlay closes sidebar on click. All sidebar nav links close sidebar on click.
+
+## Landing Page (Responsive)
+- Converted from absolute pixel positioning to fluid responsive layout using CSS Grid and Flexbox.
+- All sections use `max-w-[1240px] mx-auto px-4 sm:px-6` for consistent container sizing.
+- Navbar: Horizontal on `md:` and above, mobile hamburger menu dropdown on `sm:` and below.
+- Hero, Stats, HowItWorks, SupportedCoins, PaymentMethods, CTABanner, Footer all fully responsive.
 
 ## Run Commands
 - **Dev**: `npx next dev -p 5000`

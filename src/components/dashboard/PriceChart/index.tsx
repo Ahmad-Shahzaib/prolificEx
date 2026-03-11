@@ -21,13 +21,12 @@ function buildSvgPath(points: number[], width: number, height: number) {
   const range = max - min || 1;
   const step = width / (points.length - 1);
 
-  let line = "";
   const scaled = points.map((p, i) => ({
     x: i * step,
     y: height - ((p - min) / range) * (height - 20) - 10,
   }));
 
-  line = `M ${scaled[0].x} ${scaled[0].y}`;
+  let line = `M ${scaled[0].x} ${scaled[0].y}`;
   for (let i = 1; i < scaled.length; i++) {
     const prev = scaled[i - 1];
     const curr = scaled[i];
@@ -48,9 +47,9 @@ export function PriceChart() {
 
   return (
     <Card className="bg-[#1a1b23] border border-white/5 rounded-2xl">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="text-white text-base font-bold [font-family:'Inter',Helvetica]">
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-2">
+          <h3 className="text-white text-sm sm:text-base font-bold [font-family:'Inter',Helvetica]">
             Market Prices
           </h3>
           <div className="flex items-center gap-2">
@@ -71,17 +70,15 @@ export function PriceChart() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <span className="text-[#6b7280] text-xs [font-family:'Inter',Helvetica]">Bitcoin/BTC</span>
-          </div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+          <span className="text-[#6b7280] text-xs [font-family:'Inter',Helvetica]">Bitcoin/BTC</span>
           <div className="flex items-center gap-1">
             {timeframes.map((tf) => (
               <button
                 key={tf}
                 onClick={() => setActiveTimeframe(tf)}
                 className={cn(
-                  "px-2.5 py-1 rounded-md text-xs font-medium [font-family:'Inter',Helvetica] transition-all cursor-pointer border-none",
+                  "px-2 sm:px-2.5 py-1 rounded-md text-xs font-medium [font-family:'Inter',Helvetica] transition-all cursor-pointer border-none",
                   activeTimeframe === tf
                     ? "bg-violet-600 text-white"
                     : "bg-transparent text-[#6b7280] hover:text-white"
@@ -93,35 +90,21 @@ export function PriceChart() {
           </div>
         </div>
 
-        <p className="text-white text-2xl font-bold [font-family:'Inter',Helvetica] mb-4">
+        <p className="text-white text-xl sm:text-2xl font-bold [font-family:'Inter',Helvetica] mb-4">
           $35,352.02
         </p>
 
         <div className="relative w-full">
           <div className="flex flex-col gap-0">
-            <div className="flex items-center gap-2 text-[10px] text-[#6b7280] [font-family:'Inter',Helvetica]">
-              <span className="w-10 text-right">50,000</span>
-              <div className="flex-1 border-b border-white/5"></div>
-            </div>
-            <div className="flex items-center gap-2 text-[10px] text-[#6b7280] [font-family:'Inter',Helvetica] mt-6">
-              <span className="w-10 text-right">40,000</span>
-              <div className="flex-1 border-b border-white/5"></div>
-            </div>
-            <div className="flex items-center gap-2 text-[10px] text-[#6b7280] [font-family:'Inter',Helvetica] mt-6">
-              <span className="w-10 text-right">30,000</span>
-              <div className="flex-1 border-b border-white/5"></div>
-            </div>
-            <div className="flex items-center gap-2 text-[10px] text-[#6b7280] [font-family:'Inter',Helvetica] mt-6">
-              <span className="w-10 text-right">20,000</span>
-              <div className="flex-1 border-b border-white/5"></div>
-            </div>
-            <div className="flex items-center gap-2 text-[10px] text-[#6b7280] [font-family:'Inter',Helvetica] mt-6">
-              <span className="w-10 text-right">10,000</span>
-              <div className="flex-1 border-b border-white/5"></div>
-            </div>
+            {[50000, 40000, 30000, 20000, 10000].map((val, i) => (
+              <div key={val} className={`flex items-center gap-2 text-[10px] text-[#6b7280] [font-family:'Inter',Helvetica] ${i > 0 ? "mt-6" : ""}`}>
+                <span className="w-8 sm:w-10 text-right">{(val / 1000).toFixed(0)},000</span>
+                <div className="flex-1 border-b border-white/5"></div>
+              </div>
+            ))}
           </div>
 
-          <div className="absolute top-0 left-12 right-0 h-[180px]">
+          <div className="absolute top-0 left-10 sm:left-12 right-0 h-[180px]">
             <svg viewBox="0 0 600 200" className="w-full h-full" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
@@ -134,7 +117,7 @@ export function PriceChart() {
             </svg>
           </div>
 
-          <div className="ml-12 mt-2 flex items-end gap-[2px] h-[30px]">
+          <div className="ml-10 sm:ml-12 mt-2 flex items-end gap-[2px] h-[30px]">
             {volumeBars.map((height, i) => (
               <div
                 key={i}
@@ -145,12 +128,12 @@ export function PriceChart() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-3 ml-12 text-[10px] text-[#6b7280] [font-family:'Inter',Helvetica]">
+        <div className="flex items-center justify-between mt-3 ml-10 sm:ml-12 text-[10px] text-[#6b7280] [font-family:'Inter',Helvetica]">
           <span>19:00</span>
           <span>19:10</span>
           <span>19:20</span>
           <span>19:30</span>
-          <span>19:40</span>
+          <span className="hidden sm:inline">19:40</span>
           <span>19:50</span>
         </div>
       </CardContent>

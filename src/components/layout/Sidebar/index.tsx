@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { useSidebar } from "@/components/providers/SidebarContext";
 
 const mainLinks = [
   {
@@ -128,65 +130,91 @@ const bottomLinks = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { isOpen, close } = useSidebar();
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) close();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen, close]);
 
   return (
-    <aside className="fixed top-0 left-0 h-screen w-[200px] bg-[#11131a] flex flex-col z-40 overflow-y-auto">
-      <div className="flex items-center justify-center px-5 py-5">
-        <Link href="/" className="no-underline">
-          <Image
-            src="/figmaAssets/h8fhoaokhdjquwmkrvnczlagvyrx5x-2.png"
-            alt="Prolific Logo"
-            width={36}
-            height={36}
-            className="object-contain"
-            priority
-          />
-        </Link>
-      </div>
+    <>
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={close}
+          data-testid="sidebar-overlay"
+        />
+      )}
 
-      <nav className="flex-1 px-3 py-2 space-y-1">
-        {mainLinks.map((link) => {
-          const isActive = pathname === link.href;
-          return (
-            <Link
-              key={link.label}
-              href={link.href}
-              data-testid={`sidebar-link-${link.label.toLowerCase().replace(/\s+/g, "-")}`}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200 [font-family:'Inter',Helvetica] no-underline border",
-                isActive
-                  ? "bg-violet-600 text-white border-violet-500/40 shadow-[0_2px_8px_rgba(124,58,237,0.25)]"
-                  : "text-[#6b7280] hover:text-white hover:bg-white/5 border-transparent"
-              )}
-            >
-              <span className="flex-shrink-0 w-[18px] h-[18px]">{link.icon}</span>
-              <span className="truncate">{link.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      <aside
+        className={cn(
+          "fixed top-0 left-0 h-screen w-[200px] bg-[#11131a] flex flex-col z-50 overflow-y-auto transition-transform duration-300",
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        )}
+      >
+        <div className="flex items-center justify-center px-5 py-5">
+          <Link href="/" className="no-underline" onClick={close}>
+            <Image
+              src="/figmaAssets/h8fhoaokhdjquwmkrvnczlagvyrx5x-2.png"
+              alt="Prolific Logo"
+              width={36}
+              height={36}
+              className="object-contain"
+              priority
+            />
+          </Link>
+        </div>
 
-      <div className="px-3 pb-5 space-y-1">
-        {bottomLinks.map((link) => {
-          const isActive = pathname === link.href;
-          return (
-            <Link
-              key={link.label}
-              href={link.href}
-              data-testid={`sidebar-link-${link.label.toLowerCase()}`}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200 [font-family:'Inter',Helvetica] no-underline border",
-                isActive
-                  ? "bg-violet-600 text-white border-violet-500/40 shadow-[0_2px_8px_rgba(124,58,237,0.25)]"
-                  : "text-[#6b7280] hover:text-white hover:bg-white/5 border-transparent"
-              )}
-            >
-              <span className="flex-shrink-0 w-[18px] h-[18px]">{link.icon}</span>
-              <span>{link.label}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </aside>
+        <nav className="flex-1 px-3 py-2 space-y-1">
+          {mainLinks.map((link) => {
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.label}
+                href={link.href}
+                onClick={close}
+                data-testid={`sidebar-link-${link.label.toLowerCase().replace(/\s+/g, "-")}`}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200 [font-family:'Inter',Helvetica] no-underline border",
+                  isActive
+                    ? "bg-violet-600 text-white border-violet-500/40 shadow-[0_2px_8px_rgba(124,58,237,0.25)]"
+                    : "text-[#6b7280] hover:text-white hover:bg-white/5 border-transparent"
+                )}
+              >
+                <span className="flex-shrink-0 w-[18px] h-[18px]">{link.icon}</span>
+                <span className="truncate">{link.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="px-3 pb-5 space-y-1">
+          {bottomLinks.map((link) => {
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.label}
+                href={link.href}
+                onClick={close}
+                data-testid={`sidebar-link-${link.label.toLowerCase()}`}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200 [font-family:'Inter',Helvetica] no-underline border",
+                  isActive
+                    ? "bg-violet-600 text-white border-violet-500/40 shadow-[0_2px_8px_rgba(124,58,237,0.25)]"
+                    : "text-[#6b7280] hover:text-white hover:bg-white/5 border-transparent"
+                )}
+              >
+                <span className="flex-shrink-0 w-[18px] h-[18px]">{link.icon}</span>
+                <span>{link.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </aside>
+    </>
   );
 }

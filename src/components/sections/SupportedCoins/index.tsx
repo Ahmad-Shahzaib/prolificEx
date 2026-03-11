@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { Button } from "@/components/common/Button";
 import { Card } from "@/components/common/Card";
 
 interface CoinCardProps {
@@ -23,46 +22,38 @@ function CoinCard({
   actionIcon,
   arrowIcon,
 }: CoinCardProps) {
-  const isBitcoin = variant === "bitcoin";
-
   return (
-    <Card variant="coin" className="w-[370px] h-[433px] relative">
-      <div className="absolute top-[48px] left-[142px] w-20 h-20">
+    <Card variant="coin" className="flex flex-col items-center px-4 sm:px-6 py-8 sm:py-12">
+      <div className="relative w-16 h-16 sm:w-20 sm:h-20 mb-6 sm:mb-8">
         <Image src={icon} alt={name} fill className="object-contain" />
       </div>
 
-      <div className="absolute top-[176px] left-0 right-0 flex justify-center items-baseline gap-[11px]">
-        <span
-          className={`[font-family:'Inter',Helvetica] font-bold ${isBitcoin ? "text-white" : "text-white"} text-[32px] text-center leading-[48px] whitespace-nowrap`}
-        >
+      <div className="flex items-baseline gap-2 sm:gap-[11px] mb-4">
+        <span className="[font-family:'Inter',Helvetica] font-bold text-white text-2xl sm:text-[32px] text-center leading-tight whitespace-nowrap">
           {name}
         </span>
-        <span
-          className={`[font-family:'Inter',Helvetica] font-medium ${isBitcoin ? "text-white opacity-70" : "text-[#bdbdbd]"} text-lg text-center leading-[27px] whitespace-nowrap`}
-        >
+        <span className={`[font-family:'Inter',Helvetica] font-medium ${variant === "bitcoin" ? "text-white opacity-70" : "text-[#bdbdbd]"} text-base sm:text-lg text-center leading-[27px] whitespace-nowrap`}>
           {ticker}
         </span>
       </div>
 
-      <div
-        className={`absolute top-[240px] left-[24px] w-[322px] [font-family:'Inter',Helvetica] font-normal ${isBitcoin ? "text-white" : "text-[#828282]"} text-base text-center tracking-[0.16px] leading-7`}
-      >
+      <p className={`[font-family:'Inter',Helvetica] font-normal ${variant === "bitcoin" ? "text-white" : "text-[#828282]"} text-sm sm:text-base text-center tracking-[0.16px] leading-7 mb-6 sm:mb-8 max-w-[322px]`}>
         {description}
-      </div>
+      </p>
 
       {actionLabel && actionIcon && (
-        <button className="inline-flex items-center justify-center gap-6 pl-6 pr-4 py-4 absolute top-[331px] left-[68px] bg-violet-600 rounded-[32px] overflow-hidden cursor-pointer border-none hover:bg-violet-700 transition-colors">
-          <span className="[font-family:'Rubik',Helvetica] font-medium text-white text-lg text-center leading-[27px] whitespace-nowrap">
+        <button className="inline-flex items-center justify-center gap-4 sm:gap-6 pl-4 sm:pl-6 pr-3 sm:pr-4 py-3 sm:py-4 bg-violet-600 rounded-[32px] overflow-hidden cursor-pointer border-none hover:bg-violet-700 transition-colors">
+          <span className="[font-family:'Rubik',Helvetica] font-medium text-white text-base sm:text-lg text-center leading-[27px] whitespace-nowrap">
             {actionLabel}
           </span>
-          <div className="relative w-8 h-8">
+          <div className="relative w-6 h-6 sm:w-8 sm:h-8">
             <Image src={actionIcon} alt="arrow" fill className="object-contain" />
           </div>
         </button>
       )}
 
       {arrowIcon && (
-        <div className="absolute top-[321px] left-[153px] w-16 h-16">
+        <div className="relative w-12 h-12 sm:w-16 sm:h-16">
           <Image src={arrowIcon} alt="arrow right" fill className="object-contain" />
         </div>
       )}
@@ -72,12 +63,12 @@ function CoinCard({
 
 export function SupportedCoinsSection() {
   return (
-    <section className="absolute top-[2220px] left-0 w-full">
-      <h2 className="w-[614px] mx-auto h-[67px] flex items-center justify-center bg-[linear-gradient(90deg,rgba(255,255,255,1)_44%,rgba(255,255,255,0.2)_100%)] [-webkit-background-clip:text] bg-clip-text [-webkit-text-fill-color:transparent] [font-family:'Inter',Helvetica] font-bold text-transparent text-5xl text-center tracking-[0] leading-[67.2px]">
+    <section className="w-full max-w-[1240px] mx-auto px-4 sm:px-6 py-12 sm:py-20">
+      <h2 className="mb-8 sm:mb-12 bg-[linear-gradient(90deg,rgba(255,255,255,1)_44%,rgba(255,255,255,0.2)_100%)] [-webkit-background-clip:text] bg-clip-text [-webkit-text-fill-color:transparent] [font-family:'Inter',Helvetica] font-bold text-3xl sm:text-5xl text-center leading-tight sm:leading-[67.2px]">
         Supported Coins Section
       </h2>
 
-      <div className="absolute top-[118px] left-[99px] flex gap-[34px]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-[34px]">
         <CoinCard
           icon="/figmaAssets/icon-1.png"
           name="Bitcoin"
