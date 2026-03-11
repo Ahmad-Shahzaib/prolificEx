@@ -11,8 +11,8 @@ const footerPaymentLogos = [
 
 export function Footer() {
   return (
-    <footer className="relative w-full h-[482px] bg-[#0b0e11]">
-      <div className="relative w-full h-full max-w-[1440px] mx-auto">
+    <footer className="absolute left-[calc(50%_-_720px)] bottom-0 w-[1440px] h-[482px] bg-[#0b0e11]">
+      <div className="relative w-full h-full">
         <div className="absolute top-20 left-[120px]">
           <Image
             src="/figmaAssets/h8fhoaokhdjquwmkrvnczlagvyrx5x-2-1.png"
