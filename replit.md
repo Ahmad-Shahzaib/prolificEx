@@ -1,7 +1,7 @@
 # ProlificEx — Crypto Trading Platform
 
 ## Project Overview
-A crypto P2P trading platform with a landing page and dashboard. Built with Next.js 14, Tailwind CSS, and Redux Toolkit, matching the Figma design.
+A crypto P2P trading platform with a landing page and dashboard. Frontend-only project — no backend, no database, all static data. Built with Next.js 14, Tailwind CSS, and Redux Toolkit, matching the Figma design.
 
 ## Tech Stack
 - **Framework**: Next.js 14 (App Router)
@@ -33,7 +33,7 @@ src/
 ├── components/
 │   ├── common/
 │   │   ├── Badge/               # Feature badge component
-│   │   ├── Button/              # Reusable button (primary, secondary, ghost, outline) — amber/yellow theme
+│   │   ├── Button/              # Reusable button (primary, secondary, ghost, outline) — violet/purple theme, rounded-xl
 │   │   └── Card/                # Card component (default, coin, howItWorks variants)
 │   ├── dashboard/
 │   │   ├── ActiveOrders/        # Active orders table widget
