@@ -7,12 +7,12 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[#0d0d1a]">
+    <div className="min-h-screen bg-[#0d0e14]">
       <Sidebar />
-      <div className="lg:ml-[240px] md:ml-[72px] ml-[72px]">
-        <DashboardNavbar />
-        <main className="p-6 lg:p-8">{children}</main>
-      </div>
+      <DashboardNavbar />
+      <main className="ml-[200px] pt-[64px] min-h-[calc(100vh-64px)] overflow-y-auto">
+        <div className="p-6">{children}</div>
+      </main>
     </div>
   );
 }
