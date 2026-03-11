@@ -47,9 +47,9 @@ export function HeroSection() {
         </Button>
 
         <Button
-          variant="secondary"
+          variant="primary"
           size="lg"
-          className="w-[200px]"
+          className="shadow-[0px_16px_32px_-8px_rgba(124,58,237,0.48),0px_4px_8px_rgba(124,58,237,0.12)] [background:radial-gradient(50%_50%_at_50%_50%,rgba(255,255,255,0.12)_0%,rgba(0,0,0,0)_100%),linear-gradient(0deg,rgba(124,58,237,1)_0%,rgba(124,58,237,1)_100%)] rounded-[48px]"
           leftIcon={
             <div className="relative w-6 h-6">
               <Image src="/figmaAssets/63011d2ad7739c0ae2d6a345-gift-svg.svg" alt="Gift" fill className="object-contain" />
