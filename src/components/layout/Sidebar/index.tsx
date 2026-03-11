@@ -131,23 +131,20 @@ export function Sidebar() {
 
   return (
     <aside className="fixed top-0 left-0 h-screen w-[200px] bg-[#11131a] flex flex-col z-40 overflow-y-auto">
-      <div className="flex items-center gap-2 px-5 py-5">
-        <Link href="/" className="flex items-center gap-2 no-underline">
+      <div className="flex items-center justify-center px-5 py-5">
+        <Link href="/" className="no-underline">
           <Image
             src="/figmaAssets/h8fhoaokhdjquwmkrvnczlagvyrx5x-2.png"
             alt="Prolific Logo"
-            width={32}
-            height={32}
+            width={36}
+            height={36}
             className="object-contain"
             priority
           />
-          <span className="[font-family:'Inter',Helvetica] font-bold text-white text-lg">
-            Prolific
-          </span>
         </Link>
       </div>
 
-      <nav className="flex-1 px-3 py-2 space-y-0.5">
+      <nav className="flex-1 px-3 py-2 space-y-1">
         {mainLinks.map((link) => {
           const isActive = pathname === link.href;
           return (
@@ -156,10 +153,10 @@ export function Sidebar() {
               href={link.href}
               data-testid={`sidebar-link-${link.label.toLowerCase().replace(/\s+/g, "-")}`}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 [font-family:'Inter',Helvetica] no-underline",
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200 [font-family:'Inter',Helvetica] no-underline border",
                 isActive
-                  ? "bg-violet-600/20 text-violet-400 border border-violet-500/20"
-                  : "text-[#6b7280] hover:text-white hover:bg-white/5 border border-transparent"
+                  ? "bg-violet-600 text-white border-violet-500/40 shadow-[0_2px_8px_rgba(124,58,237,0.25)]"
+                  : "text-[#6b7280] hover:text-white hover:bg-white/5 border-transparent"
               )}
             >
               <span className="flex-shrink-0 w-[18px] h-[18px]">{link.icon}</span>
@@ -169,7 +166,7 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="px-3 pb-5 space-y-0.5">
+      <div className="px-3 pb-5 space-y-1">
         {bottomLinks.map((link) => {
           const isActive = pathname === link.href;
           return (
@@ -178,10 +175,10 @@ export function Sidebar() {
               href={link.href}
               data-testid={`sidebar-link-${link.label.toLowerCase()}`}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 [font-family:'Inter',Helvetica] no-underline",
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200 [font-family:'Inter',Helvetica] no-underline border",
                 isActive
-                  ? "bg-violet-600/20 text-violet-400 border border-violet-500/20"
-                  : "text-[#6b7280] hover:text-white hover:bg-white/5 border border-transparent"
+                  ? "bg-violet-600 text-white border-violet-500/40 shadow-[0_2px_8px_rgba(124,58,237,0.25)]"
+                  : "text-[#6b7280] hover:text-white hover:bg-white/5 border-transparent"
               )}
             >
               <span className="flex-shrink-0 w-[18px] h-[18px]">{link.icon}</span>
