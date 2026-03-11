@@ -87,7 +87,7 @@ public/
 - **Sidebar Background**: `#11131a`
 - **Card Background**: `#1a1b23`
 - **Input/Secondary Background**: `#252630`
-- **Primary Accent**: `#f0b90b` (amber/yellow) — sidebar active, buttons, highlights
+- **Primary Accent**: Violet-600 (`#7c3aed`) — sidebar active, buttons, highlights (consistent with landing page)
 - **Success**: `#1ecb4f` (green)
 - **Error**: `#ef4444` (red)
 - **Text Primary**: White

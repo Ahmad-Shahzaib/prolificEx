@@ -21,7 +21,7 @@ export default function WithdrawPage() {
               <h3 className="text-white text-lg font-bold [font-family:'Inter',Helvetica] mb-1">{coin.name}</h3>
               <p className="text-[#6b7280] text-xs [font-family:'Inter',Helvetica] mb-1">Available: {coin.balance}</p>
               <div className="w-full mt-4">
-                <Button variant="primary" size="md" className="w-full bg-transparent border border-[#f0b90b] text-[#f0b90b] hover:bg-[#f0b90b]/10 shadow-none rounded-lg font-semibold">
+                <Button variant="outline" size="md" className="w-full rounded-lg font-semibold">
                   Withdraw {coin.ticker}
                 </Button>
               </div>

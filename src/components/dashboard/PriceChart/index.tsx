@@ -83,7 +83,7 @@ export function PriceChart() {
                 className={cn(
                   "px-2.5 py-1 rounded-md text-xs font-medium [font-family:'Inter',Helvetica] transition-all cursor-pointer border-none",
                   activeTimeframe === tf
-                    ? "bg-[#f0b90b] text-black"
+                    ? "bg-violet-600 text-white"
                     : "bg-transparent text-[#6b7280] hover:text-white"
                 )}
               >

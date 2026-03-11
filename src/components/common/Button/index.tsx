@@ -23,17 +23,17 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-medium transition-all duration-200 cursor-pointer border-none focus:outline-none focus:ring-2 focus:ring-[#f0b90b]/50 focus:ring-offset-2 focus:ring-offset-[#0d0e14] disabled:opacity-50 disabled:cursor-not-allowed [font-family:'Inter',Helvetica]";
+      "inline-flex items-center justify-center font-medium transition-all duration-200 cursor-pointer border-none focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:ring-offset-2 focus:ring-offset-[#0d0e14] disabled:opacity-50 disabled:cursor-not-allowed [font-family:'Inter',Helvetica]";
 
     const variantStyles = {
       primary:
-        "bg-[#f0b90b] hover:bg-[#d4a30a] text-black rounded-lg font-semibold",
+        "bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-semibold shadow-[0px_8px_20px_-4px_rgba(124,58,237,0.4)]",
       secondary:
         "bg-[#1a1b23] border border-white/10 text-white rounded-lg hover:bg-[#252630]",
       ghost:
         "bg-transparent hover:bg-white/5 text-white rounded-lg",
       outline:
-        "bg-transparent border border-[#f0b90b] text-[#f0b90b] rounded-lg hover:bg-[#f0b90b]/10",
+        "bg-transparent border border-violet-500 text-violet-400 rounded-lg hover:bg-violet-500/10",
     };
 
     const sizeStyles = {

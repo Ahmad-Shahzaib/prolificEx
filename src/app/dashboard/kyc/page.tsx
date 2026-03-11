@@ -11,7 +11,7 @@ const steps = [
 
 const statusStyles: Record<string, { dot: string; text: string; label: string }> = {
   completed: { dot: "bg-[#1ecb4f]", text: "text-[#1ecb4f]", label: "Completed" },
-  current: { dot: "bg-[#f0b90b]", text: "text-[#f0b90b]", label: "In Progress" },
+  current: { dot: "bg-violet-500", text: "text-violet-400", label: "In Progress" },
   pending: { dot: "bg-[#6b7280]", text: "text-[#6b7280]", label: "Pending" },
 };
 
@@ -25,7 +25,7 @@ export default function KYCPage() {
             <Card key={s.step} className="bg-[#1a1b23] border border-white/5 rounded-2xl">
               <CardContent className="p-5 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-full ${s.status === "completed" ? "bg-[#1ecb4f]/10" : s.status === "current" ? "bg-[#f0b90b]/10" : "bg-white/5"} flex items-center justify-center`}>
+                  <div className={`w-10 h-10 rounded-full ${s.status === "completed" ? "bg-[#1ecb4f]/10" : s.status === "current" ? "bg-violet-500/10" : "bg-white/5"} flex items-center justify-center`}>
                     <span className={`text-sm font-bold [font-family:'Inter',Helvetica] ${style.text}`}>{s.step}</span>
                   </div>
                   <div>
@@ -39,7 +39,7 @@ export default function KYCPage() {
                     <span className={`text-xs font-medium [font-family:'Inter',Helvetica] ${style.text}`}>{style.label}</span>
                   </div>
                   {s.status === "current" && (
-                    <Button variant="primary" size="sm" className="bg-[#f0b90b] hover:bg-[#d4a30a] text-black shadow-none rounded-lg text-xs px-4 py-1.5">
+                    <Button variant="primary" size="sm" className="rounded-lg text-xs px-4 py-1.5">
                       Continue
                     </Button>
                   )}

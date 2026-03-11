@@ -17,7 +17,7 @@ const portfolioItems: PortfolioItem[] = [
   { name: "Bitcoin", iconBg: "bg-[#f7931a]", iconLetter: "₿", price: "$3,245.03", change: "-6.00%", changePositive: false, amount: "0.12543 BTC" },
   { name: "Litecoin", iconBg: "bg-[#bfbbbb]", iconLetter: "Ł", price: "$3,245.03", change: "+14.25%", changePositive: true, amount: "0.12543 LTC" },
   { name: "Solana", iconBg: "bg-[#9945ff]", iconLetter: "S", price: "$3,245.03", change: "-2.00%", changePositive: false, amount: "0.12543 SOL" },
-  { name: "Binance Coin", iconBg: "bg-[#f0b90b]", iconLetter: "B", price: "$3,245.03", change: "+12.00%", changePositive: true, amount: "0.12543 BNB" },
+  { name: "Binance Coin", iconBg: "bg-[#f3ba2f]", iconLetter: "B", price: "$3,245.03", change: "+12.00%", changePositive: true, amount: "0.12543 BNB" },
 ];
 
 export function MyPortfolio() {

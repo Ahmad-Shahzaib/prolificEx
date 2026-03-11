@@ -158,8 +158,8 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 [font-family:'Inter',Helvetica] no-underline",
                 isActive
-                  ? "bg-[#f0b90b] text-black"
-                  : "text-[#6b7280] hover:text-white hover:bg-white/5"
+                  ? "bg-violet-600/20 text-violet-400 border border-violet-500/20"
+                  : "text-[#6b7280] hover:text-white hover:bg-white/5 border border-transparent"
               )}
             >
               <span className="flex-shrink-0 w-[18px] h-[18px]">{link.icon}</span>
@@ -180,8 +180,8 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200 [font-family:'Inter',Helvetica] no-underline",
                 isActive
-                  ? "bg-[#f0b90b] text-black"
-                  : "text-[#6b7280] hover:text-white hover:bg-white/5"
+                  ? "bg-violet-600/20 text-violet-400 border border-violet-500/20"
+                  : "text-[#6b7280] hover:text-white hover:bg-white/5 border border-transparent"
               )}
             >
               <span className="flex-shrink-0 w-[18px] h-[18px]">{link.icon}</span>

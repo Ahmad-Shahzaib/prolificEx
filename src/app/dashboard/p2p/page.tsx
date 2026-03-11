@@ -25,7 +25,7 @@ export default function P2PPage() {
             </div>
             <div className="flex items-center gap-2">
               {["BTC", "USDT", "USDC"].map((coin) => (
-                <button key={coin} className={`px-3 py-1.5 rounded-md text-xs font-medium [font-family:'Inter',Helvetica] cursor-pointer border transition-colors ${coin === "BTC" ? "bg-[#f0b90b]/10 text-[#f0b90b] border-[#f0b90b]/30" : "bg-transparent text-[#6b7280] border-white/10 hover:text-white"}`}>
+                <button key={coin} className={`px-3 py-1.5 rounded-md text-xs font-medium [font-family:'Inter',Helvetica] cursor-pointer border transition-colors ${coin === "BTC" ? "bg-violet-500/10 text-violet-400 border-violet-500/30" : "bg-transparent text-[#6b7280] border-white/10 hover:text-white"}`}>
                   {coin}
                 </button>
               ))}

@@ -11,7 +11,7 @@ export default function SettingsPage() {
             <h3 className="text-white text-base font-bold [font-family:'Inter',Helvetica] mb-5">Profile Information</h3>
             <div className="space-y-4">
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-black text-xl font-bold [font-family:'Inter',Helvetica]">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white text-xl font-bold [font-family:'Inter',Helvetica]">
                   CH
                 </div>
                 <div>
@@ -21,17 +21,17 @@ export default function SettingsPage() {
               </div>
               <div>
                 <label className="text-[#6b7280] text-xs font-medium [font-family:'Inter',Helvetica] mb-1.5 block">Full Name</label>
-                <input type="text" defaultValue="Courtney Henry" className="w-full h-10 bg-[#252630] border border-white/10 rounded-lg px-4 text-sm text-white [font-family:'Inter',Helvetica] focus:outline-none focus:border-[#f0b90b]/50" />
+                <input type="text" defaultValue="Courtney Henry" className="w-full h-10 bg-[#252630] border border-white/10 rounded-lg px-4 text-sm text-white [font-family:'Inter',Helvetica] focus:outline-none focus:border-violet-500/50" />
               </div>
               <div>
                 <label className="text-[#6b7280] text-xs font-medium [font-family:'Inter',Helvetica] mb-1.5 block">Email</label>
-                <input type="email" defaultValue="courtney@email.com" className="w-full h-10 bg-[#252630] border border-white/10 rounded-lg px-4 text-sm text-white [font-family:'Inter',Helvetica] focus:outline-none focus:border-[#f0b90b]/50" />
+                <input type="email" defaultValue="courtney@email.com" className="w-full h-10 bg-[#252630] border border-white/10 rounded-lg px-4 text-sm text-white [font-family:'Inter',Helvetica] focus:outline-none focus:border-violet-500/50" />
               </div>
               <div>
                 <label className="text-[#6b7280] text-xs font-medium [font-family:'Inter',Helvetica] mb-1.5 block">Phone</label>
-                <input type="tel" defaultValue="+1 234 567 8900" className="w-full h-10 bg-[#252630] border border-white/10 rounded-lg px-4 text-sm text-white [font-family:'Inter',Helvetica] focus:outline-none focus:border-[#f0b90b]/50" />
+                <input type="tel" defaultValue="+1 234 567 8900" className="w-full h-10 bg-[#252630] border border-white/10 rounded-lg px-4 text-sm text-white [font-family:'Inter',Helvetica] focus:outline-none focus:border-violet-500/50" />
               </div>
-              <Button variant="primary" size="md" className="bg-[#f0b90b] hover:bg-[#d4a30a] text-black shadow-none rounded-lg font-semibold">
+              <Button variant="primary" size="md" className="rounded-lg font-semibold">
                 Save Changes
               </Button>
             </div>
@@ -43,7 +43,7 @@ export default function SettingsPage() {
             <div className="space-y-5">
               <div>
                 <label className="text-[#6b7280] text-xs font-medium [font-family:'Inter',Helvetica] mb-1.5 block">Currency</label>
-                <select className="w-full h-10 bg-[#252630] border border-white/10 rounded-lg px-4 text-sm text-white [font-family:'Inter',Helvetica] focus:outline-none focus:border-[#f0b90b]/50 appearance-none cursor-pointer">
+                <select className="w-full h-10 bg-[#252630] border border-white/10 rounded-lg px-4 text-sm text-white [font-family:'Inter',Helvetica] focus:outline-none focus:border-violet-500/50 appearance-none cursor-pointer">
                   <option value="usd">USD - US Dollar</option>
                   <option value="eur">EUR - Euro</option>
                   <option value="ngn">NGN - Nigerian Naira</option>
@@ -51,7 +51,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <label className="text-[#6b7280] text-xs font-medium [font-family:'Inter',Helvetica] mb-1.5 block">Language</label>
-                <select className="w-full h-10 bg-[#252630] border border-white/10 rounded-lg px-4 text-sm text-white [font-family:'Inter',Helvetica] focus:outline-none focus:border-[#f0b90b]/50 appearance-none cursor-pointer">
+                <select className="w-full h-10 bg-[#252630] border border-white/10 rounded-lg px-4 text-sm text-white [font-family:'Inter',Helvetica] focus:outline-none focus:border-violet-500/50 appearance-none cursor-pointer">
                   <option value="en">English</option>
                   <option value="fr">French</option>
                   <option value="es">Spanish</option>
@@ -59,7 +59,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <label className="text-[#6b7280] text-xs font-medium [font-family:'Inter',Helvetica] mb-1.5 block">Timezone</label>
-                <select className="w-full h-10 bg-[#252630] border border-white/10 rounded-lg px-4 text-sm text-white [font-family:'Inter',Helvetica] focus:outline-none focus:border-[#f0b90b]/50 appearance-none cursor-pointer">
+                <select className="w-full h-10 bg-[#252630] border border-white/10 rounded-lg px-4 text-sm text-white [font-family:'Inter',Helvetica] focus:outline-none focus:border-violet-500/50 appearance-none cursor-pointer">
                   <option value="utc">UTC +00:00</option>
                   <option value="wat">WAT +01:00</option>
                   <option value="est">EST -05:00</option>

@@ -20,7 +20,7 @@ export default function DepositPage() {
               </div>
               <h3 className="text-white text-lg font-bold [font-family:'Inter',Helvetica] mb-1">{coin.name}</h3>
               <p className="text-[#6b7280] text-sm [font-family:'Inter',Helvetica] mb-5">{coin.ticker}</p>
-              <Button variant="primary" size="md" className="w-full bg-[#f0b90b] hover:bg-[#d4a30a] text-black shadow-none rounded-lg font-semibold">
+              <Button variant="primary" size="md" className="w-full rounded-lg font-semibold">
                 Deposit {coin.ticker}
               </Button>
             </CardContent>

@@ -47,7 +47,7 @@ export function Transactions() {
                 className={cn(
                   "px-3 py-1 text-xs font-medium [font-family:'Inter',Helvetica] transition-all cursor-pointer border-none rounded-md",
                   activeTab === tab
-                    ? "text-[#f0b90b] border-b-2 border-[#f0b90b] bg-transparent"
+                    ? "text-violet-400 border-b-2 border-violet-400 bg-transparent"
                     : "text-[#6b7280] bg-transparent hover:text-white"
                 )}
               >

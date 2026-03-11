@@ -14,7 +14,7 @@ const transactions = [
 
 const statusColor: Record<string, string> = {
   Completed: "text-[#1ecb4f]",
-  Pending: "text-[#f0b90b]",
+  Pending: "text-violet-400",
   Failed: "text-[#ef4444]",
 };
 

@@ -19,13 +19,13 @@ export default function SupportPage() {
             <div className="space-y-4">
               <div>
                 <label className="text-[#6b7280] text-xs font-medium [font-family:'Inter',Helvetica] mb-1.5 block">Subject</label>
-                <input type="text" placeholder="What do you need help with?" className="w-full h-10 bg-[#252630] border border-white/10 rounded-lg px-4 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-[#f0b90b]/50 [font-family:'Inter',Helvetica]" />
+                <input type="text" placeholder="What do you need help with?" className="w-full h-10 bg-[#252630] border border-white/10 rounded-lg px-4 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-violet-500/50 [font-family:'Inter',Helvetica]" />
               </div>
               <div>
                 <label className="text-[#6b7280] text-xs font-medium [font-family:'Inter',Helvetica] mb-1.5 block">Message</label>
-                <textarea rows={4} placeholder="Describe your issue..." className="w-full bg-[#252630] border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-[#f0b90b]/50 [font-family:'Inter',Helvetica] resize-none" />
+                <textarea rows={4} placeholder="Describe your issue..." className="w-full bg-[#252630] border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-violet-500/50 [font-family:'Inter',Helvetica] resize-none" />
               </div>
-              <Button variant="primary" size="md" className="w-full bg-[#f0b90b] hover:bg-[#d4a30a] text-black shadow-none rounded-lg font-semibold">
+              <Button variant="primary" size="md" className="w-full rounded-lg font-semibold">
                 Submit Ticket
               </Button>
             </div>
