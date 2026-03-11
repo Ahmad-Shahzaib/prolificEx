@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Rubik:wght@400;500;700&display=swap");
+
+:root {
+  --background-color1: rgba(49, 53, 63, 1);
+  --blackblack-100: rgba(255, 255, 255, 1);
+  --blackblack-60: rgba(137, 140, 169, 1);
+  --body-small-regular-font-family: "Rubik", Helvetica;
+  --body-small-regular-font-size: 16px;
+  --body-small-regular-font-style: normal;
+  --body-small-regular-font-weight: 400;
+  --body-small-regular-letter-spacing: 0.16px;
+  --body-small-regular-line-height: 28px;
+  --body-standard-medium-font-family: "Rubik", Helvetica;
+  --body-standard-medium-font-size: 18px;
+  --body-standard-medium-font-style: normal;
+  --body-standard-medium-font-weight: 500;
+  --body-standard-medium-letter-spacing: 0px;
+  --body-standard-medium-line-height: 150%;
+  --color-primary: rgba(13, 13, 43, 1);
+  --h3-32px-font-family: "Inter", Helvetica;
+  --h3-32px-font-size: 32px;
+  --h3-32px-font-style: normal;
+  --h3-32px-font-weight: 800;
+  --h3-32px-letter-spacing: 0px;
+  --h3-32px-line-height: 130%;
+  --main-100: rgba(100, 207, 249, 1);
+  --mainlinear: rgba(58, 111, 248, 1);
+  --neutral-grey-3: rgba(130, 130, 130, 1);
+  --neutral-grey-5: rgba(224, 224, 224, 1);
+  --neutral-white: rgba(255, 255, 255, 1);
+  --neutralgrey-4: rgba(189, 189, 189, 1);
+  --neutralgrey-6: rgba(242, 242, 242, 1);
+  --neutralwhite: rgba(255, 255, 255, 1);
+  --sec-100: rgba(244, 109, 34, 1);
+  --secondary-100: rgba(30, 203, 79, 1);
+  --stroke: rgba(228, 228, 228, 1);
+  --text-10: rgba(158, 158, 158, 1);
+  --text-100: rgba(255, 255, 255, 1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Inter", Helvetica, sans-serif;
+  background-color: #0d0d1a;
+  color: white;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
