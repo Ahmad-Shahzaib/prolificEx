@@ -1,7 +1,10 @@
 {
+  "/dashboard/page": "app/dashboard/page.js",
   "/dashboard/settings/page": "app/dashboard/settings/page.js",
   "/dashboard/p2p/page": "app/dashboard/p2p/page.js",
   "/dashboard/wallet/page": "app/dashboard/wallet/page.js",
   "/dashboard/security/page": "app/dashboard/security/page.js",
-  "/dashboard/page": "app/dashboard/page.js"
+  "/dashboard/deposit/page": "app/dashboard/deposit/page.js",
+  "/dashboard/withdraw/page": "app/dashboard/withdraw/page.js",
+  "/dashboard/history/page": "app/dashboard/history/page.js"
 }
