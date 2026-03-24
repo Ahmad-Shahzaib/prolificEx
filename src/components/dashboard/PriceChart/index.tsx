@@ -50,7 +50,7 @@ export function PriceChart() {
       <CardContent className="p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-2">
           <h3 className="text-white text-sm sm:text-base font-bold [font-family:'Inter',Helvetica]">
-            Market Prices
+            User Registrations
           </h3>
           <div className="flex items-center gap-2">
             <button className="w-8 h-8 flex items-center justify-center bg-[#252630] rounded-xl text-[#6b7280] hover:text-white transition-colors cursor-pointer border-none">

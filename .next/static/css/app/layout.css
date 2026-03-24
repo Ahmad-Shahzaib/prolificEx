@@ -610,8 +610,14 @@ video {
 .ml-10 {
   margin-left: 2.5rem;
 }
+.ml-2 {
+  margin-left: 0.5rem;
+}
 .mt-0\.5 {
   margin-top: 0.125rem;
+}
+.mt-1 {
+  margin-top: 0.25rem;
 }
 .mt-2 {
   margin-top: 0.5rem;
@@ -859,9 +865,6 @@ video {
 .flex-wrap {
   flex-wrap: wrap;
 }
-.items-start {
-  align-items: flex-start;
-}
 .items-end {
   align-items: flex-end;
 }
@@ -994,9 +997,6 @@ video {
 .border-b {
   border-bottom-width: 1px;
 }
-.border-b-2 {
-  border-bottom-width: 2px;
-}
 .border-l {
   border-left-width: 1px;
 }
@@ -1011,10 +1011,6 @@ video {
 }
 .border-transparent {
   border-color: transparent;
-}
-.border-violet-400 {
-  --tw-border-opacity: 1;
-  border-color: rgb(167 139 250 / var(--tw-border-opacity, 1));
 }
 .border-violet-500 {
   --tw-border-opacity: 1;
@@ -1105,6 +1101,22 @@ video {
 .bg-black\/50 {
   background-color: rgb(0 0 0 / 0.5);
 }
+.bg-blue-500\/20 {
+  background-color: rgb(59 130 246 / 0.2);
+}
+.bg-blue-600 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(37 99 235 / var(--tw-bg-opacity, 1));
+}
+.bg-green-500\/20 {
+  background-color: rgb(34 197 94 / 0.2);
+}
+.bg-orange-500\/20 {
+  background-color: rgb(249 115 22 / 0.2);
+}
+.bg-purple-500\/20 {
+  background-color: rgb(168 85 247 / 0.2);
+}
 .bg-transparent {
   background-color: transparent;
 }
@@ -1131,6 +1143,9 @@ video {
 }
 .bg-white\/\[0\.15\] {
   background-color: rgb(255 255 255 / 0.15);
+}
+.bg-yellow-500\/20 {
+  background-color: rgb(234 179 8 / 0.2);
 }
 .bg-\[linear-gradient\(90deg\2c rgba\(255\2c 255\2c 255\2c 1\)_44\%\2c rgba\(255\2c 255\2c 255\2c 0\.2\)_100\%\)\] {
   background-image: linear-gradient(90deg,rgba(255,255,255,1) 44%,rgba(255,255,255,0.2) 100%);
@@ -1375,9 +1390,6 @@ video {
 .leading-\[38px\] {
   line-height: 38px;
 }
-.leading-\[44px\] {
-  line-height: 44px;
-}
 .leading-tight {
   line-height: 1.25;
 }
@@ -1386,9 +1398,6 @@ video {
 }
 .tracking-\[0\] {
   letter-spacing: 0;
-}
-.tracking-tight {
-  letter-spacing: -0.025em;
 }
 .text-\[\#1ecb4f\] {
   --tw-text-opacity: 1;
@@ -1410,6 +1419,10 @@ video {
   --tw-text-opacity: 1;
   color: rgb(137 140 169 / var(--tw-text-opacity, 1));
 }
+.text-\[\#9ca3af\] {
+  --tw-text-opacity: 1;
+  color: rgb(156 163 175 / var(--tw-text-opacity, 1));
+}
 .text-\[\#a6aab2\] {
   --tw-text-opacity: 1;
   color: rgb(166 170 178 / var(--tw-text-opacity, 1));
@@ -1430,6 +1443,22 @@ video {
   --tw-text-opacity: 1;
   color: rgb(242 242 242 / var(--tw-text-opacity, 1));
 }
+.text-blue-400 {
+  --tw-text-opacity: 1;
+  color: rgb(96 165 250 / var(--tw-text-opacity, 1));
+}
+.text-green-400 {
+  --tw-text-opacity: 1;
+  color: rgb(74 222 128 / var(--tw-text-opacity, 1));
+}
+.text-orange-400 {
+  --tw-text-opacity: 1;
+  color: rgb(251 146 60 / var(--tw-text-opacity, 1));
+}
+.text-purple-400 {
+  --tw-text-opacity: 1;
+  color: rgb(192 132 252 / var(--tw-text-opacity, 1));
+}
 .text-violet-400 {
   --tw-text-opacity: 1;
   color: rgb(167 139 250 / var(--tw-text-opacity, 1));
@@ -1440,6 +1469,10 @@ video {
 }
 .text-white\/90 {
   color: rgb(255 255 255 / 0.9);
+}
+.text-yellow-400 {
+  --tw-text-opacity: 1;
+  color: rgb(250 204 21 / var(--tw-text-opacity, 1));
 }
 .no-underline {
   text-decoration-line: none;
@@ -1472,9 +1505,6 @@ video {
 }
 .outline {
   outline-style: solid;
-}
-.filter {
-  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
 .backdrop-blur-\[125px\] {
   --tw-backdrop-blur: blur(125px);
@@ -1684,6 +1714,11 @@ body {
 .hover\:bg-\[\#252630\]:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(37 38 48 / var(--tw-bg-opacity, 1));
+}
+
+.hover\:bg-blue-700:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(29 78 216 / var(--tw-bg-opacity, 1));
 }
 
 .hover\:bg-violet-500\/10:hover {
@@ -2143,6 +2178,10 @@ body {
     grid-column: span 2 / span 2;
   }
 
+  .lg\:col-span-4 {
+    grid-column: span 4 / span 4;
+  }
+
   .lg\:ml-\[200px\] {
     margin-left: 200px;
   }
@@ -2174,6 +2213,10 @@ body {
 
   .lg\:grid-cols-4 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .lg\:grid-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
 

@@ -1,67 +1,85 @@
 "use client";
 
-import { Card, CardContent } from "@/components/common/Card";
-import { Button } from "@/components/common/Button";
+import { Users, BarChart3, TrendingUp, FileText, Inbox } from "lucide-react";
+
+interface Stat {
+  id: string;
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+  bg: string;
+}
+
+const stats: Stat[] = [
+  {
+    id: "1",
+    title: "Total Users",
+    value: "10293",
+    icon: <Users size={20} />,
+    bg: "bg-yellow-500/20 text-yellow-400",
+  },
+  {
+    id: "2",
+    title: "Active Trade",
+    value: "10293",
+    icon: <BarChart3 size={20} />,
+    bg: "bg-blue-500/20 text-blue-400",
+  },
+  {
+    id: "3",
+    title: "Total Volume",
+    value: "10293",
+    icon: <TrendingUp size={20} />,
+    bg: "bg-green-500/20 text-green-400",
+  },
+  {
+    id: "4",
+    title: "Pending KYC",
+    value: "10293",
+    icon: <FileText size={20} />,
+    bg: "bg-orange-500/20 text-orange-400",
+  },
+  {
+    id: "5",
+    title: "Open Dispute",
+    value: "48",
+    icon: <Inbox size={20} />,
+    bg: "bg-purple-500/20 text-purple-400",
+  },
+];
 
 export function PortfolioOverview() {
   return (
-    <Card className="bg-[#1a1b23] border border-white/5 rounded-2xl">
-      <CardContent className="p-4 sm:p-6">
-        <div className="flex items-start justify-between mb-1">
-          <p className="text-[#6b7280] text-sm [font-family:'Inter',Helvetica] font-medium">
-            Total Portfolio Value
-          </p>
-          <Button
-            variant="secondary"
-            size="sm"
-            data-testid="button-view-more-portfolio"
-            className="text-[#6b7280] text-xs bg-[#252630] border-white/10 px-3 py-1"
+    <div className="w-full">
+      
+    
+
+      {/* Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {stats.map((item) => (
+          <div
+            key={item.id}
+            className="bg-[#1a1b23] border border-white/5 rounded-2xl p-4 flex items-center gap-4"
           >
-            View More
-          </Button>
-        </div>
-        <h2 className="[font-family:'Inter',Helvetica] font-bold text-white text-2xl sm:text-[32px] leading-[44px] tracking-tight mb-5">
-          $405,021.00
-        </h2>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <Button
-            variant="primary"
-            size="sm"
-            data-testid="button-deposit"
-            leftIcon={
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M7 2V12M7 12L3 8M7 12L11 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            }
-          >
-            Deposit
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            data-testid="button-withdraw"
-            leftIcon={
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M7 12V2M7 2L3 6M7 2L11 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            }
-          >
-            Withdraw
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            data-testid="button-p2p-trade"
-            leftIcon={
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M2 5H12M2 5L5 2M2 5L5 8M12 9H2M12 9L9 6M12 9L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            }
-          >
-            P2P Trade
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+            {/* Icon */}
+            <div
+              className={`w-10 h-10 flex items-center justify-center rounded-full ${item.bg}`}
+            >
+              {item.icon}
+            </div>
+
+            {/* Text */}
+            <div>
+              <p className="text-[#9ca3af] text-xs">
+                {item.title}
+              </p>
+              <p className="text-white text-lg font-semibold mt-1">
+                {item.value}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
