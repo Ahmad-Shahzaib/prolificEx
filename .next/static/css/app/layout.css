@@ -865,6 +865,9 @@ video {
 .flex-wrap {
   flex-wrap: wrap;
 }
+.items-start {
+  align-items: flex-start;
+}
 .items-end {
   align-items: flex-end;
 }
@@ -1393,11 +1396,17 @@ video {
 .leading-tight {
   line-height: 1.25;
 }
+.leading-\[44px\] {
+  line-height: 44px;
+}
 .tracking-\[0\.16px\] {
   letter-spacing: 0.16px;
 }
 .tracking-\[0\] {
   letter-spacing: 0;
+}
+.tracking-tight {
+  letter-spacing: -0.025em;
 }
 .text-\[\#1ecb4f\] {
   --tw-text-opacity: 1;
