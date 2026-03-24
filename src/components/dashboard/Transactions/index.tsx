@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/common/Button";
 import { Card, CardContent } from "@/components/common/Card";
 
 interface Alert {
@@ -51,9 +52,9 @@ export function Transactions() {
               </div>
 
               {/* Right Button */}
-              <button className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-4 py-1.5 rounded-md">
+              <Button className="  text-xs px-4 py-1.5  ">
                 Review
-              </button>
+              </Button>
             </div>
           ))}
         </div>

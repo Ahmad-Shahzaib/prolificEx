@@ -52,7 +52,7 @@ export function Navbar() {
 
       <div className="hidden sm:inline-flex items-center gap-3 sm:gap-5">
         <Link
-          href="/dashboard"
+          href="/login"
           className="inline-flex items-center px-3 py-0.5 no-underline hover:text-white/80 transition-colors"
         >
           <span className="[font-family:'Inter',Helvetica] font-medium text-white/90 text-base tracking-[0] leading-6 whitespace-nowrap">
@@ -60,7 +60,7 @@ export function Navbar() {
           </span>
         </Link>
 
-        <Link href="/dashboard" className="no-underline">
+        <Link href="/signup" className="no-underline">
           <Button
             variant="primary"
             size="md"

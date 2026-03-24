@@ -32,8 +32,8 @@ export default function Home() {
         <HeroSection />
       </div>
 
-      <div className="relative w-full max-w-[1100px] mx-auto px-4 sm:px-6 -mt-[100px] sm:-mt-[180px] z-10 mb-16 sm:mb-24">
-        <Image
+      <div className="relative w-full max-w-[1100px] mx-auto px-4 sm:px-6 -mt-[40px] sm:-mt-[180px] z-10 mb-16 sm:mb-24">
+        <Image  
           className="w-full rounded-2xl sm:rounded-[26px] object-cover"
           alt="Dashboard preview"
           src="/figmaAssets/image-1-1.png"

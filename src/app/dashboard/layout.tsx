@@ -14,7 +14,7 @@ export default function DashboardLayout({
       <div className="min-h-screen bg-[#0d0e14]">
         <Sidebar />
         <DashboardNavbar />
-        <main className="lg:ml-[200px] pt-[64px] h-[calc(100vh-64px)] overflow-y-auto">
+        <main className="lg:ml-[200px] pt-[64px] h-[calc(100vh-64px)] ">
           <div className="p-4 sm:p-6">{children}</div>
         </main>
       </div>

@@ -1,0 +1,197 @@
+
+"use client";
+import Link from "next/link";
+import Image from "next/image";
+import { useState } from "react";
+
+export default function SignupPage() {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  return (
+    <div className="bg-[#0b0b1a] overflow-hidden w-full min-h-screen relative flex flex-col">
+      {/* Starfield background */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          className="absolute inset-0 w-full h-full object-cover z-0"
+          alt="Background"
+          src="/figmaAssets/image.png"
+          fill
+          priority
+        />
+        <Image
+          className="absolute top-0 left-0 w-full max-w-[1031px] h-auto z-0"
+          alt="Background overlay"
+          src="/figmaAssets/image-1.png"
+          width={1031}
+          height={806}
+          priority
+        />
+      </div>
+
+      {/* Logo */}
+      <div className="flex flex-col items-center justify-center w-full z-10 pt-8 pb-4">
+        <Image
+          src="/figmaAssets/h8fhoaokhdjquwmkrvnczlagvyrx5x-2.png"
+          alt="Prolific Logo"
+          width={120}
+          height={48}
+          priority
+        />
+      </div>
+
+      {/* Card */}
+      <div className="flex flex-1 items-center justify-center z-10 px-4 pb-10">
+        <div
+          className="rounded-2xl shadow-2xl px-10 py-10 w-full flex flex-col items-center"
+          style={{
+            background: "rgba(24, 24, 44, 0.85)",
+            maxWidth: "520px",
+            border: "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+          <h2 className="text-white text-3xl font-bold mb-8 tracking-wide">
+            Sign Up
+          </h2>
+
+          <div className="w-full flex flex-col gap-5">
+            {/* Full Name */}
+            <div>
+              <label className="block text-gray-200 text-sm font-medium mb-2">
+                Full Name
+              </label>
+              <input
+                type="text"
+                className="w-full px-5 py-3  rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                style={{ background: "#23233d" }}
+                placeholder="Enter your full name"
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-gray-200 text-sm font-medium mb-2">
+                Email
+              </label>
+              <input
+                type="email"
+                className="w-full px-5 py-3  rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                style={{ background: "#23233d" }}
+                placeholder="Enter your email"
+              />
+            </div>
+
+            {/* Phone Number */}
+            <div>
+              <label className="block text-gray-200 text-sm font-medium mb-2">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                className="w-full px-5 py-3  rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                style={{ background: "#23233d" }}
+                placeholder="Enter your phone number"
+              />
+            </div>
+
+
+            {/* Password */}
+            <div>
+              <label className="block text-gray-200 text-sm font-medium mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="w-full px-5 py-3 pr-10 rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  style={{ background: "#23233d" }}
+                  placeholder="Enter your password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    // Eye-off icon
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  ) : (
+                    // Eye icon
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="block text-gray-200 text-sm font-medium mb-2">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  className="w-full px-5 py-3 pr-10 rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  style={{ background: "#23233d" }}
+                  placeholder="Confirm your password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? (
+                    // Eye-off icon
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  ) : (
+                    // Eye icon
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Sign Up Button */}
+            <button
+              type="button"
+              className="w-full font-bold py-3  rounded-xl text-white text-base mt-1 transition-all duration-200 hover:opacity-90 active:scale-95"
+              style={{
+                background: "linear-gradient(90deg, #7c3aed 0%, #9333ea 100%)",
+              }}
+            >
+              Sign Up
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="w-full flex items-center my-5">
+            <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.12)" }} />
+            <span className="mx-3 text-gray-500 text-xs">or continue with</span>
+            <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.12)" }} />
+          </div>
+
+          {/* Login link */}
+          <div className="text-gray-400 text-sm text-center">
+            Already have an account?{" "}
+            <Link href="/login" className="text-purple-400 hover:underline font-medium">
+              Login
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
