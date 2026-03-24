@@ -8,6 +8,8 @@ node_modules/
 # -----------------------------
 .next/
 out/
+.next/server/
+.next/static/
 
 # -----------------------------
 # Production build
