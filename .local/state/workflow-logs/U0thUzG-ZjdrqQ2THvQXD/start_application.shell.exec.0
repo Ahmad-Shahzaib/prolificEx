@@ -1,0 +1,18 @@
+[1G[0K⠙[1G[0K  [1m[38;2;173;127;168m▲ Next.js 14.2.35[39m[22m
+  - Local:        http://localhost:5000
+
+ [32m[1m✓[22m[39m Starting...
+ [32m[1m✓[22m[39m Ready in 2.8s
+ [37m[1m○[22m[39m Compiling / ...
+ [32m[1m✓[22m[39m Compiled / in 2.7s (594 modules)
+ GET / [32m200[39m in 2974ms
+ [32m[1m✓[22m[39m Compiled in 467ms (292 modules)
+ GET / [32m200[39m in 3176ms
+ [33m[1m⚠[22m[39m Cross origin request detected from 127.0.0.1 to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+ [33m[1m⚠[22m[39m Cross origin request detected from 3af977b6-dd8c-45f8-8d03-623ab1d5c0dc-00-1sbpvnym5hh8r.riker.replit.dev to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+ GET / [32m200[39m in 69ms
+ [37m[1m○[22m[39m Compiling /dashboard ...
+ [32m[1m✓[22m[39m Compiled /dashboard in 686ms (612 modules)
+ [32m[1m✓[22m[39m Compiled in 308ms (303 modules)

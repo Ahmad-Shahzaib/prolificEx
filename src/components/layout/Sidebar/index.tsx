@@ -161,15 +161,15 @@ export function Sidebar() {
             <Image
               src="/figmaAssets/h8fhoaokhdjquwmkrvnczlagvyrx5x-2.png"
               alt="Prolific Logo"
-              width={48}
-              height={48}
+              width={100}
+              height={100}
               className="object-contain"
               priority
             />
           </Link>
         </div>
 
-        <nav className="flex-1 px-3 py-2 space-y-1">
+        <nav className="flex-1 px-3 py-3 space-y-1">
           {mainLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -179,7 +179,7 @@ export function Sidebar() {
                 onClick={close}
                 data-testid={`sidebar-link-${link.label.toLowerCase().replace(/\s+/g, "-")}`}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200 [font-family:'Inter',Helvetica] no-underline border",
+                  "flex items-center gap-3 px-3 py-3 rounded-xl text-[13px] font-medium transition-all duration-200 [font-family:'Inter',Helvetica] no-underline border",
                   isActive
                     ? "bg-violet-600 text-white border-violet-500/40 shadow-[0_2px_8px_rgba(124,58,237,0.25)]"
                     : "text-[#6b7280] hover:text-white hover:bg-white/5 border-transparent"
@@ -202,7 +202,7 @@ export function Sidebar() {
                 onClick={close}
                 data-testid={`sidebar-link-${link.label.toLowerCase()}`}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200 [font-family:'Inter',Helvetica] no-underline border",
+                  "flex items-center gap-3 px-3 py-3 rounded-xl text-[13px] font-medium transition-all duration-200 [font-family:'Inter',Helvetica] no-underline border",
                   isActive
                     ? "bg-violet-600 text-white border-violet-500/40 shadow-[0_2px_8px_rgba(124,58,237,0.25)]"
                     : "text-[#6b7280] hover:text-white hover:bg-white/5 border-transparent"

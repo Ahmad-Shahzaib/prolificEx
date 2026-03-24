@@ -1,4 +1,4 @@
-// File: /home/runner/workspace/src/app/layout.tsx
+// File: D:\E-drive-41914812\Untitled-Frame-3-1_2\proflic\src\app\layout.tsx
 import * as entry from '../../../src/app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
