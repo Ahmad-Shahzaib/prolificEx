@@ -12,7 +12,7 @@ const featureBadges: FeatureBadge[] = [
 export function HeroSection() {
   return (
     <section className="relative z-10 flex flex-col items-center gap-8 sm:gap-12 px-4 sm:px-6 pt-16 sm:pt-24 pb-20 sm:pb-32 max-w-[1240px] mx-auto text-center">
-      <div className="flex flex-col items-center gap-4 sm:gap-6 w-full">
+      <div className="flex flex-col items-center gap-4 sm:gap-6 w-full pt-6">
         <h1 className="w-full bg-[linear-gradient(90deg,rgba(255,255,255,1)_44%,rgba(255,255,255,0.2)_100%)] [-webkit-background-clip:text] bg-clip-text [-webkit-text-fill-color:transparent] [text-fill-color:transparent] font-bold text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-tight sm:leading-[1.1] text-center">
           Buy & Sell Crypto with Ease
         </h1>
