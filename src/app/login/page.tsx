@@ -1,16 +1,28 @@
 "use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "@/components/providers/AuthContext";
+
 
 export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const { login } = useAuth();
 
   function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    router.push("/dashboard");
+    const success = login(username, password);
+    if (success) {
+      router.push("/dashboard");
+    } else {
+      setError("Invalid credentials");
+    }
   }
 
   return (
@@ -55,21 +67,24 @@ export default function LoginPage() {
         >
           <h2 className="text-white text-xl font-semibold mb-6">Login</h2>
 
+
           <form className="w-full flex flex-col gap-4" onSubmit={handleLogin}>
-            {/* Email */}
+            {/* Username */}
             <div>
-              <label className="block text-gray-300 text-sm mb-1.5">Email/Phone Number</label>
+              <label className="block text-gray-300 text-sm mb-1.5">Username</label>
               <input
                 type="text"
-                className="w-full px-3 py-2.5   rounded-xl text-white text-sm focus:outline-none transition-all duration-200"
+                className="w-full px-3 py-2.5 rounded-xl text-white text-sm focus:outline-none transition-all duration-200"
                 style={{
                   backgroundColor: "#12122a",
                   border: "1.5px solid #7c3aed",
                   color: "white",
                 }}
-                placeholder="Enter your email or phone"
-                onFocus={(e) => (e.target.style.borderColor = "#7c3aed")}
-                onBlur={(e) => (e.target.style.borderColor = "#2a2a4a")}
+                placeholder="Enter your username"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                onFocus={e => (e.target.style.borderColor = "#7c3aed")}
+                onBlur={e => (e.target.style.borderColor = "#2a2a4a")}
               />
             </div>
 
@@ -79,15 +94,17 @@ export default function LoginPage() {
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  className="w-full px-3 py-2.5 pr-10   rounded-xl text-white text-sm focus:outline-none transition-all duration-200"
+                  className="w-full px-3 py-2.5 pr-10 rounded-xl text-white text-sm focus:outline-none transition-all duration-200"
                   style={{
                     backgroundColor: "#12122a",
                     border: "1.5px solid #2a2a4a",
                     color: "white",
                   }}
                   placeholder="Enter your password"
-                  onFocus={(e) => (e.target.style.borderColor = "#7c3aed")}
-                  onBlur={(e) => (e.target.style.borderColor = "#2a2a4a")}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  onFocus={e => (e.target.style.borderColor = "#7c3aed")}
+                  onBlur={e => (e.target.style.borderColor = "#2a2a4a")}
                 />
                 <button
                   type="button"
@@ -112,13 +129,19 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {error && <div className="text-red-500 text-xs">{error}</div>}
+
             <button
               type="submit"
-              className="w-full text-white font-semibold py-2.5   rounded-xl mt-1 transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
+              className="w-full text-white font-semibold py-2.5 rounded-xl mt-1 transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
               style={{ background: "linear-gradient(90deg, #7c3aed, #9333ea)" }}
             >
               Login
             </button>
+            <div className="text-xs text-gray-400 mt-2">
+              <div>Admin: <b>admin / admin123</b></div>
+              <div>User: <b>user / user123</b></div>
+            </div>
           </form>
 
           {/* Divider */}

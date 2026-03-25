@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ReduxProvider } from "@/components/providers/ReduxProvider";
+import { AuthProvider } from "@/components/providers/AuthContext";
 
 export const metadata: Metadata = {
   title: "ProlificEx — Buy & Sell Crypto with Ease",
@@ -16,7 +17,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <ReduxProvider>{children}</ReduxProvider>
+        <AuthProvider>
+          <ReduxProvider>{children}</ReduxProvider>
+        </AuthProvider>
       </body>
     </html>
   );

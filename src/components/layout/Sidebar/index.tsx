@@ -5,9 +5,13 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { useSidebar } from "@/components/providers/SidebarContext";
 
-const mainLinks = [
+import { useSidebar } from "@/components/providers/SidebarContext";
+import { useAuth } from "@/components/providers/AuthContext";
+
+
+// User sidebar items (old code)
+const userLinks = [
   {
     label: "Dashboard",
     href: "/dashboard",
@@ -104,6 +108,101 @@ const mainLinks = [
   },
 ];
 
+// Admin sidebar items (from image)
+const adminLinks = [
+  {
+    label: "Dashboard",
+    href: "/admin/dashboard",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+        <rect x="11" y="1" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+        <rect x="1" y="11" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+        <rect x="11" y="11" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+      </svg>
+    ),
+  },
+  {
+    label: "KYC Applications",
+    href: "/admin/kyc",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M9 1L2 4V8.5C2 12.64 4.99 16.49 9 17.5C13.01 16.49 16 12.64 16 8.5V4L9 1Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+        <path d="M6 9L8 11L12 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    label: "User Management",
+    href: "/admin/user-management",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <rect x="3" y="3" width="12" height="12" rx="6" stroke="currentColor" strokeWidth="1.5" />
+        <rect x="6" y="6" width="6" height="6" rx="3" stroke="currentColor" strokeWidth="1.5" />
+      </svg>
+    ),
+  },
+  {
+    label: "Trade Monitoring",
+    href: "/admin/trade-monitoring",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M3 15V9M3 9L7 13L13 7M13 7V3M13 7H17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    label: "Dispute Center",
+    href: "/admin/dispute-center",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M9 2V16M9 16L4 11M9 16L14 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    label: "Deposit Monitoring",
+    href: "/admin/deposit-monitoring",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <rect x="3" y="3" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M6 6H12V12H6V6Z" stroke="currentColor" strokeWidth="1.5" />
+      </svg>
+    ),
+  },
+  {
+    label: "Withdrawal Monitoring",
+    href: "/admin/withdrawal-monitoring",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <rect x="3" y="3" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M6 12L9 9L12 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    label: "System Logs",
+    href: "/admin/system-logs",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <rect x="3" y="3" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M6 6H12V12H6V6Z" stroke="currentColor" strokeWidth="1.5" />
+      </svg>
+    ),
+  },
+  {
+    label: "Support",
+    href: "/admin/support",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <circle cx="9" cy="9" r="7.5" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M6.5 6.5C6.5 5.12 7.62 4 9 4C10.38 4 11.5 5.12 11.5 6.5C11.5 7.88 10.38 9 9 9V10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="9" cy="13" r="0.75" fill="currentColor" />
+      </svg>
+    ),
+  },
+];
+
 const bottomLinks = [
   {
     label: "Setting",
@@ -128,9 +227,11 @@ const bottomLinks = [
   },
 ];
 
+
 export function Sidebar() {
   const pathname = usePathname();
   const { isOpen, close } = useSidebar();
+  const { role } = useAuth();
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -139,6 +240,9 @@ export function Sidebar() {
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, close]);
+
+  // Choose links based on role
+  const links = role === "admin" ? adminLinks : userLinks;
 
   return (
     <>
@@ -170,7 +274,7 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 px-3 py-3 space-y-1">
-          {mainLinks.map((link) => {
+          {links.map((link) => {
             const isActive = pathname === link.href;
             return (
               <Link
