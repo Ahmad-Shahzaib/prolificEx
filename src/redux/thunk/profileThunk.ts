@@ -49,6 +49,19 @@ export interface UserProfileResponse {
   data: UserProfile;
 }
 
+const parseJsonSafe = async (res: Response) => {
+  const text = await res.text();
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch (parseError) {
+    throw new Error(`Invalid JSON response from ${res.url} (status ${res.status}): ${text.slice(0, 200)}`);
+  }
+};
+
 export const fetchUserProfile = createAsyncThunk<
   UserProfileResponse,
   void,
@@ -58,6 +71,10 @@ export const fetchUserProfile = createAsyncThunk<
   async (_, { rejectWithValue }) => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      if (!baseUrl) {
+        return rejectWithValue("Missing NEXT_PUBLIC_API_BASE_URL in environment");
+      }
+
       const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
       const res = await fetch(`${baseUrl}/user/profile`, {
@@ -68,10 +85,10 @@ export const fetchUserProfile = createAsyncThunk<
         },
       });
 
-      const data = await res.json();
+      const data = await parseJsonSafe(res);
 
-      if (!res.ok || !data.success) {
-        return rejectWithValue(data?.message || "Failed to fetch user profile");
+      if (!res.ok || !data?.success) {
+        return rejectWithValue(data?.message || `Failed to fetch user profile (${res.status})`);
       }
 
       return data as UserProfileResponse;
@@ -90,6 +107,10 @@ export const updateUserProfile = createAsyncThunk<
   async (payload, { rejectWithValue }) => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      if (!baseUrl) {
+        return rejectWithValue("Missing NEXT_PUBLIC_API_BASE_URL in environment");
+      }
+
       const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
       const res = await fetch(`${baseUrl}/user/profile`, {
@@ -101,10 +122,10 @@ export const updateUserProfile = createAsyncThunk<
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const data = await parseJsonSafe(res);
 
-      if (!res.ok || !data.success) {
-        return rejectWithValue(data?.message || "Failed to update user profile");
+      if (!res.ok || !data?.success) {
+        return rejectWithValue(data?.message || `Failed to update user profile (${res.status})`);
       }
 
       return data as UserProfileResponse;
@@ -123,6 +144,10 @@ export const uploadUserAvatar = createAsyncThunk<
   async (avatarFile, { rejectWithValue }) => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      if (!baseUrl) {
+        return rejectWithValue("Missing NEXT_PUBLIC_API_BASE_URL in environment");
+      }
+
       const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
       const formData = new FormData();
@@ -136,10 +161,10 @@ export const uploadUserAvatar = createAsyncThunk<
         body: formData,
       });
 
-      const data = await res.json();
+      const data = await parseJsonSafe(res);
 
-      if (!res.ok || !data.success) {
-        return rejectWithValue(data?.message || "Failed to upload user avatar");
+      if (!res.ok || !data?.success) {
+        return rejectWithValue(data?.message || `Failed to upload user avatar (${res.status})`);
       }
 
       return data as UserAvatarUploadResponse;
@@ -158,6 +183,9 @@ export const changeUserPassword = createAsyncThunk<
   async (payload, { rejectWithValue }) => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      if (!baseUrl) {
+        return rejectWithValue("Missing NEXT_PUBLIC_API_BASE_URL in environment");
+      }
       const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
       const res = await fetch(`${baseUrl}/user/change-password`, {
@@ -169,10 +197,10 @@ export const changeUserPassword = createAsyncThunk<
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const data = await parseJsonSafe(res);
 
-      if (!res.ok || !data.success) {
-        return rejectWithValue(data?.message || "Failed to change password");
+      if (!res.ok || !data?.success) {
+        return rejectWithValue(data?.message || `Failed to change password (${res.status})`);
       }
 
       return data as ChangePasswordResponse;
@@ -200,6 +228,9 @@ export const deactivateUserAccount = createAsyncThunk<
   async (payload, { rejectWithValue }) => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      if (!baseUrl) {
+        return rejectWithValue("Missing NEXT_PUBLIC_API_BASE_URL in environment");
+      }
       const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
       const res = await fetch(`${baseUrl}/user/account`, {
@@ -211,10 +242,10 @@ export const deactivateUserAccount = createAsyncThunk<
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const data = await parseJsonSafe(res);
 
-      if (!res.ok || !data.success) {
-        return rejectWithValue(data?.message || "Failed to deactivate account");
+      if (!res.ok || !data?.success) {
+        return rejectWithValue(data?.message || `Failed to deactivate account (${res.status})`);
       }
 
       return data as DeactivateAccountResponse;
