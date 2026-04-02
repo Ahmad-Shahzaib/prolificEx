@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 import { useSidebar } from "@/components/providers/SidebarContext";
-import { useAuth } from "@/components/providers/AuthContext";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { logoutUser } from "@/redux/thunk/logoutThunk";
 
 
 // User sidebar items (old code)
@@ -230,8 +231,27 @@ const bottomLinks = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const dispatch = useAppDispatch();
   const { isOpen, close } = useSidebar();
-  const { role } = useAuth();
+  const role = useAppSelector((state) => {
+    const userEmail = state.auth.user?.email?.toLowerCase() || "";
+    if (userEmail.startsWith("admin") || userEmail.includes("@admin")) {
+      return "admin";
+    }
+    return "user";
+  });
+
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutUser()).unwrap();
+    } catch {
+      // best effort logout even if API failed
+      dispatch({ type: "auth/logout" });
+    }
+    close();
+    router.push("/");
+  };
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -261,7 +281,7 @@ export function Sidebar() {
         )}
       >
         <div className="flex items-center justify-center px-5 py-5">
-          <Link href="/" className="no-underline" onClick={close}>
+          
             <Image
               src="/figmaAssets/h8fhoaokhdjquwmkrvnczlagvyrx5x-2.png"
               alt="Prolific Logo"
@@ -270,7 +290,7 @@ export function Sidebar() {
               className="object-contain"
               priority
             />
-          </Link>
+         
         </div>
 
         <nav className="flex-1 px-3 py-3 space-y-1">
@@ -299,6 +319,23 @@ export function Sidebar() {
         <div className="px-3 pb-5 space-y-1">
           {bottomLinks.map((link) => {
             const isActive = pathname === link.href;
+            if (link.label === "Logout") {
+              return (
+                <button
+                  key={link.label}
+                  onClick={handleLogout}
+                  data-testid="sidebar-link-logout"
+                  className={cn(
+                    "w-full text-left flex items-center gap-3 px-3 py-3 rounded-xl text-[13px] font-medium transition-all duration-200 [font-family:'Inter',Helvetica] border",
+                    "text-[#6b7280] hover:text-white hover:bg-white/5 border-transparent"
+                  )}
+                >
+                  <span className="flex-shrink-0 w-[18px] h-[18px]">{link.icon}</span>
+                  <span>{link.label}</span>
+                </button>
+              );
+            }
+
             return (
               <Link
                 key={link.label}

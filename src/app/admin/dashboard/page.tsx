@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Users, TrendingUp, BarChart3, FileText, Scale } from "lucide-react";
 import {
   LineChart,
@@ -11,6 +11,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useAppDispatch, useAppSelector } from "../../../redux/hooks";
+import { fetchDashboardStats } from "../../../redux/thunk/dashboardStatsThunk";
 
 const registrationData = [
   { date: "Apr 1", users: 45000 },
@@ -21,7 +23,7 @@ const registrationData = [
   { date: "Apr 6", users: 28000 },
 ];
 
-const stats = [
+const defaultStats = [
   {
     label: "Total Users",
     value: "10,293",
@@ -59,7 +61,55 @@ const stats = [
   },
 ];
 
+
 export default function AdminDashboardPage() {
+  const dispatch = useAppDispatch();
+  const { stats: statsData, loading, error } = useAppSelector((state) => state.dashboard);
+
+  useEffect(() => {
+    dispatch(fetchDashboardStats());
+  }, [dispatch]);
+
+  const stats = statsData
+    ? [
+        {
+          label: "Total Users",
+          value: statsData.total_users.toLocaleString(),
+          icon: Users,
+          color: "text-yellow-500",
+          bg: "bg-yellow-500/10",
+        },
+        {
+          label: "Active Users",
+          value: statsData.active_users.toLocaleString(),
+          icon: TrendingUp,
+          color: "text-blue-500",
+          bg: "bg-blue-500/10",
+        },
+        {
+          label: "Suspended Users",
+          value: statsData.suspended_users.toLocaleString(),
+          icon: BarChart3,
+          color: "text-emerald-500",
+          bg: "bg-emerald-500/10",
+        },
+        {
+          label: "Pending KYC",
+          value: statsData.pending_kyc.toLocaleString(),
+          icon: FileText,
+          color: "text-orange-500",
+          bg: "bg-orange-500/10",
+        },
+        {
+          label: "Banned Users",
+          value: statsData.banned_users.toLocaleString(),
+          icon: Scale,
+          color: "text-purple-500",
+          bg: "bg-purple-500/10",
+        },
+      ]
+    : defaultStats;
+
   return (
     <div className="min-h-screen text-white p-3 sm:p-4 md:p-6 font-sans">
       {/* Header */}
@@ -68,6 +118,13 @@ export default function AdminDashboardPage() {
           Welcome back, Henry 👋
         </h1>
       </div>
+
+      {loading && (
+        <div className="mb-4 text-sm text-blue-300">Loading stats...</div>
+      )}
+      {error && (
+        <div className="mb-4 text-sm text-red-400">Error: {error}</div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-6 md:mb-8">

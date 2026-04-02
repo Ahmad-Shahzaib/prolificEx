@@ -1,7 +1,11 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useSidebar } from "@/components/providers/SidebarContext";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { fetchUserProfile, deactivateUserAccount } from "@/redux/thunk/profileThunk";
+import { logout } from "@/redux/slices/authSlice";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -16,10 +20,75 @@ const pageTitles: Record<string, string> = {
   "/dashboard/settings": "Settings",
 };
 
+const getInitials = (name: string) => {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part[0].toUpperCase())
+    .slice(0, 2)
+    .join("");
+};
+
 export function DashboardNavbar() {
   const pathname = usePathname();
   const title = pageTitles[pathname] || "Dashboard";
   const { toggle } = useSidebar();
+  const dispatch = useAppDispatch();
+  const profile = useAppSelector((state) => state.profile.profile);
+  const deactivateLoading = useAppSelector((state) => state.profile.deactivateLoading);
+  const deactivateError = useAppSelector((state) => state.profile.deactivateError);
+  const deactivateMessage = useAppSelector((state) => state.profile.deactivateMessage);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  const router = useRouter();
+
+  const displayName = profile?.full_name || profile?.username || "Courtney Henry";
+  const initials = profile?.full_name
+    ? getInitials(profile.full_name)
+    : profile?.username
+    ? profile.username.slice(0, 2).toUpperCase()
+    : "CH";
+
+  useEffect(() => {
+    if (!profile) {
+      dispatch(fetchUserProfile());
+    }
+  }, [dispatch, profile]);
+
+  const closeDeactivateModal = () => {
+    setIsDeactivateModalOpen(false);
+    setPassword("");
+    setLocalError(null);
+  };
+
+  const handleDeactivateClick = () => {
+    setIsProfileMenuOpen(false);
+    setIsDeactivateModalOpen(true);
+    setLocalError(null);
+  };
+
+  const handleDeactivateSubmit = async () => {
+    if (!password.trim()) {
+      setLocalError("Please enter your current password.");
+      return;
+    }
+
+    try {
+      await dispatch(deactivateUserAccount({ password: password.trim() })).unwrap();
+      dispatch(logout());
+      router.push("/");
+    } catch (error: any) {
+      setLocalError(typeof error === "string" ? error : "Failed to deactivate account.");
+    }
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    router.push("/");
+  };
 
   return (
     <header className="fixed top-0 left-0 lg:left-[200px] right-0 z-30 h-[64px] bg-[#0d0e14] border-b border-white/5 flex items-center justify-between px-4 sm:px-6">
@@ -61,20 +130,84 @@ export function DashboardNavbar() {
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-violet-500 rounded-full"></span>
         </button>
 
-        <div className="flex items-center gap-2.5 pl-2 sm:pl-3 border-l border-white/10">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white text-xs font-bold [font-family:'Inter',Helvetica]">
-            CH
-          </div>
-          <div className="hidden md:block">
-            <p className="text-sm font-medium text-white [font-family:'Inter',Helvetica] leading-4" data-testid="text-username">
-              Courtney Henry
-            </p>
-          </div>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-[#6b7280] hidden sm:block">
-            <path d="M3 5L6 8L9 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+        <div className="relative flex items-center gap-2.5 pl-2 sm:pl-3 border-l border-white/10">
+          <button
+            onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+            className="flex items-center gap-2.5 bg-transparent border-none focus:outline-none"
+            aria-label="Open profile menu"
+            data-testid="button-profile-menu"
+          >
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white text-xs font-bold [font-family:'Inter',Helvetica]">
+              {initials}
+            </div>
+            <div className="hidden md:block text-left">
+              <p className="text-sm font-medium text-white [font-family:'Inter',Helvetica] leading-4" data-testid="text-username">
+                {displayName}
+              </p>
+            </div>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-[#6b7280] hidden sm:block">
+              <path d="M3 5L6 8L9 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+
+          {isProfileMenuOpen && (
+            <div className="absolute right-0 top-full mt-2 w-44 bg-[#1a1b23] border border-white/10 rounded-xl shadow-lg z-50">
+              <button
+                onClick={handleDeactivateClick}
+                className="w-full text-left px-3 py-2 text-sm text-red-300 hover:text-white hover:bg-white/5"
+              >
+                Deactivate Account
+              </button>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/5"
+              >
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </div>
+
+      {isDeactivateModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-[#0d0e14] border border-white/10 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">Deactivate account</h2>
+              <button onClick={closeDeactivateModal} className="text-sm text-[#9ca3af] hover:text-white">✕</button>
+            </div>
+            <p className="text-sm text-[#9ca3af] mb-4">
+              Enter your current password to confirm deactivation. Your account will be logged out after deactivation.
+            </p>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Current password"
+              className="w-full mb-3 rounded-lg border border-white/15 bg-[#1a1b23] px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50"
+              data-testid="input-deactivate-password"
+            />
+            {localError && <p className="text-sm text-red-400 mb-2">{localError}</p>}
+            {deactivateError && <p className="text-sm text-red-400 mb-2">{deactivateError}</p>}
+            {deactivateMessage && <p className="text-sm text-emerald-300 mb-2">{deactivateMessage}</p>}
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={closeDeactivateModal}
+                className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-white/80 hover:text-white hover:border-white/30"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeactivateSubmit}
+                disabled={deactivateLoading}
+                className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {deactivateLoading ? "Deactivating..." : "Deactivate"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

@@ -3,27 +3,44 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useAuth } from "@/components/providers/AuthContext";
-
+import { useState, useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { loginUser } from "@/redux/thunk/loginThunk";
+import { resetAuthError } from "@/redux/slices/authSlice";
 
 export default function LoginPage() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const { loading, error, isAuthenticated, user } = useAppSelector((state) => state.auth);
   const [showPassword, setShowPassword] = useState(false);
-  const [username, setUsername] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const { login } = useAuth();
 
-  function handleLogin(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const success = login(username, password);
-    if (success) {
-      router.push("/dashboard");
-    } else {
-      setError("Invalid credentials");
+  useEffect(() => {
+    if (isAuthenticated) {
+      const userEmail = user?.email?.toLowerCase() || "";
+      const isAdmin = userEmail.startsWith("admin") || userEmail.includes("@admin");
+      router.push(isAdmin ? "/admin/dashboard" : "/dashboard");
     }
-  }
+  }, [isAuthenticated, user, router]);
+
+  useEffect(() => {
+    return () => {
+      if (error) dispatch(resetAuthError());
+    };
+  }, [dispatch, error]);
+
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      const resultAction = await dispatch(loginUser({ identifier, password }));
+      if (loginUser.fulfilled.match(resultAction)) {
+        // success will be handled by isAuthenticated effect
+      }
+    } catch {
+      // thunk sets error state automatically
+    }
+  };
 
   return (
     <div className="bg-[#0a0a18] overflow-hidden w-full min-h-screen relative flex flex-col items-center justify-start">
@@ -69,9 +86,9 @@ export default function LoginPage() {
 
 
           <form className="w-full flex flex-col gap-4" onSubmit={handleLogin}>
-            {/* Username */}
+            {/* Email or Username */}
             <div>
-              <label className="block text-gray-300 text-sm mb-1.5">Username</label>
+              <label className="block text-gray-300 text-sm mb-1.5">Email or Username</label>
               <input
                 type="text"
                 className="w-full px-3 py-2.5 rounded-xl text-white text-sm focus:outline-none transition-all duration-200"
@@ -80,9 +97,9 @@ export default function LoginPage() {
                   border: "1.5px solid #7c3aed",
                   color: "white",
                 }}
-                placeholder="Enter your username"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
+                placeholder="Enter your email or username"
+                value={identifier}
+                onChange={e => setIdentifier(e.target.value)}
                 onFocus={e => (e.target.style.borderColor = "#7c3aed")}
                 onBlur={e => (e.target.style.borderColor = "#2a2a4a")}
               />
@@ -133,15 +150,15 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full text-white font-semibold py-2.5 rounded-xl mt-1 transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
+              disabled={loading}
+              className="w-full text-white font-semibold py-2.5 rounded-xl mt-1 transition-all duration-200 hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
               style={{ background: "linear-gradient(90deg, #7c3aed, #9333ea)" }}
             >
-              Login
+              {loading ? "Logging in..." : "Login"}
             </button>
-            <div className="text-xs text-gray-400 mt-2">
-              <div>Admin: <b>admin / admin123</b></div>
-              <div>User: <b>user / user123</b></div>
-            </div>
+            {user && (
+              <div className="text-xs text-green-400 mt-2">Logged in as: {user.full_name}</div>
+            )}
           </form>
 
           {/* Divider */}
