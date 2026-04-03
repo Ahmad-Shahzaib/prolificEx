@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { verifyEmail } from "@/redux/thunk/verifyEmailThunk";
@@ -8,10 +8,16 @@ import { resetVerifyEmailState } from "@/redux/slices/verifyEmailSlice";
 
 export default function VerifyEmailPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const emailFromQuery = searchParams.get("email") || "";
 
-  const [email, setEmail] = useState(emailFromQuery);
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const emailFromQuery = params.get("email") || "";
+    if (emailFromQuery) {
+      setEmail(emailFromQuery);
+    }
+  }, []);
   const [code, setCode] = useState("");
 
   const dispatch = useAppDispatch();
