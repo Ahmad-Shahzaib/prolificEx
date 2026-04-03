@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/providers/SidebarContext";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { logoutUser } from "@/redux/thunk/logoutThunk";
+import { logout } from "@/redux/slices/authSlice";
 
 
 // User sidebar items (old code)
@@ -247,7 +248,7 @@ export function Sidebar() {
       await dispatch(logoutUser()).unwrap();
     } catch {
       // best effort logout even if API failed
-      dispatch({ type: "auth/logout" });
+      dispatch(logout());
     }
     close();
     router.push("/");

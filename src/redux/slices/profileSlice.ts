@@ -1,5 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { fetchUserProfile, updateUserProfile, uploadUserAvatar, changeUserPassword, deactivateUserAccount, UserProfileResponse, UserProfile } from "../thunk/profileThunk";
+import { logout } from "./authSlice";
+import { logoutUser } from "../thunk/logoutThunk";
 
 interface ProfileState {
   loading: boolean;
@@ -138,7 +140,9 @@ const profileSlice = createSlice({
       .addCase(deactivateUserAccount.rejected, (state, action) => {
         state.deactivateLoading = false;
         state.deactivateError = action.payload || "Failed to deactivate account";
-      });
+      })
+      .addCase(logout, () => initialState)
+      .addCase(logoutUser.fulfilled, () => initialState);
   },
 });
 

@@ -42,15 +42,18 @@ export function DashboardNavbar() {
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const [password, setPassword] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
+  const [avatarLoadError, setAvatarLoadError] = useState(false);
 
   const router = useRouter();
 
-  const displayName = profile?.full_name || profile?.username || "Courtney Henry";
+  const displayName = profile?.full_name || profile?.username || "";
   const initials = profile?.full_name
     ? getInitials(profile.full_name)
     : profile?.username
     ? profile.username.slice(0, 2).toUpperCase()
     : "CH";
+
+  const avatarUrl = profile?.avatar && !avatarLoadError ? profile.avatar : null;
 
   useEffect(() => {
     if (!profile) {
@@ -64,10 +67,9 @@ export function DashboardNavbar() {
     setLocalError(null);
   };
 
-  const handleDeactivateClick = () => {
+  const handleProfileClick = () => {
     setIsProfileMenuOpen(false);
-    setIsDeactivateModalOpen(true);
-    setLocalError(null);
+    router.push("/dashboard/settings");
   };
 
   const handleDeactivateSubmit = async () => {
@@ -137,8 +139,17 @@ export function DashboardNavbar() {
             aria-label="Open profile menu"
             data-testid="button-profile-menu"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white text-xs font-bold [font-family:'Inter',Helvetica]">
-              {initials}
+            <div className="w-8 h-8 rounded-full overflow-hidden bg-[#1a1b23] border border-white/10 flex items-center justify-center text-white text-xs font-bold [font-family:'Inter',Helvetica]">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="Profile Avatar"
+                  className="w-full h-full object-cover"
+                  onError={() => setAvatarLoadError(true)}
+                />
+              ) : (
+                <span>{initials}</span>
+              )}
             </div>
             <div className="hidden md:block text-left">
               <p className="text-sm font-medium text-white [font-family:'Inter',Helvetica] leading-4" data-testid="text-username">
@@ -153,10 +164,10 @@ export function DashboardNavbar() {
           {isProfileMenuOpen && (
             <div className="absolute right-0 top-full mt-2 w-44 bg-[#1a1b23] border border-white/10 rounded-xl shadow-lg z-50">
               <button
-                onClick={handleDeactivateClick}
-                className="w-full text-left px-3 py-2 text-sm text-red-300 hover:text-white hover:bg-white/5"
+                onClick={handleProfileClick}
+                className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/5"
               >
-                Deactivate Account
+                Profile
               </button>
               <button
                 onClick={handleLogout}

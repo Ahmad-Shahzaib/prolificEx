@@ -154,15 +154,28 @@ export default function SettingsPage() {
                 className="relative w-28 h-28 rounded-full overflow-hidden border-4 border-white/10 cursor-pointer"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <Image
-                  src={
-                    profile?.avatar ||
-                    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face"
-                  }
-                  alt="Profile Photo"
-                  fill
-                  className="object-cover"
-                />
+                {profile?.avatar ? (
+                  <Image
+                    src={profile.avatar}
+                    alt="Profile Photo"
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full bg-[#1a1b23] text-white text-2xl font-bold">
+                    {(() => {
+                      const name = profile?.username || profile?.full_name || "";
+                      const parts = name.split(" ").filter(Boolean);
+                      if (parts.length >= 2) {
+                        return `${parts[0][0].toUpperCase()}${parts[1][0].toUpperCase()}`;
+                      }
+                      if (parts.length === 1) {
+                        return parts[0].slice(0, 2).toUpperCase();
+                      }
+                      return "AR";
+                    })()}
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs">
                   Click to change
                 </div>
@@ -237,8 +250,8 @@ export default function SettingsPage() {
                 <label className="block text-[#6b7280] text-sm mb-2">Phone Number</label>
                 <div className="flex bg-[#1a1b23] border border-white/10 rounded-2xl overflow-hidden">
                   <div className="flex items-center gap-2 px-4 border-r border-white/10">
-                    <span className="text-xl">🇺🇸</span>
-                    <span className="text-white">+</span>
+                    {/* <span className="text-xl">🇺🇸</span> */}
+                    {/* <span className="text-white">+</span> */}
                   </div>
                   <input
                     type="tel"
@@ -253,8 +266,8 @@ export default function SettingsPage() {
               <div>
                 <label className="block text-[#6b7280] text-sm mb-2">Country</label>
                 <div className="flex items-center bg-[#1a1b23] border border-white/10 rounded-2xl px-5 py-3.5">
-                  <span className="text-xl mr-3">{profile?.country === "Ghana" ? "🇬🇭" : "🇺🇸"}</span>
-                  <span className="text-white">{country || "—"}</span>
+                  <span className="text-xl mr-3">{profile?.country === "Ghana" ? "🇬🇭" : ""}</span>
+                  <span className="text-white">{country || ""}</span>
                 </div>
               </div>
 

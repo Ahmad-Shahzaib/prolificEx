@@ -12,9 +12,7 @@ export default function AdminUserManagementPage() {
   const { users, loading, error, pagination } = useAppSelector((state) => state.adminUsers);
   const { user: selectedUser, loading: detailLoading, error: detailError } = useAppSelector((state) => state.adminUserDetail);
 
-  const [status] = useState("active");
-  const [kycLevel] = useState(0);
-  const [perPage] = useState(20);
+  const [perPage, setPerPage] = useState<number>(20);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -24,8 +22,14 @@ export default function AdminUserManagementPage() {
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
 
   useEffect(() => {
-    dispatch(fetchAdminUsers({ status, kyc_level: kycLevel, search, per_page: perPage, page }));
-  }, [dispatch, status, kycLevel, search, perPage, page]);
+    dispatch(
+      fetchAdminUsers({
+        search,
+        per_page: perPage || 20,
+        page: page || 1,
+      })
+    );
+  }, [dispatch, search, perPage, page]);
 
   const onSearch = () => {
     setPage(1);
@@ -48,6 +52,12 @@ export default function AdminUserManagementPage() {
     }
   };
 
+  const getKycText = (level: number) => {
+    if (level === 0) return "Not Submitted";
+    if (level === 2) return "Verified";
+    return `Level ${level}`;
+  };
+
   const onChangeStatus = async (userId: number, newStatus: "active" | "suspended") => {
     setStatusUpdateError(null);
     setStatusUpdateLoading(userId);
@@ -56,7 +66,8 @@ export default function AdminUserManagementPage() {
     try {
       await dispatch(updateAdminUserStatus({ userId, status: newStatus })).unwrap();
 
-      dispatch(fetchAdminUsers({ status, kyc_level: kycLevel, search, per_page: perPage, page }));
+      // always refresh using only search + pagination (no status/kyc filter)
+      dispatch(fetchAdminUsers({ search, per_page: perPage, page }));
 
       if (selectedUserId === userId) {
         dispatch(fetchAdminUserDetail(userId));
@@ -73,28 +84,64 @@ export default function AdminUserManagementPage() {
       <div className="max-w-7xl mx-auto">
         <h1 className="text-2xl font-semibold mb-6">User Management</h1>
 
-        <div className="bg-[#1a1c2e] rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between mb-6 border border-[#23263b]">
-          <div className="flex-1 relative max-w-md">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-              <Search className="w-5 h-5" />
+        <div className="bg-[#1a1c2e] rounded-2xl p-4 flex flex-col gap-4 md:gap-3 mb-6 border border-[#23263b]">
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
+            <div className="flex-1 relative max-w-md">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                <Search className="w-5 h-5" />
+              </div>
+              <input
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                type="text"
+                placeholder="search by name, email, phone"
+                className="w-full bg-[#222531] border border-[#23263b] rounded-xl pl-11 py-3 text-sm focus:outline-none focus:border-blue-600 placeholder-gray-500"
+                onKeyDown={(e) => e.key === "Enter" && onSearch()}
+              />
             </div>
-            <input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              type="text"
-              placeholder="search by name, email, phone"
-              className="w-full bg-[#222531] border border-[#23263b] rounded-xl pl-11 py-3 text-sm focus:outline-none focus:border-blue-600 placeholder-gray-500"
-              onKeyDown={(e) => e.key === "Enter" && onSearch()}
-            />
+
+            <button
+              onClick={onSearch}
+              className="flex items-center gap-2 bg-[#222531] hover:bg-[#2a2d3f] border border-[#23263b] px-5 py-3 rounded-xl text-sm font-medium transition-colors whitespace-nowrap"
+            >
+              <Filter className="w-4 h-4" />
+              Search
+            </button>
           </div>
 
-          <button
-            onClick={onSearch}
-            className="flex items-center gap-2 bg-[#222531] hover:bg-[#2a2d3f] border border-[#23263b] px-5 py-3 rounded-xl text-sm font-medium transition-colors whitespace-nowrap"
-          >
-            <Filter className="w-4 h-4" />
-            Search
-          </button>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <label className="text-xs text-gray-400">Per page</label>
+            <select
+              value={perPage}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                setPerPage(val);
+                setPage(1);
+              }}
+              className="bg-[#222531] border border-[#23263b] rounded-xl px-3 py-2 text-sm text-gray-200"
+            >
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={500}>All</option>
+            </select>
+
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  setPerPage(20);
+                  setPage(1);
+                }}
+                className="w-full bg-[#222531] hover:bg-[#2a2d3f] border border-[#23263b] px-4 py-2 rounded-xl text-xs text-gray-200"
+              >
+                Show 20 per page
+              </button>
+            </div>
+
+            <div className="flex items-end">
+              <p className="text-xs text-gray-400">No status/kyc filters applied</p>
+            </div>
+          </div>
         </div>
 
         {statusUpdateError && (
@@ -142,10 +189,10 @@ export default function AdminUserManagementPage() {
                     <div>
                       <span
                         className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                          user.kyc_level === 0 ? "bg-amber-500/10 text-amber-400" : "bg-emerald-500/10 text-emerald-400"
+                          user.kyc_level === 0 ? "bg-amber-500/10 text-amber-400" : user.kyc_level === 2 ? "bg-emerald-500/10 text-emerald-400" : "bg-blue-500/10 text-blue-400"
                         }`}
                       >
-                        KYC {user.kyc_level}
+                        {getKycText(user.kyc_level)}
                       </span>
                     </div>
                   </div>
@@ -162,10 +209,10 @@ export default function AdminUserManagementPage() {
                   <div className="hidden md:block md:col-span-1">
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                        user.kyc_level === 0 ? "bg-amber-500/10 text-amber-400" : "bg-emerald-500/10 text-emerald-400"
+                        user.kyc_level === 0 ? "bg-amber-500/10 text-amber-400" : user.kyc_level === 2 ? "bg-emerald-500/10 text-emerald-400" : "bg-blue-500/10 text-blue-400"
                       }`}
                     >
-                      KYC {user.kyc_level}
+                      {getKycText(user.kyc_level)}
                     </span>
                   </div>
 
@@ -240,14 +287,21 @@ export default function AdminUserManagementPage() {
                 <button
                   onClick={() => handlePage((pagination?.current_page ?? 1) - 1)}
                   disabled={!pagination?.prev_page_url}
-                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#23263b] hover:bg-[#222531] transition-colors disabled:opacity-50"
+                  className="h-9 w-9 flex items-center justify-center rounded-full border border-[#23263b] hover:bg-[#222531] transition-colors disabled:opacity-50"
+                  aria-label="Previous page"
                 >
                   ←
                 </button>
+
+                <span className="h-9 px-3 flex items-center justify-center text-sm text-gray-300 border border-[#23263b] rounded-full">
+                  {pagination?.current_page ?? 1} / {pagination?.last_page ?? 1}
+                </span>
+
                 <button
                   onClick={() => handlePage((pagination?.current_page ?? 1) + 1)}
                   disabled={!pagination?.next_page_url}
-                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#23263b] hover:bg-[#222531] transition-colors disabled:opacity-50"
+                  className="h-9 w-9 flex items-center justify-center rounded-full border border-[#23263b] hover:bg-[#222531] transition-colors disabled:opacity-50"
+                  aria-label="Next page"
                 >
                   →
                 </button>
@@ -337,12 +391,12 @@ export default function AdminUserManagementPage() {
                       <span className="text-white font-medium capitalize">{selectedUser.role}</span>
                     </div>
 
-                    <div className="flex justify-between items-center py-2.5">
+                    {/* <div className="flex justify-between items-center py-2.5">
                       <span className="text-gray-400">KYC Level</span>
                       <span className="px-3 py-1 bg-blue-500/10 text-blue-400 text-xs font-medium rounded-full">
-                        Level {selectedUser.kyc_level}
+                        {getKycText(selectedUser.kyc_level)}
                       </span>
-                    </div>
+                    </div> */}
 
                     <div className="flex justify-between items-center py-2.5">
                       <span className="text-gray-400">Email Verified</span>

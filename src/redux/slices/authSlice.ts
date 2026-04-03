@@ -52,6 +52,13 @@ const initialState: AuthState = {
   message: null,
 };
 
+const clearPersistedStorage = () => {
+  if (typeof window !== "undefined") {
+    localStorage.clear();
+    sessionStorage.clear();
+  }
+};
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -64,11 +71,7 @@ const authSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
       state.message = null;
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("authTokenType");
-        localStorage.removeItem("authUser");
-      }
+      clearPersistedStorage();
     },
     resetAuthError(state) {
       state.error = null;
@@ -113,11 +116,7 @@ const authSlice = createSlice({
         state.user = null;
         state.isAuthenticated = false;
         state.message = action.payload.message;
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("authToken");
-          localStorage.removeItem("authTokenType");
-          localStorage.removeItem("authUser");
-        }
+        clearPersistedStorage();
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.loading = false;

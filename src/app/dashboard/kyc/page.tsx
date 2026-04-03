@@ -79,6 +79,14 @@ export default function KYCPage() {
     else previewSetter(null);
   };
 
+  const formatStatus = (statusValue?: string | null) => {
+    if (!statusValue) return "Not Verified";
+    return statusValue
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
   // Camera Functions
   const startCamera = async () => {
     try {
@@ -119,7 +127,7 @@ export default function KYCPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!documentFront || !documentBack || !selfieWithId) {
+    if (  !documentFront || !documentBack || !selfieWithId) {
       alert("Please upload all required documents and selfie.");
       return;
     }
@@ -149,7 +157,7 @@ export default function KYCPage() {
                 ${status === 'approved' ? 'bg-emerald-500 text-black' : 
                   status === 'pending' ? 'bg-amber-500 text-black' : 
                   'bg-red-500/10 text-red-500'}`}>
-                {status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Not Verified'}
+                {formatStatus(status)}
               </div>
             </div>
             <div className="mb-6 text-sm text-gray-300">

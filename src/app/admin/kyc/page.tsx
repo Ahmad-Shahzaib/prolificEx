@@ -5,11 +5,6 @@ import { User, X, FileText, CreditCard, Camera, ChevronLeft, ChevronRight } from
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { fetchKycPending, approveKyc, rejectKyc, KycPendingEntry } from "@/redux/thunk/adminKycPendingThunk";
 
-// Build the storage root URL from NEXT_PUBLIC_STORAGE_URL (preferred)
-// or by extracting the origin from NEXT_PUBLIC_API_BASE_URL.
-// e.g. "https://api.prolificex.softsuitetech.com/api/v1"
-//   origin → "https://api.prolificex.softsuitetech.com"
-//   STORAGE_ROOT → "https://api.prolificex.softsuitetech.com/storage"
 const STORAGE_ROOT = (() => {
   if (process.env.NEXT_PUBLIC_STORAGE_URL) {
     return process.env.NEXT_PUBLIC_STORAGE_URL.replace(/\/$/, "");
@@ -84,6 +79,13 @@ export default function AdminKYCApprovalsPage() {
   useEffect(() => {
     dispatch(fetchKycPending({ per_page: 20 }));
   }, [dispatch]);
+
+  const getKycText = (level: number | null | undefined) => {
+    if (level === 0) return "Not Submitted";
+    if (level === 2) return "Verified";
+    if (level == null) return "-";
+    return `Level ${level}`;
+  };
 
   const openModal = (entry: KycPendingEntry) => {
     setSelectedUser(entry);
@@ -187,7 +189,7 @@ export default function AdminKYCApprovalsPage() {
                         <div>Username: {entry.user.username || "-"}</div>
                         <div>Country: {entry.user.country || "-"}</div>
                         <div>Role: {entry.user.role || "-"}</div>
-                        <div>KYC: {entry.user.kyc_level ?? "-"}</div>
+                        <div>KYC: {getKycText(entry.user.kyc_level)}</div>
                         <div>Status: {entry.status || "-"}</div>
                         <div>Doc: {entry.document_type || "-"}</div>
                       </div>
@@ -207,7 +209,7 @@ export default function AdminKYCApprovalsPage() {
                     {entry.user.role || "-"}
                   </div>
                   <div className="hidden md:block md:col-span-1 text-sm text-gray-400 truncate">
-                    {entry.user.kyc_level ?? "-"}
+                    {getKycText(entry.user.kyc_level)}
                   </div>
                   <div className="hidden md:block md:col-span-1 text-sm text-gray-400 truncate capitalize">
                     {entry.status || "-"}

@@ -63,8 +63,12 @@ export const fetchAdminUsers = createAsyncThunk<
       if (params?.status) query.append("status", params.status);
       if (typeof params?.kyc_level !== "undefined") query.append("kyc_level", String(params.kyc_level));
       if (params?.search) query.append("search", params.search);
-      if (params?.per_page) query.append("per_page", String(params.per_page));
-      if (params?.page) query.append("page", String(params.page));
+
+      const perPage = typeof params?.per_page !== "undefined" ? params.per_page : 20;
+      query.append("per_page", String(perPage));
+
+      const page = typeof params?.page !== "undefined" ? params.page : 1;
+      query.append("page", String(page));
 
       const url = `${baseUrl}/admin/users${query.toString() ? `?${query.toString()}` : ""}`;
       const res = await fetch(url, {
