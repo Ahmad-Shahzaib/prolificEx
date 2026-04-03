@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "next dev",
-    "prebuild": "rimraf .next",
+    "prebuild": "node scripts/clean-next.js",
     "build": "next build",
     "start": "cross-env NODE_ENV=production next start",
     "check": "tsc",

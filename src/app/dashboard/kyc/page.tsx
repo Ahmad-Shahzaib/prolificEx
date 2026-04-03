@@ -7,6 +7,7 @@ import { Upload, Check, Camera, RotateCcw, X } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { submitKyc, fetchKycStatus } from "@/redux/thunk/kycThunk";
 import { resetKycState } from "@/redux/slices/kycSlice";
+import { stat } from "fs";
 
 export default function KYCPage() {
   const dispatch = useAppDispatch();
@@ -142,11 +143,32 @@ export default function KYCPage() {
 
   return (
     <PageShell title="KYC Verification" description="Complete your verification to unlock full trading features.">
-      <Card className="bg-[#0f0f17] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+      {status === 'approved' && (
+        <div className="mb-6 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-6 flex gap-4">
+          <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 text-black text-2xl">
+            <Check />
+          </div>
+          <div>
+            <p className="text-emerald-500 font-medium">Your KYC is approved</p>
+            <p className="text-gray-400 text-sm mt-1">Thank you for verifying your identity. You now have access to increased limits and features.</p>
+          </div>
+        </div>
+      )}
+      {status === 'pending' && (
+        <div className="mb-6 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 flex gap-4">
+          <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center flex-shrink-0 text-black text-2xl">
+            <RotateCcw />
+          </div>
+          <div>
+            <p className="text-amber-500 font-medium">Your KYC is pending</p>
+            <p className="text-gray-400 text-sm mt-1">Your documents are currently under review. This process usually takes 24-48 hours. We'll notify you once it's complete.</p>
+          </div>
+        </div>
+      )}
+ {
+  ((status === 'rejected') || (status === 'not_submitted')) && (
+ <Card className="bg-[#0f0f17] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
         <CardContent className="p-6 sm:p-10">
-
-        
-
           <form onSubmit={handleSubmit}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8">
               <div>
@@ -154,9 +176,8 @@ export default function KYCPage() {
                 <p className="text-gray-400 mt-1">Upload your documents to increase limits</p>
               </div>
               <div className={`px-6 py-2 rounded-full text-sm font-medium whitespace-nowrap
-                ${status === 'approved' ? 'bg-emerald-500 text-black' : 
-                  status === 'pending' ? 'bg-amber-500 text-black' : 
-                  'bg-red-500/10 text-red-500'}`}>
+                ${status === 'rejected' ? 'bg-red-500/10 text-red-500' : 
+                  'bg-amber-500/10 text-amber-500'}`}>
                 {formatStatus(status)}
               </div>
             </div>
@@ -344,18 +365,11 @@ export default function KYCPage() {
             </div>
           </form>
 
-          {/* Pending Status Message */}
-          {status === 'pending' && (
-            <div className="mt-10 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 flex gap-4">
-              <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center flex-shrink-0 text-black text-2xl">⏳</div>
-              <div>
-                <p className="text-amber-500 font-medium">Your documents are under review</p>
-                <p className="text-gray-400 text-sm mt-1">This process usually takes 24-48 hours. We'll notify you once it's complete.</p>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
+  ) 
+ }
+     
     </PageShell>
   );
 }
