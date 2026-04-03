@@ -277,7 +277,7 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          "fixed top-0 left-0 h-screen w-[200px] bg-[#11131a] flex flex-col z-50  transition-transform duration-300",
+          "fixed top-0 left-0 h-screen w-[200px] bg-[#11131a] flex flex-col z-50 overflow-y-auto sidebar-scrollbar transition-transform duration-300",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
@@ -357,6 +357,17 @@ export function Sidebar() {
           })}
         </div>
       </aside>
+
+      <style jsx>{`
+        .sidebar-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .sidebar-scrollbar::-webkit-scrollbar {
+          width: 0;
+          background: transparent;
+        }
+      `}</style>
     </>
   );
 }
