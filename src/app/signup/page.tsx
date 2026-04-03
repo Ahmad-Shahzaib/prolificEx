@@ -2,6 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { registerUser } from "@/redux/thunk/registerThunk";
 import { resetRegisterState } from "@/redux/slices/registerSlice";
@@ -9,6 +10,7 @@ import { resetRegisterState } from "@/redux/slices/registerSlice";
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   // Initial form state
   const initialFormState = {
@@ -22,6 +24,7 @@ export default function SignupPage() {
 
   const [form, setForm] = useState(initialFormState);
 
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const { loading, error, success, message } = useAppSelector(
     (state) => state.register
@@ -33,17 +36,22 @@ export default function SignupPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setLocalError(null);
+
+    if (form.password !== form.password_confirmation) {
+      setLocalError('Passwords do not match');
+      return;
+    }
+
     dispatch(registerUser(form));
   };
 
-  // Reset form when registration is successful
+  // Redirect to verification page when registration is successful
   useEffect(() => {
     if (success) {
-      setForm(initialFormState);
-      setShowPassword(false);
-      setShowConfirmPassword(false);
+      router.push(`/signup/verify-email?email=${encodeURIComponent(form.email)}`);
     }
-  }, [success]);
+  }, [success, router, form.email]);
 
   // Reset Redux state on component mount
   useEffect(() => {
@@ -260,6 +268,11 @@ export default function SignupPage() {
             </button>
 
             {/* Feedback Messages */}
+            {localError && (
+              <div className="text-red-400 text-sm mt-2 text-center">
+                {localError}
+              </div>
+            )}
             {error && (
               <div className="text-red-400 text-sm mt-2 text-center">
                 {error}

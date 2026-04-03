@@ -156,6 +156,13 @@ export default function LoginPage() {
             >
               {loading ? "Logging in..." : "Login"}
             </button>
+
+            <div className="mt-2 text-right">
+              <Link href="/login/forgot-password" className="text-xs text-purple-300 hover:underline">
+                Forgot password?
+              </Link>
+            </div>
+
             {user && (
               <div className="text-xs text-green-400 mt-2">Logged in as: {user.full_name}</div>
             )}

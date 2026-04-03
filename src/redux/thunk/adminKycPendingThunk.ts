@@ -54,7 +54,7 @@ export const fetchKycPending = createAsyncThunk<
   "kycPending/fetchPending",
   async (params, { rejectWithValue }) => {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.prolificex.softsuitetech.com/api/v1";
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
       const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
 
       const query = new URLSearchParams();
@@ -78,6 +78,91 @@ export const fetchKycPending = createAsyncThunk<
       return data as KycPendingResponse;
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while fetching pending KYC submissions");
+    }
+  }
+);
+
+export interface KycActionParams {
+  id: number;
+  notes?: string;
+}
+
+export interface KycActionResponse {
+  success: boolean;
+  message: string;
+  kyc_id: number;
+}
+
+export const approveKyc = createAsyncThunk<
+  KycActionResponse,
+  KycActionParams,
+  { rejectValue: string }
+>(
+  "kycPending/approveKyc",
+  async ({ id, notes }, { rejectWithValue }) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+      const url = `${baseUrl}/admin/kyc/${id}/approve`;
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ notes }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return rejectWithValue(data.message || "Failed to approve KYC");
+      }
+
+      return {
+        success: data.success,
+        message: data.message,
+        kyc_id: id,
+      } as KycActionResponse;
+    } catch (error: any) {
+      return rejectWithValue(error?.message || "Network error while approving KYC");
+    }
+  }
+);
+
+export const rejectKyc = createAsyncThunk<
+  KycActionResponse,
+  KycActionParams,
+  { rejectValue: string }
+>(
+  "kycPending/rejectKyc",
+  async ({ id, notes }, { rejectWithValue }) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+      const url = `${baseUrl}/admin/kyc/${id}/reject`;
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ notes }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return rejectWithValue(data.message || "Failed to reject KYC");
+      }
+
+      return {
+        success: data.success,
+        message: data.message,
+        kyc_id: id,
+      } as KycActionResponse;
+    } catch (error: any) {
+      return rejectWithValue(error?.message || "Network error while rejecting KYC");
     }
   }
 );
