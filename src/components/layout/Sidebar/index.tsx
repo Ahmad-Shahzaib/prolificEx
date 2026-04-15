@@ -174,7 +174,7 @@ const adminLinks = [
         <path d="M3 3V15M15 3V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     ),
-  },
+  }, 
   {
     label: "Dispute Center",
     href: "/admin/dispute-center",
