@@ -149,138 +149,128 @@ export default function SettingsPage() {
           {activeTab === "profile" && (
             <div className="flex flex-col md:flex-row gap-10">
               {/* Profile Photo Section */}
-            <div className="flex-shrink-0 flex flex-col items-center">
-              <div
-                className="relative w-28 h-28 rounded-full overflow-hidden border-4 border-white/10 cursor-pointer"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {profile?.avatar ? (
-                  <Image
-                    src={profile.avatar}
-                    alt="Profile Photo"
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center w-full h-full bg-[#1a1b23] text-white text-2xl font-bold">
-                    {(() => {
-                      const name = profile?.username || profile?.full_name || "";
-                      const parts = name.split(" ").filter(Boolean);
-                      if (parts.length >= 2) {
-                        return `${parts[0][0].toUpperCase()}${parts[1][0].toUpperCase()}`;
-                      }
-                      if (parts.length === 1) {
-                        return parts[0].slice(0, 2).toUpperCase();
-                      }
-                      return "AR";
-                    })()}
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs">
-                  Click to change
-                </div>
-              </div>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    setSelectedAvatar(e.target.files[0]);
-                    dispatch(uploadUserAvatar(e.target.files[0]));
-                  }
-                }}
-              />
-
-            </div>
-
-            {/* Form Fields */}
-            <div className="flex-1 space-y-6">
-              {error && (
-                <div className="text-red-500 text-sm">Error: {error}</div>
-              )}
-              {avatarUploadError && (
-                <div className="text-red-500 text-sm">Avatar upload failed: {avatarUploadError}</div>
-              )}
-              {message && !loading && !error && (
-                <div className="text-green-400 text-sm">{message}</div>
-              )}
-              {avatarUploadMessage && !loading && !avatarUploadError && (
-                <div className="text-green-400 text-sm">{avatarUploadMessage}</div>
-              )}
-              {loading && <div className="text-sm text-gray-300">Loading...</div>}
-
-              {/* Username */}
-              <div>
-                <label className="block text-[#6b7280] text-sm mb-2">Username</label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full bg-[#1a1b23] border border-white/10 rounded-2xl px-5 py-3.5 text-white placeholder:text-[#6b7280] focus:outline-none focus:border-white/30"
-                />
-              </div>
-
-              {/* Display Name */}
-              <div>
-                <label className="block text-[#6b7280] text-sm mb-2">Display Name</label>
-                <input
-                  type="text"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full bg-[#1a1b23] border border-white/10 rounded-2xl px-5 py-3.5 text-white placeholder:text-[#6b7280] focus:outline-none focus:border-white/30"
-                />
-              </div>
-
-              {/* Email */}
-              <div>
-                <label className="block text-[#6b7280] text-sm mb-2">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-[#1a1b23] border border-white/10 rounded-2xl px-5 py-3.5 text-white placeholder:text-[#6b7280] focus:outline-none focus:border-white/30"
-                />
-              </div>
-
-              {/* Phone Number */}
-              <div>
-                <label className="block text-[#6b7280] text-sm mb-2">Phone Number</label>
-                <div className="flex bg-[#1a1b23] border border-white/10 rounded-2xl overflow-hidden">
-                  <div className="flex items-center gap-2 px-4 border-r border-white/10">
-                    {/* <span className="text-xl">🇺🇸</span> */}
-                    {/* <span className="text-white">+</span> */}
-                  </div>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="flex-1 bg-transparent px-5 py-3.5 text-white focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Country */}
-              <div>
-                <label className="block text-[#6b7280] text-sm mb-2">Country</label>
-                <div className="flex items-center bg-[#1a1b23] border border-white/10 rounded-2xl px-5 py-3.5">
-                  <span className="text-xl mr-3">{profile?.country === "Ghana" ? "🇬🇭" : ""}</span>
-                  <span className="text-white">{country || ""}</span>
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-4">
-                <Button
-                  className="bg-violet-600 hover:bg-violet-700 text-white px-10 py-3.5 rounded-2xl font-medium"
-                  onClick={handleSave}
+              <div className="flex-shrink-0 flex flex-col items-center">
+                <div
+                  className="relative w-28 h-28 rounded-full overflow-hidden border-4 border-white/10 cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
                 >
-                  Save Changes
-                </Button>
+                  {profile?.avatar ? (
+                    <Image
+                      src={profile.avatar}
+                      alt="Profile Photo"
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center w-full h-full bg-[#1a1b23] text-white text-2xl font-bold">
+                      {(() => {
+                        const name = profile?.username || profile?.full_name || "";
+                        const parts = name.split(" ").filter(Boolean);
+                        if (parts.length >= 2) {
+                          return `${parts[0][0].toUpperCase()}${parts[1][0].toUpperCase()}`;
+                        }
+                        if (parts.length === 1) {
+                          return parts[0].slice(0, 2).toUpperCase();
+                        }
+                        return "AR";
+                      })()}
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/30 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs">
+                    Click to change
+                  </div>
+                </div>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setSelectedAvatar(e.target.files[0]);
+                      dispatch(uploadUserAvatar(e.target.files[0]));
+                    }
+                  }}
+                />
+
+              </div>
+
+              {/* Form Fields */}
+              <div className="flex-1 space-y-6">
+                {error && (
+                  <div className="text-red-500 text-sm">Error: {error}</div>
+                )}
+                {avatarUploadError && (
+                  <div className="text-red-500 text-sm">Avatar upload failed: {avatarUploadError}</div>
+                )}
+                {message && !loading && !error && (
+                  <div className="text-green-400 text-sm">{message}</div>
+                )}
+                {avatarUploadMessage && !loading && !avatarUploadError && (
+                  <div className="text-green-400 text-sm">{avatarUploadMessage}</div>
+                )}
+                {loading && <div className="text-sm text-gray-300">Loading...</div>}
+
+
+                {/* Display Name */}
+                <div>
+                  <label className="block text-[#6b7280] text-sm mb-2">Name </label>
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="w-full bg-[#1a1b23] border border-white/10 rounded-2xl px-5 py-3.5 text-white placeholder:text-[#6b7280] focus:outline-none focus:border-white/30"
+                  />
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-[#6b7280] text-sm mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-[#1a1b23] border border-white/10 rounded-2xl px-5 py-3.5 text-white placeholder:text-[#6b7280] focus:outline-none focus:border-white/30"
+                  />
+                </div>
+
+                {/* Phone Number */}
+                <div>
+                  <label className="block text-[#6b7280] text-sm mb-2">Phone Number</label>
+                  <div className="flex bg-[#1a1b23] border border-white/10 rounded-2xl overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 border-r border-white/10">
+                      {/* <span className="text-xl">🇺🇸</span> */}
+                      {/* <span className="text-white">+</span> */}
+                    </div>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="flex-1 bg-transparent px-5 py-3.5 text-white focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Country */}
+                <div>
+                  <label className="block text-[#6b7280] text-sm mb-2">Country</label>
+                  <div className="flex items-center bg-[#1a1b23] border border-white/10 rounded-2xl px-5 py-3.5">
+                    <span className="text-xl mr-3">{profile?.country === "Ghana" ? "🇬🇭" : ""}</span>
+                    <span className="text-white">{country || ""}</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <Button
+                    className="bg-violet-600 hover:bg-violet-700 text-white px-10 py-3.5 rounded-2xl font-medium"
+                    onClick={handleSave}
+                  >
+                    Save Changes
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
           )}
 
           {activeTab === "password" && (

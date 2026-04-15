@@ -1,76 +1,110 @@
 "use client";
-import { useState } from "react";
-import { PageShell } from "@/components/dashboard/PageShell";
+import { useEffect, useMemo, useState } from "react";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { fetchWallets } from "@/redux/thunk/walletThunk";
 import { Button } from "@/components/common/Button";
 
-const walletAssets = [
-  {
-    name: "Ethereum",
-    ticker: "ETH",
-    iconBg: "bg-[#627eea]",
-    iconLetter: "Ξ",
-    available: "0.45 BTC",
-    inTrade: "0.02 BTC",
-    total: "0.47 BTC",
-    action: "deposit",
-  },
-  {
-    name: "Bitcoin",
-    ticker: "BTC",
-    iconBg: "bg-[#f7931a]",
-    iconLetter: "₿",
-    available: "0.45 BTC",
-    inTrade: "0.02 BTC",
-    total: "0.47 BTC",
-    action: "deposit",
-  },
-  {
-    name: "LUNA",
-    ticker: "LUNA",
-    iconBg: "bg-[#172852]",
-    iconLetter: "🌙",
-    available: "0.45 BTC",
-    inTrade: "0.02 BTC",
-    total: "0.47 BTC",
-    action: "deposit",
-  },
-  {
-    name: "Tether",
-    ticker: "USDT",
-    iconBg: "bg-[#26a17b]",
-    iconLetter: "₮",
-    available: "0.45 BTC",
-    inTrade: "0.02 BTC",
-    total: "0.47 BTC",
-    action: "withdraw",
-  },
-  {
-    name: "Binance Coin",
-    ticker: "BNB",
-    iconBg: "bg-[#f3ba2f]",
-    iconLetter: "B",
-    available: "0.45 BTC",
-    inTrade: "0.02 BTC",
-    total: "0.47 BTC",
-    action: "withdraw",
-  },
-  {
-    name: "USD Coin",
-    ticker: "USDC",
-    iconBg: "bg-[#2775ca]",
-    iconLetter: "$",
-    available: "0.45 BTC",
-    inTrade: "0.02 BTC",
-    total: "0.47 BTC",
-    action: "withdraw",
-  },
-];
+const walletCoinMeta: Record<string, { name: string; iconBg: string; iconLetter: string; action: "deposit" | "withdraw" }> = {
+  BTC: { name: "Bitcoin", iconBg: "bg-[#f7931a]", iconLetter: "₿", action: "deposit" },
+  ETH: { name: "Ethereum", iconBg: "bg-[#627eea]", iconLetter: "Ξ", action: "deposit" },
+  USDT: { name: "Tether", iconBg: "bg-[#26a17b]", iconLetter: "₮", action: "withdraw" },
+  USDC: { name: "USD Coin", iconBg: "bg-[#2775ca]", iconLetter: "$", action: "withdraw" },
+  SOL: { name: "Solana", iconBg: "bg-[#172852]", iconLetter: "🌙", action: "deposit" },
+};
 
 export default function WalletPage() {
-  const [fromAmount, setFromAmount] = useState("89");
-  const [toAmount, setToAmount] = useState("$120.000");
+  const dispatch = useAppDispatch();
+  const { loading, error, wallets, totalPortfolioUsd } = useAppSelector((state) => state.wallet);
+  const [fromAmount, setFromAmount] = useState("1");
+  const [toAmount, setToAmount] = useState("");
   const [fromCurrency, setFromCurrency] = useState("ETH");
   const [toCurrency, setToCurrency] = useState("USD");
+
+  const currencyOptions = ["USD", "BTC", "ETH", "USDT", "USDC"];
+  const currencySymbols: Record<string, string> = {
+    USD: "$",
+    BTC: "₿",
+    ETH: "Ξ",
+    USDT: "₮",
+    USDC: "$",
+  };
+
+  const currencyRates: Record<string, number> = {
+    USD: 1,
+    BTC: 60000,
+    ETH: 2500,
+    USDT: 1,
+    USDC: 1,
+  };
+
+  const parseAmount = (value: string) => {
+    const parsed = Number(value.replace(/[^0-9.-]/g, ""));
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const formatAmount = (value: number, currency: string) => {
+    const decimals = value < 1 ? 6 : 2;
+    return `${currencySymbols[currency] ?? ""}${value.toLocaleString("en-US", {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    })}`;
+  };
+
+  const convert = (amount: number, from: string, to: string) => {
+    const fromRate = currencyRates[from] ?? 1;
+    const toRate = currencyRates[to] ?? 1;
+    return amount * (fromRate / toRate);
+  };
+
+  const conversionRateLabel = useMemo(() => {
+    const rate = convert(1, fromCurrency, toCurrency);
+    return `1 ${fromCurrency} = ${formatAmount(rate, toCurrency)}`;
+  }, [fromCurrency, toCurrency]);
+
+  useEffect(() => {
+    dispatch(fetchWallets());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (!fromAmount.trim()) {
+      setToAmount("");
+      return;
+    }
+
+    const amount = parseAmount(fromAmount);
+    const convertedValue = convert(amount, fromCurrency, toCurrency);
+    setToAmount(formatAmount(convertedValue, toCurrency));
+  }, [fromAmount, fromCurrency, toCurrency]);
+
+  const walletAssets = useMemo(
+    () =>
+      wallets.map((asset) => {
+        const meta = walletCoinMeta[asset.coin] ?? {
+          name: asset.coin,
+          iconBg: "bg-slate-600",
+          iconLetter: asset.coin.charAt(0),
+          action: "deposit" as const,
+        };
+
+        return {
+          ...asset,
+          name: meta.name,
+          ticker: asset.coin,
+          iconBg: meta.iconBg,
+          iconLetter: meta.iconLetter,
+          available: asset.available_balance,
+          inTrade: asset.locked_balance,
+          total: asset.balance,
+          action: meta.action,
+        };
+      }),
+    [wallets]
+  );
+
+  const formattedTotalPortfolio = totalPortfolioUsd.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
 
   return (
     <div
@@ -89,12 +123,14 @@ export default function WalletPage() {
           >
             <div className="flex items-start justify-between mb-1">
               <p className="text-gray-400 text-sm">Total Portfolio Value</p>
-              <Button className="text-gray-400 text-xs hover:text-white transition-colors">
-                View More
-              </Button>
+              
             </div>
-            <p className="text-white text-3xl font-bold mb-6">$405,021.00</p>
-
+            <p className="text-white text-3xl font-bold mb-2">
+              {loading ? "Loading..." : formattedTotalPortfolio}
+            </p>
+            {error ? (
+              <p className="text-sm text-red-400 mb-4">Unable to load wallet balances: {error}</p>
+            ) : null}
             <div className="flex flex-wrap gap-3">
               <Button 
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-medium transition-all hover:opacity-90"
@@ -147,52 +183,101 @@ export default function WalletPage() {
             </div>
 
             {/* Assets Rows */}
-            {walletAssets.map((asset, i) => (
-              <div
-                key={asset.ticker}
-                className="border-b border-white/[0.04] last:border-none hover:bg-white/[0.02] transition-colors px-4 sm:px-6 py-5 md:py-4"
-              >
-                {/* Mobile Card Layout */}
-                <div className="md:hidden flex flex-col gap-4">
-                  <div className="flex items-center justify-between">
+            {loading ? (
+              <div className="px-6 py-8 text-gray-400 text-sm">Loading wallets…</div>
+            ) : error ? (
+              <div className="px-6 py-8 text-red-400 text-sm">{error}</div>
+            ) : walletAssets.length === 0 ? (
+              <div className="px-6 py-8 text-gray-400 text-sm">No wallet records found.</div>
+            ) : (
+              walletAssets.map((asset) => (
+                <div
+                  key={asset.id}
+                  className="border-b border-white/[0.04] last:border-none hover:bg-white/[0.02] transition-colors px-4 sm:px-6 py-5 md:py-4"
+                >
+                  {/* Mobile Card Layout */}
+                  <div className="md:hidden flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-9 h-9 rounded-full ${asset.iconBg} flex items-center justify-center text-white text-base font-bold flex-shrink-0`}
+                        >
+                          {asset.iconLetter}
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">{asset.name}</p>
+                          <p className="text-xs text-gray-500">{asset.ticker}</p>
+                        </div>
+                      </div>
+                      <span className="text-right text-sm font-medium text-white">
+                        {asset.total}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-gray-400 text-xs">Available</p>
+                        <p className="text-gray-300">{asset.available}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-xs">In Trade</p>
+                        <p className="text-gray-300">{asset.inTrade}</p>
+                      </div>
+                    </div>
+
+                    <div className="pt-2">
+                      {asset.action === "deposit" ? (
+                        <Button
+                          className="w-full px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-all hover:opacity-90"
+                          style={{ background: "#7c3aed" }}
+                        >
+                          Deposit
+                        </Button>
+                      ) : (
+                        <Button
+                          className="w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-white/10"
+                          style={{
+                            background: "transparent",
+                            border: "1px solid rgba(255,255,255,0.2)",
+                            color: "#d1d5db",
+                          }}
+                        >
+                          Withdraw
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Desktop Table Row */}
+                  <div
+                    className="hidden md:grid items-center"
+                    style={{
+                      gridTemplateColumns: "2fr 1.2fr 1.2fr 1.2fr 1fr",
+                    }}
+                  >
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-9 h-9 rounded-full ${asset.iconBg} flex items-center justify-center text-white text-base font-bold flex-shrink-0`}
+                        className={`w-8 h-8 rounded-full ${asset.iconBg} flex items-center justify-center text-white text-sm font-bold flex-shrink-0`}
                       >
                         {asset.iconLetter}
                       </div>
-                      <div>
-                        <p className="text-white font-medium">{asset.name}</p>
-                        <p className="text-xs text-gray-500">{asset.ticker}</p>
-                      </div>
+                      <span className="text-white text-sm font-medium">{asset.name}</span>
                     </div>
-                    <span className="text-right text-sm font-medium text-white">
-                      {asset.total}
-                    </span>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-400 text-xs">Available</p>
-                      <p className="text-gray-300">{asset.available}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-xs">In Trade</p>
-                      <p className="text-gray-300">{asset.inTrade}</p>
-                    </div>
-                  </div>
+                    <span className="text-gray-300 text-sm">{asset.available}</span>
+                    <span className="text-gray-300 text-sm">{asset.inTrade}</span>
+                    <span className="text-gray-300 text-sm">{asset.total}</span>
 
-                  <div className="pt-2">
                     {asset.action === "deposit" ? (
                       <Button
-                        className="w-full px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-all hover:opacity-90"
+                        className="px-5 py-1.5 rounded-xl text-white text-xs font-medium transition-all hover:opacity-90 justify-self-end"
                         style={{ background: "#7c3aed" }}
                       >
                         Deposit
                       </Button>
                     ) : (
                       <Button
-                        className="w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-white/10"
+                        className="px-5 py-1.5 rounded-xl text-xs font-medium transition-all hover:bg-white/10 justify-self-end"
                         style={{
                           background: "transparent",
                           border: "1px solid rgba(255,255,255,0.2)",
@@ -204,49 +289,8 @@ export default function WalletPage() {
                     )}
                   </div>
                 </div>
-
-                {/* Desktop Table Row */}
-                <div
-                  className="hidden md:grid items-center"
-                  style={{
-                    gridTemplateColumns: "2fr 1.2fr 1.2fr 1.2fr 1fr",
-                  }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-8 h-8 rounded-full ${asset.iconBg} flex items-center justify-center text-white text-sm font-bold flex-shrink-0`}
-                    >
-                      {asset.iconLetter}
-                    </div>
-                    <span className="text-white text-sm font-medium">{asset.name}</span>
-                  </div>
-
-                  <span className="text-gray-300 text-sm">{asset.available}</span>
-                  <span className="text-gray-300 text-sm">{asset.inTrade}</span>
-                  <span className="text-gray-300 text-sm">{asset.total}</span>
-
-                  {asset.action === "deposit" ? (
-                    <Button
-                      className="px-5 py-1.5 rounded-xl text-white text-xs font-medium transition-all hover:opacity-90 justify-self-end"
-                      style={{ background: "#7c3aed" }}
-                    >
-                      Deposit
-                    </Button>
-                  ) : (
-                    <Button
-                      className="px-5 py-1.5 rounded-xl text-xs font-medium transition-all hover:bg-white/10 justify-self-end"
-                      style={{
-                        background: "transparent",
-                        border: "1px solid rgba(255,255,255,0.2)",
-                        color: "#d1d5db",
-                      }}
-                    >
-                      Withdraw
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -269,12 +313,17 @@ export default function WalletPage() {
               className="bg-transparent text-white text-lg font-semibold w-full outline-none"
               placeholder="0"
             />
-            <div className="flex items-center gap-1 ml-3 flex-shrink-0">
-              <span className="text-gray-300 text-sm font-medium">{fromCurrency}</span>
-              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} className="text-gray-400">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
+            <select
+              value={fromCurrency}
+              onChange={(e) => setFromCurrency(e.target.value)}
+              className="ml-3 bg-transparent text-gray-300 text-sm font-medium outline-none appearance-none"
+            >
+              {currencyOptions.map((currency) => (
+                <option key={currency} value={currency} className="bg-[#0d0e17] text-white">
+                  {currency}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* To Input */}
@@ -285,20 +334,25 @@ export default function WalletPage() {
             <input
               type="text"
               value={toAmount}
-              onChange={(e) => setToAmount(e.target.value)}
+              readOnly
               className="bg-transparent text-white text-lg font-semibold w-full outline-none"
               placeholder="0"
             />
-            <div className="flex items-center gap-1 ml-3 flex-shrink-0">
-              <span className="text-gray-300 text-sm font-medium">{toCurrency}</span>
-              <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} className="text-gray-400">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
+            <select
+              value={toCurrency}
+              onChange={(e) => setToCurrency(e.target.value)}
+              className="ml-3 bg-transparent text-gray-300 text-sm font-medium outline-none appearance-none"
+            >
+              {currencyOptions.map((currency) => (
+                <option key={currency} value={currency} className="bg-[#0d0e17] text-white">
+                  {currency}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Rate */}
-          <p className="text-gray-500 text-xs mb-6 px-1">1 ETH = 2500 USD</p>
+          <p className="text-gray-500 text-xs mb-6 px-1">{conversionRateLabel}</p>
 
           {/* Convert Button */}
           <button

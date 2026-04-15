@@ -47,6 +47,18 @@ const userLinks = [
     ),
   },
   {
+    label: "Network Fee",
+    href: "/dashboard/network-fee",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M4 6.5H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M4 11.5H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M8 3L11 6L8 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M10 9L7 12L10 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
     label: "Deposit",
     href: "/dashboard/deposit",
     icon: (
@@ -150,6 +162,16 @@ const adminLinks = [
     icon: (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M3 15V9M3 9L7 13L13 7M13 7V3M13 7H17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    label: "P2P Market",
+    href: "/admin/p2p",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M5 5H13M5 9H11M5 13H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M3 3V15M15 3V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     ),
   },
