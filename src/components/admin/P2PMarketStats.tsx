@@ -41,9 +41,7 @@ export default function P2PMarketStats({ stats, loading, error }: P2PMarketStats
             Data is loaded from the admin P2P stats endpoint.
           </p>
         </div>
-        <div className="rounded-2xl border border-slate-800 bg-[#13151f] px-4 py-3 text-sm text-slate-300">
-          API: <span className="text-slate-100">/admin/p2p/stats</span>
-        </div>
+       
       </div>
 
       {loading && (
