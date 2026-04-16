@@ -38,7 +38,7 @@ export default function P2PMarketStats({ stats, loading, error }: P2PMarketStats
         <div>
           <h1 className="text-2xl font-semibold">P2P Market Statistics</h1>
           <p className="text-sm text-slate-400 mt-1">
-            Data is loaded from the admin P2P stats endpoint.
+            Data is loaded from the admin P2P stats endpoint. 
           </p>
         </div>
        
