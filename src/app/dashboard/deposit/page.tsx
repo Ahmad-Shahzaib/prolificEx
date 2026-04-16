@@ -80,13 +80,11 @@ const QRCode = ({ qrData }: { qrData?: string }) => {
     );
   }
 
+  const chartUrl = `https://quickchart.io/qr?text=${encodeURIComponent(qrData)}&size=200&margin=0&dark=3f46a6&light=ffffff`;
+
   return (
-    <div className="w-[90px] h-[90px] bg-white rounded-sm overflow-hidden shrink-0">
-      <img
-        className="w-full h-full object-cover"
-        src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrData)}`}
-        alt="Deposit QR Code"
-      />
+    <div className="w-[120px] h-[120px] bg-white rounded-sm overflow-hidden shrink-0">
+      <img className="w-full h-full object-cover" src={chartUrl} alt="Deposit QR Code" />
     </div>
   );
 };
@@ -163,9 +161,7 @@ export default function DepositPage() {
               <div className="flex items-center gap-2 bg-[#1c1d26] border border-white/10 rounded-xl px-4 py-3">
                 <CoinIcon coin={selectedCoin} />
                 <span className="text-white text-sm font-medium flex-1">{selectedCoin}</span>
-                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#6b7280" strokeWidth={2}>
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
+               
               </div>
             </div>
 
