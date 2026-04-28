@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { createOffer, fetchMyOffers } from "@/redux/thunk/p2pOffersThunk";
+import { createOffer, fetchMyOffers, fetchOffers, P2POffer } from "@/redux/thunk/p2pOffersThunk";
 
 const COINS = ["USDT", "BTC", "ETH", "BNB", "USDC"];
 const NETWORKS = ["TRC20", "ERC20", "BEP20"];
@@ -23,30 +23,22 @@ const PRICE_TYPES = ["fixed"];
 const FIAT_CURRENCIES = ["USD", "EUR", "GBP"];
 const RATINGS = ["All", "5 Stars", "4+ Stars", "3+ Stars"];
 
-const generateMerchants = () =>
-  Array.from({ length: 78 }, (_, i) => ({
-    id: i + 1,
-    name: "TraderMax",
-    rating: 5,
-    price: 48032.32 + (Math.random() - 0.5) * 200,
-    available: 2500,
-    coin: "USDT",
-    limitMin: 100,
-    limitMax: 2000,
-    paymentMethod: ["Bank Transfer", "PayPal", "Wise", "Revolut"][i % 4],
-    completionRate: 98 + Math.floor(Math.random() * 2),
-    orders: 1000 + Math.floor(Math.random() * 5000),
-  }));
-
-const ALL_MERCHANTS = generateMerchants();
 const PAGE_SIZE = 9;
 
 export default function P2PCryptoTable() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { myOffers, loading, error, creating, createError, createSuccessMessage } = useAppSelector(
-    (state) => state.p2pOffers
-  );
+  const {
+    offers,
+    offersLoading,
+    offersError,
+    myOffers,
+    loading,
+    error,
+    creating,
+    createError,
+    createSuccessMessage,
+  } = useAppSelector((state) => state.p2pOffers);
 
   const [tab, setTab] = useState<"buy" | "sell">("buy");
   const [coin, setCoin] = useState("USDT");
@@ -72,33 +64,44 @@ export default function P2PCryptoTable() {
   const [instructions, setInstructions] = useState("Send exact amount. Include order number in reference.");
 
   useEffect(() => {
+    dispatch(fetchOffers({ page: 1, per_page: 20 }));
     dispatch(fetchMyOffers());
   }, [dispatch]);
 
-  const filtered = ALL_MERCHANTS.filter((m) => {
+  const handleBuyOffer = (offer: P2POffer) => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("selectedP2POffer", JSON.stringify(offer));
+    }
+    router.push(`/dashboard/p2p/order?selectedOfferId=${offer.id}`);
+  };
+
+  const filtered = offers.filter((offer) => {
+    const numericRating = Math.round(Number(offer.rating) || 0);
     const matchRating =
       rating === "All"
         ? true
         : rating === "5 Stars"
-        ? m.rating === 5
+        ? numericRating === 5
         : rating === "4+ Stars"
-        ? m.rating >= 4
-        : m.rating >= 3;
+        ? numericRating >= 4
+        : numericRating >= 3;
 
     const matchPayment =
-      paymentFilter === "All" ? true : m.paymentMethod === paymentFilter;
+      paymentFilter === "All" ? true : offer.payment_method === paymentFilter;
 
+    const minLimit = Number(offer.min_order_limit);
+    const maxLimit = Number(offer.max_order_limit);
     const matchAmount =
       amount === ""
         ? true
-        : parseFloat(amount) >= m.limitMin && parseFloat(amount) <= m.limitMax;
+        : Number(amount) >= minLimit && Number(amount) <= maxLimit;
 
     return matchRating && matchPayment && matchAmount;
   });
 
   const currentRows = tab === "buy" ? filtered : myOffers;
   const totalPages = Math.ceil(currentRows.length / PAGE_SIZE);
-  const paginatedMerchants = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const paginatedBuyOffers = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const paginatedOffers = myOffers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleSearch = () => {
@@ -342,7 +345,7 @@ export default function P2PCryptoTable() {
                   >
                     <div className="hidden md:grid grid-cols-[2fr_1.1fr_1.1fr_1.1fr_1.4fr_1.1fr] items-center px-6 py-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border border-white/10 flex-shrink-0" />
+                        {/* <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border border-white/10 flex-shrink-0" /> */}
                         <div>
                           <p className="font-semibold text-white">{offer.coin} / {offer.network}</p>
                           <p className="text-white/60 text-sm">{offer.bank_name}</p>
@@ -416,110 +419,119 @@ export default function P2PCryptoTable() {
                 <span></span>
               </div>
 
-              {paginatedMerchants.length === 0 ? (
+              {offersLoading ? (
+                <div className="py-20 text-center text-white/40 text-sm">Loading buy offers…</div>
+              ) : offersError ? (
+                <div className="py-20 text-center text-red-400 text-sm">{offersError}</div>
+              ) : paginatedBuyOffers.length === 0 ? (
                 <div className="py-20 text-center text-white/40 text-sm">
                   No merchants found for your criteria.
                 </div>
               ) : (
-                paginatedMerchants.map((m) => (
-                  <div
-                    key={m.id}
-                    className="border-b border-white/5 last:border-none hover:bg-white/[0.02] transition-all"
-                  >
-                    {/* Desktop Row */}
-                    <div className="hidden md:grid grid-cols-[2fr_1.1fr_1.1fr_1.1fr_1.4fr_auto] items-center px-6 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border border-white/10 flex-shrink-0" />
-                        <div>
-                          <p className="font-semibold text-white group-hover:text-violet-300 transition">{m.name}</p>
-                          <div className="flex gap-0.5 mt-1">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star
-                                key={i}
-                                size={12}
-                                className={i < m.rating ? "fill-amber-400 text-amber-400" : "text-white/20"}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
+                paginatedBuyOffers.map((offer) => {
+                  const sellerName = offer.user?.full_name || offer.user?.username || "Merchant";
+                  const sellerRating = Math.round(Number(offer.rating) || 0);
 
-                      <span className="font-mono font-semibold">
-                        ${m.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                      </span>
-
-                      <span className="text-white/70">
-                        {m.available.toLocaleString()} {m.coin}
-                      </span>
-
-                      <span className="text-white/70">
-                        ${m.limitMin.toLocaleString()} – ${m.limitMax.toLocaleString()}
-                      </span>
-
-                      <span className="text-white/70">{m.paymentMethod}</span>
-
-                      <Button
-                        onClick={() => router.push("/dashboard/p2p/order")}
-                        className="px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 active:scale-95 text-sm font-semibold shadow-lg shadow-violet-900/30"
-                      >
-                        Buy
-                      </Button>
-                    </div>
-
-                    {/* Mobile Card */}
-                    <div className="md:hidden p-5 space-y-4">
-                      <div className="flex items-start justify-between">
+                  return (
+                    <div
+                      key={offer.id}
+                      className="border-b border-white/5 last:border-none hover:bg-white/[0.02] transition-all"
+                    >
+                      {/* Desktop Row */}
+                      <div className="hidden md:grid grid-cols-[2fr_1.1fr_1.1fr_1.1fr_1.4fr_auto] items-center px-6 py-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border border-white/10" />
+                          {/* <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border border-white/10 flex-shrink-0" /> */}
                           <div>
-                            <p className="font-semibold">{m.name}</p>
+                            <p className="font-semibold text-white group-hover:text-violet-300 transition">{sellerName}</p>
                             <div className="flex gap-0.5 mt-1">
                               {Array.from({ length: 5 }).map((_, i) => (
                                 <Star
                                   key={i}
-                                  size={13}
-                                  className={i < m.rating ? "fill-amber-400 text-amber-400" : "text-white/20"}
+                                  size={12}
+                                  className={i < sellerRating ? "fill-amber-400 text-amber-400" : "text-white/20"}
                                 />
                               ))}
                             </div>
                           </div>
                         </div>
 
-                        <div className="text-right">
-                          <p className="font-mono text-lg font-semibold text-emerald-400">
-                            ${m.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                          </p>
-                          <p className="text-xs text-white/50">per USDT</p>
-                        </div>
+                        <span className="font-mono font-semibold">
+                          ${Number(offer.price_per_coin).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                        </span>
+
+                        <span className="text-white/70">
+                          {Number(offer.available_amount).toLocaleString()} {offer.coin}
+                        </span>
+
+                        <span className="text-white/70">
+                          ${Number(offer.min_order_limit).toLocaleString()} – ${Number(offer.max_order_limit).toLocaleString()}
+                        </span>
+
+                        <span className="text-white/70">{offer.payment_method}</span>
+
+                        <Button
+                          onClick={() => handleBuyOffer(offer)}
+                          className="px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 active:scale-95 text-sm font-semibold shadow-lg shadow-violet-900/30"
+                        >
+                          Buy
+                        </Button>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4 text-sm">
+                      {/* Mobile Card */}
+                      <div className="md:hidden p-5 space-y-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border border-white/10" />
+                            <div>
+                              <p className="font-semibold">{sellerName}</p>
+                              <div className="flex gap-0.5 mt-1">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    size={13}
+                                    className={i < sellerRating ? "fill-amber-400 text-amber-400" : "text-white/20"}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <p className="font-mono text-lg font-semibold text-emerald-400">
+                              ${Number(offer.price_per_coin).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                            </p>
+                            <p className="text-xs text-white/50">per {offer.coin}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-white/40 text-xs">Available</p>
+                            <p className="font-medium">{Number(offer.available_amount).toLocaleString()} {offer.coin}</p>
+                          </div>
+                          <div>
+                            <p className="text-white/40 text-xs">Limits</p>
+                            <p className="font-medium">
+                              ${Number(offer.min_order_limit).toLocaleString()} – ${Number(offer.max_order_limit).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+
                         <div>
-                          <p className="text-white/40 text-xs">Available</p>
-                          <p className="font-medium">{m.available.toLocaleString()} {m.coin}</p>
+                          <p className="text-white/40 text-xs mb-1">Payment Method</p>
+                          <p className="text-white/80">{offer.payment_method}</p>
                         </div>
-                        <div>
-                          <p className="text-white/40 text-xs">Limits</p>
-                          <p className="font-medium">
-                            ${m.limitMin} – ${m.limitMax}
-                          </p>
-                        </div>
-                      </div>
 
-                      <div>
-                        <p className="text-white/40 text-xs mb-1">Payment Methods</p>
-                        <p className="text-white/80">{m.paymentMethod}</p>
+                        <Button
+                          onClick={() => handleBuyOffer(offer)}
+                          className="w-full py-3.5 rounded-2xl bg-violet-600 hover:bg-violet-500 text-base font-semibold active:scale-[0.985]"
+                        >
+                          Buy Now
+                        </Button>
                       </div>
-
-                      <Button
-                        onClick={() => router.push("/dashboard/p2p/order")}
-                        className="w-full py-3.5 rounded-2xl bg-violet-600 hover:bg-violet-500 text-base font-semibold active:scale-[0.985]"
-                      >
-                        Buy Now
-                      </Button>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </>
           )}

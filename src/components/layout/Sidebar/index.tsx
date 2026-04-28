@@ -36,6 +36,17 @@ const userLinks = [
     ),
   },
   {
+    label: "My Orders",
+    href: "/dashboard/my-orders",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <rect x="3" y="4" width="12" height="2" rx="1" fill="currentColor" />
+        <rect x="3" y="8" width="12" height="2" rx="1" fill="currentColor" />
+        <rect x="3" y="12" width="8" height="2" rx="1" fill="currentColor" />
+      </svg>
+    ),
+  },
+  {
     label: "Wallet",
     href: "/dashboard/wallet",
     icon: (
