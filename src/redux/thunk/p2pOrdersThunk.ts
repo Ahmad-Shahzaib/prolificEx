@@ -98,6 +98,16 @@ export interface P2POrdersRequest {
   status?: string;
 }
 
+export interface ConfirmP2POrderResponse {
+  success: boolean;
+  message: string;
+  data: P2POrderItem;
+}
+
+export interface ConfirmP2POrderPayload {
+  order_id: number;
+}
+
 export const fetchMyOrders = createAsyncThunk<
   P2POrdersResponse,
   P2POrdersRequest,
@@ -137,6 +147,40 @@ export const fetchMyOrders = createAsyncThunk<
       return data as P2POrdersResponse;
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while fetching orders");
+    }
+  }
+);
+
+export const confirmOrderPayment = createAsyncThunk<
+  ConfirmP2POrderResponse,
+  ConfirmP2POrderPayload,
+  { rejectValue: string }
+>(
+  "p2pOrders/confirmOrderPayment",
+  async ({ order_id }, { rejectWithValue }) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      if (!baseUrl) {
+        return rejectWithValue("Missing NEXT_PUBLIC_API_BASE_URL in environment");
+      }
+
+      const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+      const response = await fetch(`${baseUrl}/p2p/orders/${order_id}/confirm`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data?.success) {
+        return rejectWithValue(data?.message || `Failed to confirm payment (${response.status})`);
+      }
+
+      return data as ConfirmP2POrderResponse;
+    } catch (error: any) {
+      return rejectWithValue(error?.message || "Network error while confirming payment");
     }
   }
 );

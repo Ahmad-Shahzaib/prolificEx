@@ -1,9 +1,12 @@
 "use client";
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { withdrawThunk, WithdrawPayload } from "@/redux/thunk/withdrawThunk";
 import { resetWithdrawState } from "@/redux/slices/withdrawSlice";
+import { fetchKycStatus } from "@/redux/thunk/kycThunk";
 import { PageShell } from "@/components/dashboard/PageShell";
+import { useToast } from "@/hooks/use-toast";
+import { Toaster } from "@/components/common/Toast/Toast";
 
 const WarningIcon = () => (
   <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#f59e0b" strokeWidth={2}>
@@ -62,6 +65,8 @@ const withdrawOptions = [
 export default function WithdrawPage() {
   const dispatch = useAppDispatch();
   const withdrawState = useAppSelector((state) => state.withdraw);
+  const kycStatus = useAppSelector((state) => state.kyc.status);
+  const { toast, toasts, dismiss } = useToast();
   const [selectedCoinKey, setSelectedCoinKey] = useState("USDT");
   const [selectedNetwork, setSelectedNetwork] = useState("TRC20");
   const [walletAddress, setWalletAddress] = useState("");
@@ -71,9 +76,33 @@ export default function WithdrawPage() {
   const feeAmount = 1;
   const receiveAmount = amount ? Math.max(0, Number(amount) - feeAmount) : 0;
 
+  useEffect(() => {
+    dispatch(fetchKycStatus());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (withdrawState.success && withdrawState.message) {
+      toast({
+        title: "Withdrawal Successful",
+        description: withdrawState.message,
+        type: "success",
+      });
+      dispatch(resetWithdrawState());
+    }
+  }, [withdrawState.success, withdrawState.message, toast, dispatch]);
+
   const handleWithdraw = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    dispatch(resetWithdrawState());
+    
+    if (kycStatus !== 'approved') {
+      toast({
+        title: "KYC Verification Required",
+        description: "Please complete KYC verification before making withdrawals. Visit the KYC page to get started.",
+        type: "error",
+      });
+      return;
+    }
+    
     dispatch(
       withdrawThunk({
         coin: selectedCoinKey,
@@ -91,6 +120,17 @@ export default function WithdrawPage() {
   return (
     <PageShell title="Withdraw" description="Initiate a withdrawal to your wallet address.">
       <div className="space-y-6 px-4 sm:px-6 py-2">
+        {kycStatus !== 'approved' && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 flex gap-4">
+            <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center flex-shrink-0">
+              <WarningIcon />
+            </div>
+            <div>
+              <p className="text-amber-500 font-medium">KYC Verification Required</p>
+              <p className="text-gray-400 text-sm mt-1">You must complete KYC verification before making withdrawals. Please visit the <a href="/dashboard/kyc" className="text-violet-400 hover:underline">KYC page</a> to verify your identity.</p>
+            </div>
+          </div>
+        )}
         <div className="bg-[#13141a] border border-white/[0.07] rounded-2xl p-5 sm:p-6 space-y-6">
           <p className="text-white/70 text-sm font-medium">Select Coin</p>
 
@@ -104,7 +144,7 @@ export default function WithdrawPage() {
                   setSelectedCoinKey(coin);
                   setSelectedNetwork(network);
                 }}
-                className="w-full bg-[#1c1d26] border border-white/10 rounded-xl px-4 py-3 pr-10 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-violet-500/50"
+                className="w-full bg-[#1c1d26] border border-white/10 rounded-xl px-4 py-3 pr-10 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-violet-500/50 appearance-none"
               >
                 {withdrawOptions.map((option) => (
                   <option
@@ -166,24 +206,13 @@ export default function WithdrawPage() {
                 /> */}
                 <button
                   type="submit"
-                  disabled={withdrawState.loading}
+                  disabled={withdrawState.loading || kycStatus !== 'approved'}
                   className="bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium px-6 py-3 rounded-xl transition-colors whitespace-nowrap w-full sm:w-auto disabled:opacity-50"
                 >
                   {withdrawState.loading ? "Processing..." : "Confirm Withdrawal"}
                 </button>
               </div>
             </div>
-
-            {withdrawState.error && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-xs">
-                {withdrawState.error}
-              </div>
-            )}
-            {withdrawState.success && withdrawState.message && (
-              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3 text-emerald-400 text-xs">
-                {withdrawState.message}
-              </div>
-            )}
 
             <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3">
               <WarningIcon />
@@ -235,6 +264,7 @@ export default function WithdrawPage() {
           )}
         </div> */}
       </div>
+      <Toaster toasts={toasts} onDismiss={dismiss} />
     </PageShell>
   );
 }

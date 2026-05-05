@@ -1,11 +1,15 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { fetchMyOrders, P2POrderItem, P2POrdersResponse } from "../thunk/p2pOrdersThunk";
+import { confirmOrderPayment, fetchMyOrders, P2POrderItem, P2POrdersResponse } from "../thunk/p2pOrdersThunk";
 
 interface P2POrdersState {
   loading: boolean;
+  confirmLoading: boolean;
+  confirmingOrderId: number | null;
   error: string | null;
+  confirmError: string | null;
   orders: P2POrderItem[];
   message: string | null;
+  confirmMessage: string | null;
   pagination: {
     currentPage: number;
     lastPage: number;
@@ -17,9 +21,13 @@ interface P2POrdersState {
 
 const initialState: P2POrdersState = {
   loading: false,
+  confirmLoading: false,
+  confirmingOrderId: null,
   error: null,
+  confirmError: null,
   orders: [],
   message: null,
+  confirmMessage: null,
   pagination: {
     currentPage: 1,
     lastPage: 1,
@@ -82,6 +90,32 @@ const p2pOrdersSlice = createSlice({
       .addCase(fetchMyOrders.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to fetch orders";
+      })
+      .addCase(confirmOrderPayment.pending, (state, action) => {
+        state.confirmLoading = true;
+        state.confirmingOrderId = action.meta.arg.order_id;
+        state.confirmError = null;
+        state.confirmMessage = null;
+      })
+      .addCase(confirmOrderPayment.fulfilled, (state, action) => {
+        state.confirmLoading = false;
+        state.confirmingOrderId = null;
+        state.confirmError = null;
+        state.confirmMessage = action.payload.message;
+
+        const updatedOrder = action.payload.data;
+        const orderIndex = state.orders.findIndex((item) => item.id === updatedOrder.id);
+        if (orderIndex !== -1) {
+          state.orders[orderIndex] = {
+            ...state.orders[orderIndex],
+            ...updatedOrder,
+          };
+        }
+      })
+      .addCase(confirmOrderPayment.rejected, (state, action) => {
+        state.confirmLoading = false;
+        state.confirmingOrderId = null;
+        state.confirmError = action.payload || "Failed to confirm payment";
       });
   },
 });

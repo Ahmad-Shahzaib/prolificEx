@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { fetchDepositInfo } from "@/redux/thunk/depositThunk";
 import { clearDepositState } from "@/redux/slices/depositSlice";
+import { fetchKycStatus } from "@/redux/thunk/kycThunk";
 import { PageShell } from "@/components/dashboard/PageShell";
 
 // --- Icons ---
@@ -58,9 +59,9 @@ const COIN_NAMES: Record<string, string> = {
 
 const networkOptionsByCoin: Record<string, string[]> = {
   BTC: ["BTC"],
-  ETH: ["ETH", "ERC20"],
+  ETH: [ "ERC20"],
   USDT: ["TRC20", "ERC20"],
-  USDC: ["ERC20", "TRC20"],
+  USDC: ["ERC20"],
   SOL: ["SOL"],
 };
 
@@ -94,6 +95,7 @@ export default function DepositPage() {
   const { loading: depositLoading, error: depositError, info: depositInfo } = useAppSelector(
     (state) => state.deposit
   );
+  const kycStatus = useAppSelector((state) => state.kyc.status);
 
   const [selectedCoin, setSelectedCoin] = useState("BTC");
   const [selectedNetwork, setSelectedNetwork] = useState("BTC");
@@ -130,6 +132,17 @@ export default function DepositPage() {
   return (
     <PageShell title="Deposit" description="">
       <div className="space-y-6 px-4 sm:px-6 py-2">
+        {kycStatus !== 'approved' && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 flex gap-4">
+            <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center flex-shrink-0">
+              <WarningIcon />
+            </div>
+            <div>
+              <p className="text-amber-500 font-medium">KYC Verification Required</p>
+              <p className="text-gray-400 text-sm mt-1">You must complete KYC verification before making deposits. Please visit the <a href="/dashboard/kyc" className="text-violet-400 hover:underline">KYC page</a> to verify your identity.</p>
+            </div>
+          </div>
+        )}
 
         <div className="bg-[#13141a] border border-white/[0.07] rounded-2xl p-5 sm:p-6 space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -189,19 +202,20 @@ export default function DepositPage() {
           ) : null}
 
           <div className="flex flex-col sm:flex-row items-start gap-5">
-            <QRCode qrData={depositLoading ? undefined : qrValue} />
+            <QRCode qrData={depositLoading || kycStatus !== 'approved' ? undefined : qrValue} />
 
             <div className="flex-1 space-y-4 w-full">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-white/80 text-sm font-medium">Wallet Deposit Address</p>
                   <p className="text-white text-sm mt-1 break-all sm:break-normal font-mono">
-                    {depositLoading ? "Loading address..." : currentAddress || "Address unavailable"}
+                    {kycStatus !== 'approved' ? "KYC verification required" : (depositLoading ? "Loading address..." : currentAddress || "Address unavailable")}
                   </p>
                 </div>
                 <button
                   onClick={handleCopy}
-                  className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium px-5 py-3 rounded-xl transition-colors w-full sm:w-auto justify-center sm:justify-start"
+                  disabled={kycStatus !== 'approved'}
+                  className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium px-5 py-3 rounded-xl transition-colors w-full sm:w-auto justify-center sm:justify-start disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <CopyIcon />
                   {copied ? "Copied!" : "Copy Address"}

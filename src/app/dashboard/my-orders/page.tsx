@@ -6,7 +6,7 @@ import { Search, MessageCircle } from "lucide-react";
 import { PageShell } from "@/components/dashboard/PageShell";
 import { Card, CardContent } from "@/components/common/Card";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { fetchMyOrders } from "@/redux/thunk/p2pOrdersThunk";
+import { confirmOrderPayment, fetchMyOrders } from "@/redux/thunk/p2pOrdersThunk";
 import { setOrdersStatusFilter } from "@/redux/slices/p2pOrdersSlice";
 
 const statusOptions = [
@@ -20,7 +20,7 @@ const statusOptions = [
 
 export default function MyOrdersPage() {
   const dispatch = useAppDispatch();
-  const { loading, error, orders, pagination, statusFilter } = useAppSelector((state) => state.p2pOrders);
+  const { loading, error, orders, pagination, statusFilter, confirmLoading, confirmingOrderId, confirmError, confirmMessage } = useAppSelector((state) => state.p2pOrders);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -96,6 +96,18 @@ export default function MyOrdersPage() {
             </div>
           )}
 
+          {confirmMessage && (
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-200 mb-4">
+              {confirmMessage}
+            </div>
+          )}
+
+          {confirmError && (
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200 mb-4">
+              {confirmError}
+            </div>
+          )}
+
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full min-w-[850px]">
               <thead>
@@ -127,9 +139,20 @@ export default function MyOrdersPage() {
                     <td className="py-5 text-sm text-white">{order.fiat_amount} {order.fiat_currency}</td>
                     <td className="py-5 text-sm text-[#cbd5e1]">{order.payment_method}</td>
                     <td className="py-5">
-                      <span className="inline-block px-4 py-1 rounded-full text-xs font-medium bg-violet-600/10 text-violet-300 capitalize">
-                        {order.status.replaceAll("_", " ")}
-                      </span>
+                      <div className="space-y-2">
+                        <span className="inline-block px-4 py-1 rounded-full text-xs font-medium bg-violet-600/10 text-violet-300 capitalize">
+                          {order.status.replaceAll("_", " ")}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => dispatch(confirmOrderPayment({ order_id: order.id }))}
+                          disabled={order.status !== "paid" || (confirmLoading && confirmingOrderId === order.id)}
+                          title={order.status !== "paid" ? "Order must be paid before confirming" : undefined}
+                          className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-[#11121c] px-3 py-2 text-[11px] font-semibold text-white transition-colors hover:bg-[#1f1f2e] disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {confirmLoading && confirmingOrderId === order.id ? "Confirming…" : "Confirm payment"}
+                        </button>
+                      </div>
                     </td>
                     <td className="py-5 text-sm text-white">
                       <Link href={`/dashboard/p2p/order/${order.id}`} className="relative inline-flex items-center gap-2 rounded-full px-3 py-2 bg-[#11121c] hover:bg-[#1f1f2e] transition">
@@ -189,6 +212,15 @@ export default function MyOrdersPage() {
                   <span className="inline-block px-3 py-1 bg-violet-600/10 text-violet-200 text-xs font-medium rounded-full capitalize">
                     {order.status.replaceAll("_", " ")}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => dispatch(confirmOrderPayment({ order_id: order.id }))}
+                    disabled={order.status !== "paid" || (confirmLoading && confirmingOrderId === order.id)}
+                    title={order.status !== "paid" ? "Order must be paid before confirming" : undefined}
+                    className="mt-2 inline-flex items-center justify-center rounded-2xl border border-white/10 bg-[#11121c] px-3 py-2 text-[11px] font-semibold text-white transition-colors hover:bg-[#1f1f2e] disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {confirmLoading && confirmingOrderId === order.id ? "Confirming…" : "Confirm payment"}
+                  </button>
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-sm text-[#d1d5db]">
                   <div>
