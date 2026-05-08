@@ -1,9 +1,11 @@
 "use client";
 import { FormEvent, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { withdrawThunk, WithdrawPayload } from "@/redux/thunk/withdrawThunk";
 import { resetWithdrawState } from "@/redux/slices/withdrawSlice";
 import { fetchKycStatus } from "@/redux/thunk/kycThunk";
+import { fetchWallets } from "@/redux/thunk/walletThunk";
 import { PageShell } from "@/components/dashboard/PageShell";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/common/Toast/Toast";
@@ -66,9 +68,15 @@ export default function WithdrawPage() {
   const dispatch = useAppDispatch();
   const withdrawState = useAppSelector((state) => state.withdraw);
   const kycStatus = useAppSelector((state) => state.kyc.status);
+  const wallets = useAppSelector((state) => state.wallet.wallets);
   const { toast, toasts, dismiss } = useToast();
-  const [selectedCoinKey, setSelectedCoinKey] = useState("USDT");
-  const [selectedNetwork, setSelectedNetwork] = useState("TRC20");
+  const searchParams = useSearchParams();
+  const coinParam = searchParams.get("coin")?.toUpperCase() ?? "USDT";
+  const validCoinKeys = Array.from(new Set(withdrawOptions.map((o) => o.coin)));
+  const initialCoinKey = validCoinKeys.includes(coinParam) ? coinParam : "USDT";
+  const initialNetwork = withdrawOptions.find((o) => o.coin === initialCoinKey)?.network ?? "TRC20";
+  const [selectedCoinKey, setSelectedCoinKey] = useState(initialCoinKey);
+  const [selectedNetwork, setSelectedNetwork] = useState(initialNetwork);
   const [walletAddress, setWalletAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [authCode, setAuthCode] = useState("");
@@ -76,8 +84,20 @@ export default function WithdrawPage() {
   const feeAmount = 1;
   const receiveAmount = amount ? Math.max(0, Number(amount) - feeAmount) : 0;
 
+  // Find matching wallet for selected coin + network
+  const matchedWallet = wallets.find(
+    (w) =>
+      w.coin.toUpperCase() === selectedCoinKey.toUpperCase() &&
+      w.network.toUpperCase() === selectedNetwork.toUpperCase()
+  );
+  const availableBalance = matchedWallet ? parseFloat(matchedWallet.available_balance) : 0;
+  const availableBalanceDisplay = matchedWallet
+    ? `${parseFloat(matchedWallet.available_balance).toFixed(6)} ${selectedCoinKey}`
+    : `0.000000 ${selectedCoinKey}`;
+
   useEffect(() => {
     dispatch(fetchKycStatus());
+    dispatch(fetchWallets());
   }, [dispatch]);
 
   useEffect(() => {
@@ -91,18 +111,67 @@ export default function WithdrawPage() {
     }
   }, [withdrawState.success, withdrawState.message, toast, dispatch]);
 
+  useEffect(() => {
+    if (withdrawState.error) {
+      toast({
+        title: "Withdrawal Failed",
+        description: withdrawState.error,
+        type: "error",
+      });
+      dispatch(resetWithdrawState());
+    }
+  }, [withdrawState.error, toast, dispatch]);
+
   const handleWithdraw = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    
-    if (kycStatus !== 'approved') {
+
+    if (kycStatus !== "approved") {
       toast({
         title: "KYC Verification Required",
-        description: "Please complete KYC verification before making withdrawals. Visit the KYC page to get started.",
+        description:
+          "Please complete KYC verification before making withdrawals. Visit the KYC page to get started.",
         type: "error",
       });
       return;
     }
-    
+
+    if (!walletAddress.trim()) {
+      toast({
+        title: "Missing Wallet Address",
+        description: "Please enter a recipient wallet address.",
+        type: "error",
+      });
+      return;
+    }
+
+    const numericAmount = parseFloat(amount);
+    if (!amount || isNaN(numericAmount) || numericAmount <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid withdrawal amount greater than zero.",
+        type: "error",
+      });
+      return;
+    }
+
+    if (numericAmount > availableBalance) {
+      toast({
+        title: "Insufficient Balance",
+        description: `You only have ${availableBalanceDisplay} available. Please enter a smaller amount.`,
+        type: "error",
+      });
+      return;
+    }
+
+    if (numericAmount <= feeAmount) {
+      toast({
+        title: "Amount Too Low",
+        description: `Withdrawal amount must be greater than the network fee of ${feeAmount} ${selectedCoinKey}.`,
+        type: "error",
+      });
+      return;
+    }
+
     dispatch(
       withdrawThunk({
         coin: selectedCoinKey,
@@ -188,9 +257,15 @@ export default function WithdrawPage() {
             </div>
 
             <div className="space-y-2">
-              <p className="text-white/40 text-xs">Available balance: 12,300 USDT</p>
+              <p className="text-white/40 text-xs">Available balance: {availableBalanceDisplay}</p>
+              {amount && parseFloat(amount) > availableBalance && (
+                <p className="text-red-400 text-xs flex items-center gap-1">
+                  <WarningIcon />
+                  Insufficient balance. Max withdrawable: {availableBalanceDisplay}
+                </p>
+              )}
               <div className="bg-[#1c1d26] rounded-lg px-4 py-2.5 inline-block">
-                <span className="text-white/50 text-xs">Network fee: {feeAmount} {selectedCoinKey} You will receive: {receiveAmount} {selectedCoinKey}</span>
+                <span className="text-white/50 text-xs">Network fee: {feeAmount} {selectedCoinKey} &nbsp;|&nbsp; You will receive: {receiveAmount} {selectedCoinKey}</span>
               </div>
             </div>
 

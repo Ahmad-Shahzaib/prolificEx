@@ -8,7 +8,7 @@ import { initiateP2POrder } from "@/redux/thunk/p2pOrderThunk";
 import { fetchP2POrderMessages, sendP2POrderMessage } from "@/redux/thunk/p2pOrderMessagesThunk";
 import { P2POffer } from "@/redux/thunk/p2pOffersThunk";
 import { clearP2POrderMessages } from "@/redux/slices/p2pOrderMessagesSlice";
-import { restoreP2POrderState } from "@/redux/slices/p2pOrderSlice";
+import { clearP2POrderState, restoreP2POrderState } from "@/redux/slices/p2pOrderSlice";
 
 interface Message {
   id: number;
@@ -51,45 +51,57 @@ export default function P2POrderPage({ selectedOffer }: P2POrderPageProps) {
       : "0.00";
 
   const currentOrder = orderResult?.order;
+  // Blocked only when there's an existing order with the same seller from a DIFFERENT offer
+  // (same offer_id means it's the user's own active order — not a block)
   const hasBlockedOrder =
     Boolean(currentOrder) &&
     Boolean(selectedOffer?.user?.id) &&
     selectedOffer?.user?.id === currentOrder?.seller_id &&
+    currentOrder?.offer_id !== selectedOffer?.id &&
     currentOrder?.status !== "active";
 
+  // Clear Redux order+messages when the user switches to a different offer
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!selectedOffer) return;
+    const orderOfferId = orderResult?.order?.offer_id;
+    if (orderOfferId !== undefined && orderOfferId !== selectedOffer.id) {
+      dispatch(clearP2POrderState());
+      dispatch(clearP2POrderMessages());
+    }
+  }, [dispatch, selectedOffer, orderResult]);
 
-    const storedState = sessionStorage.getItem("p2pOrderState");
-    if (!orderResult && storedState) {
-      try {
-        const parsed = JSON.parse(storedState);
-        if (parsed?.order) {
-          dispatch(restoreP2POrderState(parsed));
-        }
-      } catch {
-        // ignore invalid stored order state
+  // Restore order from per-offer sessionStorage key when Redux is empty
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!selectedOffer || orderResult) return;
+    const stored = sessionStorage.getItem(`p2pOrder_${selectedOffer.id}`);
+    if (!stored) return;
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed?.order) {
+        dispatch(restoreP2POrderState(parsed));
       }
+    } catch {
+      sessionStorage.removeItem(`p2pOrder_${selectedOffer.id}`);
     }
-  }, [dispatch, orderResult]);
+  }, [dispatch, orderResult, selectedOffer]);
 
+  // Persist order to per-offer sessionStorage key whenever it changes
   useEffect(() => {
     if (typeof window === "undefined") return;
-
-    if (orderResult) {
-      sessionStorage.setItem(
-        "p2pOrderState",
-        JSON.stringify({
-          loading: false,
-          error: orderError,
-          order: orderResult,
-          successMessage: orderSuccessMessage,
-        })
-      );
-    } else {
-      sessionStorage.removeItem("p2pOrderState");
-    }
-  }, [orderResult, orderError, orderSuccessMessage]);
+    if (!selectedOffer || !orderResult) return;
+    if (orderResult.order.offer_id !== selectedOffer.id) return;
+    sessionStorage.setItem(
+      `p2pOrder_${selectedOffer.id}`,
+      JSON.stringify({
+        loading: false,
+        error: orderError,
+        order: orderResult,
+        successMessage: orderSuccessMessage,
+      })
+    );
+  }, [orderResult, orderError, orderSuccessMessage, selectedOffer]);
 
   const canInitiateOrder =
     Boolean(selectedOffer) &&

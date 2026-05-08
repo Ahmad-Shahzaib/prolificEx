@@ -1,3 +1,6 @@
+"use client";
+
+import { useAppSelector } from "@/redux/hooks";
 import { PortfolioOverview } from "@/components/dashboard/PortfolioOverview";
 import { ActiveOrders } from "@/components/dashboard/ActiveOrders";
 import { MyPortfolio } from "@/components/dashboard/MyPortfolio";
@@ -5,10 +8,13 @@ import { PriceChart } from "@/components/dashboard/PriceChart";
 import { Transactions } from "@/components/dashboard/Transactions";
 
 export default function DashboardPage() {
+  const profile = useAppSelector((state) => state.profile.profile);
+  const displayName = profile?.full_name || profile?.username || "there";
+
   return (
     <div className="space-y-6">
       <h2 className="[font-family:'Inter',Helvetica] font-bold text-white text-xl">
-        Welcome back, Henry 👋
+        Welcome back, {displayName} 👋
       </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

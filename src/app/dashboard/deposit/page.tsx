@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { fetchDepositInfo } from "@/redux/thunk/depositThunk";
 import { clearDepositState } from "@/redux/slices/depositSlice";
@@ -97,8 +98,14 @@ export default function DepositPage() {
   );
   const kycStatus = useAppSelector((state) => state.kyc.status);
 
-  const [selectedCoin, setSelectedCoin] = useState("BTC");
-  const [selectedNetwork, setSelectedNetwork] = useState("BTC");
+  const searchParams = useSearchParams();
+  const coinParam = searchParams.get("coin")?.toUpperCase() ?? "BTC";
+  const validCoins = Object.keys(networkOptionsByCoin);
+  const initialCoin = validCoins.includes(coinParam) ? coinParam : "BTC";
+  const [selectedCoin, setSelectedCoin] = useState(initialCoin);
+  const [selectedNetwork, setSelectedNetwork] = useState(
+    networkOptionsByCoin[initialCoin]?.[0] ?? "BTC"
+  );
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {

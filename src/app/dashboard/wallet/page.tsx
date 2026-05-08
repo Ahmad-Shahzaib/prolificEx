@@ -195,7 +195,7 @@ export default function WalletPage() {
   const [ratesError,   setRatesError]   = useState(false);
 
   // Filter state
-  const [selectedAction, setSelectedAction] = useState<"all" | "deposit" | "withdraw">("all");
+  const [selectedAction, setSelectedAction] = useState<"deposit" | "withdraw">("deposit");
 
   // ── Live exchange-rate fetch ──────────────────────────────────────────────
   const fetchRates = async () => {
@@ -293,12 +293,14 @@ export default function WalletPage() {
     [wallets]
   );
 
-  const filteredWalletAssets = useMemo(
-    () =>
-      walletAssets.filter(
-        (asset) => selectedAction === "all" || asset.action === selectedAction
-      ),
-    [walletAssets, selectedAction]
+  const depositAssets = useMemo(
+    () => walletAssets.filter((asset) => asset.action === "deposit"),
+    [walletAssets]
+  );
+
+  const withdrawAssets = useMemo(
+    () => walletAssets.filter((asset) => asset.action === "withdraw"),
+    [walletAssets]
   );
 
   const formattedTotalPortfolio = totalPortfolioUsd.toLocaleString("en-US", {
@@ -312,7 +314,7 @@ export default function WalletPage() {
       className="min-h-screen w-full p-4 sm:p-6"
       style={{ background: "#0d0e17", fontFamily: "'Inter', sans-serif" }}
     >
-      <h1 className="text-white text-2xl font-semibold mb-6">Wallet</h1>
+      <h1 className="text-white text-2xl font-semibold mb-6">Wallets</h1>
 
       <div className="flex flex-col xl:flex-row gap-6">
         {/* ── Left Column ── */}
@@ -360,14 +362,11 @@ export default function WalletPage() {
                 </Button>
               ))}
               <Button
-                onClick={() => { setSelectedAction("all"); router.push("/dashboard/p2p"); }}
+                onClick={() => router.push("/dashboard/p2p")}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90"
                 style={{
-                  background: selectedAction === "all" ? "#7c3aed" : "transparent",
-                  border:
-                    selectedAction === "all"
-                      ? "1px solid transparent"
-                      : "1px solid rgba(255,255,255,0.15)",
+                  background: "transparent",
+                  border: "1px solid rgba(255,255,255,0.15)",
                   color: "#ffffff",
                 }}
               >
@@ -403,101 +402,170 @@ export default function WalletPage() {
               <div className="px-6 py-8 text-gray-400 text-sm">Loading wallets…</div>
             ) : error ? (
               <div className="px-6 py-8 text-red-400 text-sm">{error}</div>
-            ) : filteredWalletAssets.length === 0 ? (
+            ) : depositAssets.length === 0 && withdrawAssets.length === 0 ? (
               <div className="px-6 py-8 text-gray-400 text-sm">No wallet records found.</div>
             ) : (
-              filteredWalletAssets.map((asset) => (
-                <div
-                  key={asset.id}
-                  className="border-b border-white/[0.04] last:border-none hover:bg-white/[0.02] transition-colors px-4 sm:px-6 py-5 md:py-4"
-                >
-                  {/* Mobile layout */}
-                  <div className="md:hidden flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-9 h-9 rounded-full ${asset.iconBg} flex items-center justify-center text-white text-base font-bold flex-shrink-0`}
-                        >
-                          {asset.iconLetter}
-                        </div>
-                        <div>
-                          <p className="text-white font-medium">{asset.name}</p>
-                          <p className="text-xs text-gray-500">{asset.ticker}</p>
-                        </div>
-                      </div>
-                      <span className="text-right text-sm font-medium text-white">{asset.total}</span>
+              <>
+                {/* ── Deposit Section ── */}
+                {selectedAction === "deposit" && depositAssets.length > 0 && (
+                  <>
+                    <div
+                      className="flex items-center gap-2 px-6 py-2.5"
+                      style={{ background: "rgba(124,58,237,0.08)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+                    >
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#7c3aed" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                      </svg>
+                      <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#7c3aed" }}>
+                        Deposit Networks
+                      </span>
+                      <span className="ml-auto text-xs text-gray-500">{depositAssets.length} asset{depositAssets.length !== 1 ? "s" : ""}</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-gray-400 text-xs">Available</p>
-                        <p className="text-gray-300">{asset.available}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-400 text-xs">In Trade</p>
-                        <p className="text-gray-300">{asset.inTrade}</p>
-                      </div>
-                    </div>
-                    <div className="pt-2">
-                      {asset.action === "deposit" ? (
-                        <Button
-                          className="w-full px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-all hover:opacity-90"
-                          style={{ background: "#7c3aed" }}
-                        >
-                          Deposit
-                        </Button>
-                      ) : (
-                        <Button
-                          className="w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-white/10"
-                          style={{
-                            background: "transparent",
-                            border: "1px solid rgba(255,255,255,0.2)",
-                            color: "#d1d5db",
-                          }}
-                        >
-                          Withdraw
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Desktop row */}
-                  <div
-                    className="hidden md:grid items-center"
-                    style={{ gridTemplateColumns: "2fr 1.2fr 1.2fr 1.2fr 1fr" }}
-                  >
-                    <div className="flex items-center gap-3">
+                    {depositAssets.map((asset) => (
                       <div
-                        className={`w-8 h-8 rounded-full ${asset.iconBg} flex items-center justify-center text-white text-sm font-bold flex-shrink-0`}
+                        key={asset.id}
+                        className="border-b border-white/[0.04] last:border-none hover:bg-white/[0.02] transition-colors px-4 sm:px-6 py-5 md:py-4"
                       >
-                        {asset.iconLetter}
+                        {/* Mobile layout */}
+                        <div className="md:hidden flex flex-col gap-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-9 h-9 rounded-full ${asset.iconBg} flex items-center justify-center text-white text-base font-bold flex-shrink-0`}>
+                                {asset.iconLetter}
+                              </div>
+                              <div>
+                                <p className="text-white font-medium">{asset.name}</p>
+                                <p className="text-xs text-gray-500">{asset.ticker}</p>
+                              </div>
+                            </div>
+                            <span className="text-right text-sm font-medium text-white">{asset.total}</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <p className="text-gray-400 text-xs">Available</p>
+                              <p className="text-gray-300">{asset.available}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-400 text-xs">In Trade</p>
+                              <p className="text-gray-300">{asset.inTrade}</p>
+                            </div>
+                          </div>
+                          <div className="pt-2">
+                            <Button
+                              onClick={() => router.push(`/dashboard/deposit?coin=${asset.ticker}`)}
+                              className="w-full px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-all hover:opacity-90"
+                              style={{ background: "#7c3aed" }}
+                            >
+                              Deposit
+                            </Button>
+                          </div>
+                        </div>
+                        {/* Desktop row */}
+                        <div className="hidden md:grid items-center" style={{ gridTemplateColumns: "2fr 1.2fr 1.2fr 1.2fr 1fr" }}>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-full ${asset.iconBg} flex items-center justify-center text-white text-sm font-bold flex-shrink-0`}>
+                              {asset.iconLetter}
+                            </div>
+                            <span className="text-white text-sm font-medium">{asset.name}</span>
+                          </div>
+                          <span className="text-gray-300 text-sm">{asset.available}</span>
+                          <span className="text-gray-300 text-sm">{asset.inTrade}</span>
+                          <span className="text-gray-300 text-sm">{asset.total}</span>
+                          <Button
+                            onClick={() => router.push(`/dashboard/deposit?coin=${asset.ticker}`)}
+                            className="px-5 py-1.5 rounded-xl text-white text-xs font-medium transition-all hover:opacity-90 justify-self-end"
+                            style={{ background: "#7c3aed" }}
+                          >
+                            Deposit
+                          </Button>
+                        </div>
                       </div>
-                      <span className="text-white text-sm font-medium">{asset.name}</span>
+                    ))}
+                  </>
+                )}
+
+                {/* ── Withdraw Section ── */}
+                {selectedAction === "withdraw" && withdrawAssets.length > 0 && (
+                  <>
+                    <div
+                      className="flex items-center gap-2 px-6 py-2.5"
+                      style={{
+                        background: "rgba(16,185,129,0.07)",
+                        borderTop: undefined,
+                        borderBottom: "1px solid rgba(255,255,255,0.06)",
+                      }}
+                    >
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#10b981" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                      </svg>
+                      <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#10b981" }}>
+                        Withdraw Networks
+                      </span>
+                      <span className="ml-auto text-xs text-gray-500">{withdrawAssets.length} asset{withdrawAssets.length !== 1 ? "s" : ""}</span>
                     </div>
-                    <span className="text-gray-300 text-sm">{asset.available}</span>
-                    <span className="text-gray-300 text-sm">{asset.inTrade}</span>
-                    <span className="text-gray-300 text-sm">{asset.total}</span>
-                    {asset.action === "deposit" ? (
-                      <Button
-                        className="px-5 py-1.5 rounded-xl text-white text-xs font-medium transition-all hover:opacity-90 justify-self-end"
-                        style={{ background: "#7c3aed" }}
+                    {withdrawAssets.map((asset) => (
+                      <div
+                        key={asset.id}
+                        className="border-b border-white/[0.04] last:border-none hover:bg-white/[0.02] transition-colors px-4 sm:px-6 py-5 md:py-4"
                       >
-                        Deposit
-                      </Button>
-                    ) : (
-                      <Button
-                        className="px-5 py-1.5 rounded-xl text-xs font-medium transition-all hover:bg-white/10 justify-self-end"
-                        style={{
-                          background: "transparent",
-                          border: "1px solid rgba(255,255,255,0.2)",
-                          color: "#d1d5db",
-                        }}
-                      >
-                        Withdraw
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))
+                        {/* Mobile layout */}
+                        <div className="md:hidden flex flex-col gap-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-9 h-9 rounded-full ${asset.iconBg} flex items-center justify-center text-white text-base font-bold flex-shrink-0`}>
+                                {asset.iconLetter}
+                              </div>
+                              <div>
+                                <p className="text-white font-medium">{asset.name}</p>
+                                <p className="text-xs text-gray-500">{asset.ticker}</p>
+                              </div>
+                            </div>
+                            <span className="text-right text-sm font-medium text-white">{asset.total}</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <p className="text-gray-400 text-xs">Available</p>
+                              <p className="text-gray-300">{asset.available}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-400 text-xs">In Trade</p>
+                              <p className="text-gray-300">{asset.inTrade}</p>
+                            </div>
+                          </div>
+                          <div className="pt-2">
+                            <Button
+                              onClick={() => router.push(`/dashboard/withdraw?coin=${asset.ticker}`)}
+                              className="w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-white/10"
+                              style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "#d1d5db" }}
+                            >
+                              Withdraw
+                            </Button>
+                          </div>
+                        </div>
+                        {/* Desktop row */}
+                        <div className="hidden md:grid items-center" style={{ gridTemplateColumns: "2fr 1.2fr 1.2fr 1.2fr 1fr" }}>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-full ${asset.iconBg} flex items-center justify-center text-white text-sm font-bold flex-shrink-0`}>
+                              {asset.iconLetter}
+                            </div>
+                            <span className="text-white text-sm font-medium">{asset.name}</span>
+                          </div>
+                          <span className="text-gray-300 text-sm">{asset.available}</span>
+                          <span className="text-gray-300 text-sm">{asset.inTrade}</span>
+                          <span className="text-gray-300 text-sm">{asset.total}</span>
+                          <Button
+                            onClick={() => router.push(`/dashboard/withdraw?coin=${asset.ticker}`)}
+                            className="px-5 py-1.5 rounded-xl text-xs font-medium transition-all hover:bg-white/10 justify-self-end"
+                            style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "#d1d5db" }}
+                          >
+                            Withdraw
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </>
             )}
           </div>
         </div>
