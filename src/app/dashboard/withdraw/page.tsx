@@ -1,5 +1,5 @@
 "use client";
-import { FormEvent, useState, useEffect } from "react";
+import { FormEvent, useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { withdrawThunk, WithdrawPayload } from "@/redux/thunk/withdrawThunk";
@@ -64,7 +64,7 @@ const withdrawOptions = [
   { coin: "USDT", network: "TRC20", label: "USDT — TRC20" },
 ];
 
-export default function WithdrawPage() {
+function WithdrawContent() {
   const dispatch = useAppDispatch();
   const withdrawState = useAppSelector((state) => state.withdraw);
   const kycStatus = useAppSelector((state) => state.kyc.status);
@@ -341,5 +341,13 @@ export default function WithdrawPage() {
       </div>
       <Toaster toasts={toasts} onDismiss={dismiss} />
     </PageShell>
+  );
+}
+
+export default function WithdrawPage() {
+  return (
+    <Suspense>
+      <WithdrawContent />
+    </Suspense>
   );
 }

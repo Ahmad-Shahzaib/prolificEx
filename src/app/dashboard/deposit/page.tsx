@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { fetchDepositInfo } from "@/redux/thunk/depositThunk";
@@ -91,7 +91,7 @@ const QRCode = ({ qrData }: { qrData?: string }) => {
   );
 };
 
-export default function DepositPage() {
+function DepositContent() {
   const dispatch = useAppDispatch();
   const { loading: depositLoading, error: depositError, info: depositInfo } = useAppSelector(
     (state) => state.deposit
@@ -331,5 +331,13 @@ export default function DepositPage() {
         </div>
       </div>
     </PageShell>
+  );
+}
+
+export default function DepositPage() {
+  return (
+    <Suspense>
+      <DepositContent />
+    </Suspense>
   );
 }
