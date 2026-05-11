@@ -16,8 +16,14 @@ import profileReducer from "./slices/profileSlice";
 import walletReducer from "./slices/walletSlice";
 import depositReducer from "./slices/depositSlice";
 import kycReducer from "./slices/kycSlice";
+import transactionsReducer from "./slices/transactionsSlice";
+
 import networkFeeReducer from "./slices/networkFeeSlice";
 import p2pOffersReducer from "./slices/p2pOffersSlice";
+import p2pOrderReducer from "./slices/p2pOrderSlice";
+import p2pOrderMessagesReducer from "./slices/p2pOrderMessagesSlice";
+import p2pOrdersReducer from "./slices/p2pOrdersSlice";
+import withdrawReducer from "./slices/withdrawSlice";
 
 const appReducer = combineReducers({
   ui: uiReducer,
@@ -35,8 +41,13 @@ const appReducer = combineReducers({
   wallet: walletReducer,
   deposit: depositReducer,
   kyc: kycReducer,
+  transactions: transactionsReducer,
   networkFee: networkFeeReducer,
   p2pOffers: p2pOffersReducer,
+  p2pOrder: p2pOrderReducer,
+  p2pOrderMessages: p2pOrderMessagesReducer,
+  p2pOrders: p2pOrdersReducer,
+  withdraw: withdrawReducer,
 });
 
 const rootReducer = (state: any, action: any) => {

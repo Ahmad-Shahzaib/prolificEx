@@ -30,12 +30,21 @@ export function NetworkFeeCalculator() {
   const [amount, setAmount] = useState("100");
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  const availableNetworks = networkOptionsByCoin[selectedCoin] ?? [selectedCoin];
+
   useEffect(() => {
-    const availableNetworks = networkOptionsByCoin[selectedCoin] ?? [selectedCoin];
-    if (!availableNetworks.includes(selectedNetwork)) {
-      setSelectedNetwork(availableNetworks[0]);
+    const networks = networkOptionsByCoin[selectedCoin] ?? [selectedCoin];
+    if (!networks.includes(selectedNetwork)) {
+      setSelectedNetwork(networks[0]);
     }
   }, [selectedCoin, selectedNetwork]);
+
+  useEffect(() => {
+    const numericAmount = parseFloat(amount);
+    if (numericAmount > 0) {
+      dispatch(fetchNetworkFee({ coin: selectedCoin, network: selectedNetwork, amount: numericAmount }));
+    }
+  }, [dispatch, selectedCoin, selectedNetwork]);
 
   useEffect(() => {
     return () => {
@@ -70,41 +79,45 @@ export function NetworkFeeCalculator() {
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="sm:col-span-1">
               <label className="block text-sm text-white/70 mb-2">Coin</label>
-              <div className="grid grid-cols-3 gap-2">
-                {Object.keys(networkOptionsByCoin).map((coin) => (
-                  <button
-                    key={coin}
-                    type="button"
-                    onClick={() => setSelectedCoin(coin)}
-                    className={`rounded-2xl px-3 py-2 text-sm font-medium transition ${
-                      selectedCoin === coin
-                        ? "bg-violet-600 text-white"
-                        : "bg-white/5 text-white/70 hover:bg-white/10"
-                    }`}
-                  >
-                    {coin}
-                  </button>
-                ))}
+              <div className="rounded-3xl border border-white/10 bg-[#0f1119] p-3">
+                <div className="grid grid-cols-3 gap-2">
+                  {Object.keys(networkOptionsByCoin).map((coin) => (
+                    <button
+                      key={coin}
+                      type="button"
+                      onClick={() => setSelectedCoin(coin)}
+                      className={`rounded-2xl border px-3 py-2 text-sm font-medium transition ${
+                        selectedCoin === coin
+                          ? "border-violet-500 bg-violet-600 text-white"
+                          : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10"
+                      }`}
+                    >
+                      {coin}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
             <div className="sm:col-span-1">
               <label className="block text-sm text-white/70 mb-2">Network</label>
-              <div className="grid grid-cols-3 gap-2">
-                {(networkOptionsByCoin[selectedCoin] ?? [selectedCoin]).map((network) => (
-                  <button
-                    key={network}
-                    type="button"
-                    onClick={() => setSelectedNetwork(network)}
-                    className={`rounded-2xl px-3 py-2 text-sm font-medium transition ${
-                      selectedNetwork === network
-                        ? "bg-violet-600 text-white"
-                        : "bg-white/5 text-white/70 hover:bg-white/10"
-                    }`}
-                  >
-                    {network}
-                  </button>
-                ))}
+              <div className="rounded-3xl border border-white/10 bg-[#0f1119] p-3">
+                <div className="grid grid-cols-3 gap-2">
+                  {(networkOptionsByCoin[selectedCoin] ?? [selectedCoin]).map((network) => (
+                    <button
+                      key={network}
+                      type="button"
+                      onClick={() => setSelectedNetwork(network)}
+                      className={`rounded-2xl border px-3 py-2 text-sm font-medium transition ${
+                        selectedNetwork === network
+                          ? "border-violet-500 bg-violet-600 text-white"
+                          : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10"
+                      }`}
+                    >
+                      {network}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -135,9 +148,7 @@ export function NetworkFeeCalculator() {
           ) : null}
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Button type="submit" variant="primary" size="md" disabled={loading}>
-              {loading ? "Calculating..." : "Get Fee"}
-            </Button>
+           
             <div className="text-sm text-white/60">
               {COIN_NAMES[selectedCoin]} · {selectedNetwork}
             </div>

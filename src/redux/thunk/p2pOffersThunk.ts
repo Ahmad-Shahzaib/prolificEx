@@ -20,8 +20,15 @@ export interface P2POffer {
   account_number: string;
   instructions: string;
   status: string;
+  rating: string;
   created_at: string;
   updated_at: string;
+  user?: {
+    id: number;
+    uuid: string;
+    full_name: string;
+    username: string | null;
+  };
 }
 
 export interface CreateP2POfferPayload {
@@ -73,6 +80,63 @@ export const createOffer = createAsyncThunk<
       return data.data as P2POffer;
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while creating offer");
+    }
+  }
+);
+
+export const fetchOffers = createAsyncThunk<
+  P2POffer[],
+  { page?: number; per_page?: number; coin?: string; network?: string; payment_method?: string },
+  { rejectValue: string }
+>(
+  "p2pOffers/fetchOffers",
+  async ({ page = 1, per_page = 20, coin, network, payment_method }, { rejectWithValue }) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      if (!baseUrl) {
+        return rejectWithValue("Missing NEXT_PUBLIC_API_BASE_URL in environment");
+      }
+
+      const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+      const query = new URLSearchParams({
+        page: page.toString(),
+        per_page: per_page.toString(),
+      });
+
+      if (coin) {
+        query.append("coin", coin);
+      }
+      if (network) {
+        query.append("network", network);
+      }
+      if (payment_method) {
+        query.append("payment_method", payment_method);
+      }
+
+      const response = await fetch(`${baseUrl}/p2p/offers?${query.toString()}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data?.success) {
+        return rejectWithValue(data?.message || `Failed to load offers (${response.status})`);
+      }
+
+      if (Array.isArray(data?.data)) {
+        return data.data as P2POffer[];
+      }
+
+      if (Array.isArray(data?.data?.data)) {
+        return data.data.data as P2POffer[];
+      }
+
+      return [];
+    } catch (error: any) {
+      return rejectWithValue(error?.message || "Network error while fetching offers");
     }
   }
 );

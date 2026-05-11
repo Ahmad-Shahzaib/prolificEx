@@ -1,9 +1,12 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { createOffer, fetchMyOffers, P2POffer } from "../thunk/p2pOffersThunk";
+import { createOffer, fetchMyOffers, fetchOffers, P2POffer } from "../thunk/p2pOffersThunk";
 
 interface P2POffersState {
   loading: boolean;
   error: string | null;
+  offers: P2POffer[];
+  offersLoading: boolean;
+  offersError: string | null;
   myOffers: P2POffer[];
   creating: boolean;
   createError: string | null;
@@ -13,6 +16,9 @@ interface P2POffersState {
 const initialState: P2POffersState = {
   loading: false,
   error: null,
+  offers: [],
+  offersLoading: false,
+  offersError: null,
   myOffers: [],
   creating: false,
   createError: null,
@@ -26,6 +32,9 @@ const p2pOffersSlice = createSlice({
     clearP2POffersState(state) {
       state.loading = false;
       state.error = null;
+      state.offers = [];
+      state.offersLoading = false;
+      state.offersError = null;
       state.myOffers = [];
       state.creating = false;
       state.createError = null;
@@ -46,6 +55,19 @@ const p2pOffersSlice = createSlice({
       .addCase(fetchMyOffers.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to load P2P offers";
+      })
+      .addCase(fetchOffers.pending, (state) => {
+        state.offersLoading = true;
+        state.offersError = null;
+      })
+      .addCase(fetchOffers.fulfilled, (state, action: PayloadAction<P2POffer[]>) => {
+        state.offersLoading = false;
+        state.offersError = null;
+        state.offers = action.payload;
+      })
+      .addCase(fetchOffers.rejected, (state, action) => {
+        state.offersLoading = false;
+        state.offersError = action.payload || "Failed to load P2P offers";
       })
       .addCase(createOffer.pending, (state) => {
         state.creating = true;

@@ -1,13 +1,12 @@
-"use client";
+import { Suspense } from "react";
+import OrderPageClient from "./OrderPageClient";
 
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import P2POrderPage from "./P2POrderPage";
+export const dynamic = "force-dynamic";
 
-export default function OrderPage() {
-  // Optionally, you can use router or params for order id, etc.
-  // const router = useRouter();
-  // const { id } = useParams();
-  // ...
-  return <P2POrderPage />;
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <OrderPageClient />
+    </Suspense>
+  );
 }

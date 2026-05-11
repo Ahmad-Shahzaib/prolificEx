@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
@@ -14,8 +14,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { createOffer, fetchMyOffers } from "@/redux/thunk/p2pOffersThunk";
-
+import { createOffer, fetchMyOffers, fetchOffers, P2POffer } from "@/redux/thunk/p2pOffersThunk";
+import { fetchWallets } from "@/redux/thunk/walletThunk";
+import { fetchKycStatus } from "@/redux/thunk/kycThunk";
+import { Toaster } from "@/components/common/Toast";
+import { useToast } from "@/hooks/use-toast";
 const COINS = ["USDT", "BTC", "ETH", "BNB", "USDC"];
 const NETWORKS = ["TRC20", "ERC20", "BEP20"];
 const PAYMENT_METHODS = ["All", "Bank Transfer", "PayPal", "Wise", "Revolut"];
@@ -23,39 +26,33 @@ const PRICE_TYPES = ["fixed"];
 const FIAT_CURRENCIES = ["USD", "EUR", "GBP"];
 const RATINGS = ["All", "5 Stars", "4+ Stars", "3+ Stars"];
 
-const generateMerchants = () =>
-  Array.from({ length: 78 }, (_, i) => ({
-    id: i + 1,
-    name: "TraderMax",
-    rating: 5,
-    price: 48032.32 + (Math.random() - 0.5) * 200,
-    available: 2500,
-    coin: "USDT",
-    limitMin: 100,
-    limitMax: 2000,
-    paymentMethod: ["Bank Transfer", "PayPal", "Wise", "Revolut"][i % 4],
-    completionRate: 98 + Math.floor(Math.random() * 2),
-    orders: 1000 + Math.floor(Math.random() * 5000),
-  }));
-
-const ALL_MERCHANTS = generateMerchants();
 const PAGE_SIZE = 9;
 
 export default function P2PCryptoTable() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { myOffers, loading, error, creating, createError, createSuccessMessage } = useAppSelector(
-    (state) => state.p2pOffers
-  );
+  const { toasts, toast, dismiss } = useToast();
+  const {
+    offers,
+    offersLoading,
+    offersError,
+    myOffers,
+    loading,
+    error,
+    creating,
+    createError,
+    createSuccessMessage,
+  } = useAppSelector((state) => state.p2pOffers);
+
+  const { totalPortfolioUsd, loading: walletLoading } = useAppSelector((state) => state.wallet);
+  const kycStatus = useAppSelector((state) => state.kyc.status);
 
   const [tab, setTab] = useState<"buy" | "sell">("buy");
   const [coin, setCoin] = useState("USDT");
   const [amount, setAmount] = useState("");
-  const [rating, setRating] = useState("All");
   const [paymentFilter, setPaymentFilter] = useState("All");
   const [page, setPage] = useState(1);
   const [showCoinDropdown, setShowCoinDropdown] = useState(false);
-  const [showRatingDropdown, setShowRatingDropdown] = useState(false);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [network, setNetwork] = useState("TRC20");
@@ -71,34 +68,78 @@ export default function P2PCryptoTable() {
   const [accountNumber, setAccountNumber] = useState("");
   const [instructions, setInstructions] = useState("Send exact amount. Include order number in reference.");
 
+  // Refs for dropdown click-outside detection
+  const coinDropdownRef = useRef<HTMLDivElement>(null);
+  const filterDropdownRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
+    dispatch(fetchOffers({ page: 1, per_page: 20 }));
     dispatch(fetchMyOffers());
+    dispatch(fetchWallets());
+    dispatch(fetchKycStatus());
   }, [dispatch]);
 
-  const filtered = ALL_MERCHANTS.filter((m) => {
-    const matchRating =
-      rating === "All"
-        ? true
-        : rating === "5 Stars"
-        ? m.rating === 5
-        : rating === "4+ Stars"
-        ? m.rating >= 4
-        : m.rating >= 3;
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (coinDropdownRef.current && !coinDropdownRef.current.contains(event.target as Node)) {
+        setShowCoinDropdown(false);
+      }
+      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
+        setShowFilterDropdown(false);
+      }
+    };
 
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleBuyOffer = (offer: P2POffer) => {
+    // Check KYC status first
+    if (kycStatus !== 'approved') {
+      toast({
+        title: "KYC Verification Required",
+        description: "Please complete KYC verification before buying crypto. Visit the KYC page to get started.",
+        type: "error"
+      });
+      return;
+    }
+    
+    // Check if user has deposited any funds
+    if (totalPortfolioUsd === 0) {
+      toast({
+        title: "Deposit Required",
+        description: "Please deposit funds into your wallet before buying crypto. Visit the Deposit page to get started.",
+        type: "error"
+      });
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("selectedP2POffer", JSON.stringify(offer));
+    }
+    router.push(`/dashboard/p2p/order?selectedOfferId=${offer.id}`);
+  };
+
+  const filtered = offers.filter((offer: P2POffer) => {
     const matchPayment =
-      paymentFilter === "All" ? true : m.paymentMethod === paymentFilter;
+      paymentFilter === "All" ? true : offer.payment_method === paymentFilter;
 
+    const minLimit = Number(offer.min_order_limit);
+    const maxLimit = Number(offer.max_order_limit);
     const matchAmount =
       amount === ""
         ? true
-        : parseFloat(amount) >= m.limitMin && parseFloat(amount) <= m.limitMax;
+        : Number(amount) >= minLimit && Number(amount) <= maxLimit;
 
-    return matchRating && matchPayment && matchAmount;
+    return matchPayment && matchAmount;
   });
 
   const currentRows = tab === "buy" ? filtered : myOffers;
   const totalPages = Math.ceil(currentRows.length / PAGE_SIZE);
-  const paginatedMerchants = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const paginatedBuyOffers = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const paginatedOffers = myOffers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleSearch = () => {
@@ -106,7 +147,84 @@ export default function P2PCryptoTable() {
   };
 
   const handleCreateOffer = async () => {
-    if (!amount || !minOrderLimit || !maxOrderLimit || !pricePerCoin || !bankName || !accountName || !accountNumber) {
+    // Check KYC status first
+    if (kycStatus !== 'approved') {
+      toast({ 
+        title: "KYC Verification Required", 
+        description: "Please complete KYC verification before creating sell offers. Visit the KYC page to get started.", 
+        type: "error" 
+      });
+      return;
+    }
+    
+    // Validation
+    if (!amount || amount.trim() === "") {
+      toast({ title: "Amount is required", description: "Please enter the amount you want to sell", type: "error" });
+      return;
+    }
+
+    if (Number(amount) <= 0 || isNaN(Number(amount))) {
+      toast({ title: "Invalid amount", description: "Please enter a valid positive number for amount", type: "error" });
+      return;
+    }
+
+    if (!minOrderLimit || minOrderLimit.trim() === "") {
+      toast({ title: "Min order limit is required", description: "Please enter minimum order limit", type: "error" });
+      return;
+    }
+
+    if (Number(minOrderLimit) <= 0 || isNaN(Number(minOrderLimit))) {
+      toast({ title: "Invalid min order limit", description: "Please enter a valid positive number", type: "error" });
+      return;
+    }
+
+    if (!maxOrderLimit || maxOrderLimit.trim() === "") {
+      toast({ title: "Max order limit is required", description: "Please enter maximum order limit", type: "error" });
+      return;
+    }
+
+    if (Number(maxOrderLimit) <= 0 || isNaN(Number(maxOrderLimit))) {
+      toast({ title: "Invalid max order limit", description: "Please enter a valid positive number", type: "error" });
+      return;
+    }
+
+    if (Number(minOrderLimit) >= Number(maxOrderLimit)) {
+      toast({ title: "Invalid limits", description: "Min order limit must be less than max order limit", type: "error" });
+      return;
+    }
+
+    if (!pricePerCoin || pricePerCoin.trim() === "") {
+      toast({ title: "Price per coin is required", description: "Please enter price per coin", type: "error" });
+      return;
+    }
+
+    if (Number(pricePerCoin) <= 0 || isNaN(Number(pricePerCoin))) {
+      toast({ title: "Invalid price", description: "Please enter a valid positive number for price", type: "error" });
+      return;
+    }
+
+    if (!paymentWindow || paymentWindow.trim() === "") {
+      toast({ title: "Payment window is required", description: "Please enter payment window in minutes", type: "error" });
+      return;
+    }
+
+    if (Number(paymentWindow) <= 0 || isNaN(Number(paymentWindow))) {
+      toast({ title: "Invalid payment window", description: "Please enter a valid positive number", type: "error" });
+      return;
+    }
+
+    if (!bankName || bankName.trim() === "") {
+      toast({ title: "Bank name is required", description: "Please enter your bank name", type: "error" });
+      return;
+    }
+
+    if (!accountName || accountName.trim() === "") {
+      toast({ title: "Account name is required", description: "Please enter your account name", type: "error" });
+      return;
+    }
+
+    if (!accountNumber || accountNumber.trim() === "") {
+      toast({ title: "Account number is required", description: "Please enter your account number", type: "error" });
       return;
     }
 
@@ -130,6 +248,13 @@ export default function P2PCryptoTable() {
           instructions,
         })
       ).unwrap();
+      
+      toast({ 
+        title: "Offer created successfully!", 
+        description: "Your sell offer has been published and is now live", 
+        type: "success" 
+      });
+      
       setShowOfferModal(false);
       setAmount("");
       setMinOrderLimit("100");
@@ -140,14 +265,36 @@ export default function P2PCryptoTable() {
       setAccountNumber("");
       setInstructions("Send exact amount. Include order number in reference.");
       dispatch(fetchMyOffers());
-    } catch {
-      // Error is set in Redux state.
+    } catch (err: any) {
+      toast({ 
+        title: "Failed to create offer", 
+        description: err?.message || "An error occurred while creating your offer", 
+        type: "error" 
+      });
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0d0d14] text-white font-sans">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
+    <>
+      <Toaster toasts={toasts} onDismiss={dismiss} />
+      <div className="min-h-screen bg-[#0d0d14] text-white font-sans">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
+
+        {kycStatus !== 'approved' && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 flex gap-4 mb-6">
+            <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center flex-shrink-0">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-amber-500 font-medium">KYC Verification Required</p>
+              <p className="text-gray-400 text-sm mt-1">You must complete KYC verification before buying or selling crypto. Please visit the <a href="/dashboard/kyc" className="text-violet-400 hover:underline">KYC page</a> to verify your identity.</p>
+            </div>
+          </div>
+        )}
 
         {/* Buy / Sell Tabs */}
         <div className="flex gap-6 mb-6 border-b border-white/10 overflow-x-auto pb-1">
@@ -172,11 +319,10 @@ export default function P2PCryptoTable() {
         {/* Filters & Search Bar */}
         <div className="flex flex-col lg:flex-row gap-3 mb-6 bg-[#16161f] rounded-2xl border border-white/10 p-3">
           {/* Coin Picker */}
-          <div className="relative w-full lg:w-auto">
+          <div ref={coinDropdownRef} className="relative w-full lg:w-auto">
             <Button
               onClick={() => {
                 setShowCoinDropdown(!showCoinDropdown);
-                setShowRatingDropdown(false);
                 setShowFilterDropdown(false);
               }}
               className="w-full lg:w-auto flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-[#1e1e2e] hover:bg-[#25253a] text-sm font-medium"
@@ -214,7 +360,7 @@ export default function P2PCryptoTable() {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Enter Amount (USD)"
-            className="w-full lg:flex-1 bg-[#1e1e2e] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none placeholder:text-white/40"
+            className="w-full lg:flex-1 bg-[#1e1e2e] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none placeholder:text-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
 
           {/* Search Button */}
@@ -226,51 +372,12 @@ export default function P2PCryptoTable() {
             Search
           </button>
 
-          {/* Rating Filter */}
-          <div className="relative w-full lg:w-auto">
-            <button
-              onClick={() => {
-                setShowRatingDropdown(!showRatingDropdown);
-                setShowCoinDropdown(false);
-                setShowFilterDropdown(false);
-              }}
-              className="w-full lg:w-auto flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-[#1e1e2e] hover:bg-[#25253a] text-sm"
-            >
-              <div className="flex items-center gap-2">
-                <Star size={18} className="text-amber-400" />
-                <span>Rating</span>
-              </div>
-              <ChevronDown size={16} className="text-white/50" />
-            </button>
-
-            {showRatingDropdown && (
-              <div className="absolute z-50 top-full mt-2 right-0 w-full lg:w-44 bg-[#1e1e2e] border border-white/10 rounded-xl shadow-2xl overflow-hidden">
-                {RATINGS.map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => {
-                      setRating(r);
-                      setPage(1);
-                      setShowRatingDropdown(false);
-                    }}
-                    className={`w-full text-left px-4 py-3 text-sm hover:bg-violet-600/20 transition ${
-                      rating === r ? "text-violet-400 bg-violet-600/10" : "text-white/80"
-                    }`}
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
           {/* Payment Filter */}
-          <div className="relative w-full lg:w-auto">
+          <div ref={filterDropdownRef} className="relative w-full lg:w-auto">
             <button
               onClick={() => {
                 setShowFilterDropdown(!showFilterDropdown);
                 setShowCoinDropdown(false);
-                setShowRatingDropdown(false);
               }}
               className="w-full lg:w-auto flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-[#1e1e2e] hover:bg-[#25253a] text-sm"
             >
@@ -335,14 +442,14 @@ export default function P2PCryptoTable() {
               ) : error ? (
                 <div className="py-20 text-center text-red-400 text-sm">{error}</div>
               ) : (
-                paginatedOffers.map((offer) => (
+                paginatedOffers.map((offer: P2POffer) => (
                   <div
                     key={offer.id}
                     className="border-b border-white/5 last:border-none hover:bg-white/[0.02] transition-all"
                   >
                     <div className="hidden md:grid grid-cols-[2fr_1.1fr_1.1fr_1.1fr_1.4fr_1.1fr] items-center px-6 py-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border border-white/10 flex-shrink-0" />
+                        {/* <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border border-white/10 flex-shrink-0" /> */}
                         <div>
                           <p className="font-semibold text-white">{offer.coin} / {offer.network}</p>
                           <p className="text-white/60 text-sm">{offer.bank_name}</p>
@@ -416,110 +523,119 @@ export default function P2PCryptoTable() {
                 <span></span>
               </div>
 
-              {paginatedMerchants.length === 0 ? (
+              {offersLoading ? (
+                <div className="py-20 text-center text-white/40 text-sm">Loading buy offers…</div>
+              ) : offersError ? (
+                <div className="py-20 text-center text-red-400 text-sm">{offersError}</div>
+              ) : paginatedBuyOffers.length === 0 ? (
                 <div className="py-20 text-center text-white/40 text-sm">
                   No merchants found for your criteria.
                 </div>
               ) : (
-                paginatedMerchants.map((m) => (
-                  <div
-                    key={m.id}
-                    className="border-b border-white/5 last:border-none hover:bg-white/[0.02] transition-all"
-                  >
-                    {/* Desktop Row */}
-                    <div className="hidden md:grid grid-cols-[2fr_1.1fr_1.1fr_1.1fr_1.4fr_auto] items-center px-6 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border border-white/10 flex-shrink-0" />
-                        <div>
-                          <p className="font-semibold text-white group-hover:text-violet-300 transition">{m.name}</p>
-                          <div className="flex gap-0.5 mt-1">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star
-                                key={i}
-                                size={12}
-                                className={i < m.rating ? "fill-amber-400 text-amber-400" : "text-white/20"}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
+                paginatedBuyOffers.map((offer: P2POffer) => {
+                  const sellerName = offer.user?.full_name || offer.user?.username || "Merchant";
+                  const sellerRating = Math.round(Number(offer.rating) || 0);
 
-                      <span className="font-mono font-semibold">
-                        ${m.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                      </span>
-
-                      <span className="text-white/70">
-                        {m.available.toLocaleString()} {m.coin}
-                      </span>
-
-                      <span className="text-white/70">
-                        ${m.limitMin.toLocaleString()} – ${m.limitMax.toLocaleString()}
-                      </span>
-
-                      <span className="text-white/70">{m.paymentMethod}</span>
-
-                      <Button
-                        onClick={() => router.push("/dashboard/p2p/order")}
-                        className="px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 active:scale-95 text-sm font-semibold shadow-lg shadow-violet-900/30"
-                      >
-                        Buy
-                      </Button>
-                    </div>
-
-                    {/* Mobile Card */}
-                    <div className="md:hidden p-5 space-y-4">
-                      <div className="flex items-start justify-between">
+                  return (
+                    <div
+                      key={offer.id}
+                      className="border-b border-white/5 last:border-none hover:bg-white/[0.02] transition-all"
+                    >
+                      {/* Desktop Row */}
+                      <div className="hidden md:grid grid-cols-[2fr_1.1fr_1.1fr_1.1fr_1.4fr_auto] items-center px-6 py-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border border-white/10" />
+                          {/* <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border border-white/10 flex-shrink-0" /> */}
                           <div>
-                            <p className="font-semibold">{m.name}</p>
+                            <p className="font-semibold text-white group-hover:text-violet-300 transition">{sellerName}</p>
                             <div className="flex gap-0.5 mt-1">
                               {Array.from({ length: 5 }).map((_, i) => (
                                 <Star
                                   key={i}
-                                  size={13}
-                                  className={i < m.rating ? "fill-amber-400 text-amber-400" : "text-white/20"}
+                                  size={12}
+                                  className={i < sellerRating ? "fill-amber-400 text-amber-400" : "text-white/20"}
                                 />
                               ))}
                             </div>
                           </div>
                         </div>
 
-                        <div className="text-right">
-                          <p className="font-mono text-lg font-semibold text-emerald-400">
-                            ${m.price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                          </p>
-                          <p className="text-xs text-white/50">per USDT</p>
-                        </div>
+                        <span className="font-mono font-semibold">
+                          ${Number(offer.price_per_coin).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                        </span>
+
+                        <span className="text-white/70">
+                          {Number(offer.available_amount).toLocaleString()} {offer.coin}
+                        </span>
+
+                        <span className="text-white/70">
+                          ${Number(offer.min_order_limit).toLocaleString()} – ${Number(offer.max_order_limit).toLocaleString()}
+                        </span>
+
+                        <span className="text-white/70">{offer.payment_method}</span>
+
+                        <Button
+                          onClick={() => handleBuyOffer(offer)}
+                          className="px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 active:scale-95 text-sm font-semibold shadow-lg shadow-violet-900/30"
+                        >
+                          Buy
+                        </Button>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4 text-sm">
+                      {/* Mobile Card */}
+                      <div className="md:hidden p-5 space-y-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border border-white/10" />
+                            <div>
+                              <p className="font-semibold">{sellerName}</p>
+                              <div className="flex gap-0.5 mt-1">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    size={13}
+                                    className={i < sellerRating ? "fill-amber-400 text-amber-400" : "text-white/20"}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <p className="font-mono text-lg font-semibold text-emerald-400">
+                              ${Number(offer.price_per_coin).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                            </p>
+                            <p className="text-xs text-white/50">per {offer.coin}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-white/40 text-xs">Available</p>
+                            <p className="font-medium">{Number(offer.available_amount).toLocaleString()} {offer.coin}</p>
+                          </div>
+                          <div>
+                            <p className="text-white/40 text-xs">Limits</p>
+                            <p className="font-medium">
+                              ${Number(offer.min_order_limit).toLocaleString()} – ${Number(offer.max_order_limit).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+
                         <div>
-                          <p className="text-white/40 text-xs">Available</p>
-                          <p className="font-medium">{m.available.toLocaleString()} {m.coin}</p>
+                          <p className="text-white/40 text-xs mb-1">Payment Method</p>
+                          <p className="text-white/80">{offer.payment_method}</p>
                         </div>
-                        <div>
-                          <p className="text-white/40 text-xs">Limits</p>
-                          <p className="font-medium">
-                            ${m.limitMin} – ${m.limitMax}
-                          </p>
-                        </div>
-                      </div>
 
-                      <div>
-                        <p className="text-white/40 text-xs mb-1">Payment Methods</p>
-                        <p className="text-white/80">{m.paymentMethod}</p>
+                        <Button
+                          onClick={() => handleBuyOffer(offer)}
+                          className="w-full py-3.5 rounded-2xl bg-violet-600 hover:bg-violet-500 text-base font-semibold active:scale-[0.985]"
+                        >
+                          Buy Now
+                        </Button>
                       </div>
-
-                      <Button
-                        onClick={() => router.push("/dashboard/p2p/order")}
-                        className="w-full py-3.5 rounded-2xl bg-violet-600 hover:bg-violet-500 text-base font-semibold active:scale-[0.985]"
-                      >
-                        Buy Now
-                      </Button>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </>
           )}
@@ -579,9 +695,6 @@ export default function P2PCryptoTable() {
               }}
               style={{ scrollbarWidth: "thin" }}
             >
-              {createError && <div className="rounded-2xl bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-200">{createError}</div>}
-              {createSuccessMessage && <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-sm text-emerald-200">{createSuccessMessage}</div>}
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label className="space-y-2 text-sm text-white/80">
                   Coin
@@ -794,6 +907,7 @@ export default function P2PCryptoTable() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
