@@ -14,14 +14,21 @@ export interface UserPayload {
   status: string;
 }
 
+export interface LoginSuccessData {
+  token: string;
+  token_type: string;
+  user: UserPayload;
+}
+
+export interface LoginTwoFactorData {
+  requires_2fa: true;
+  pending_token: string;
+}
+
 export interface LoginResponse {
   success: boolean;
   message: string;
-  data: {
-    token: string;
-    token_type: string;
-    user: UserPayload;
-  };
+  data: LoginSuccessData | LoginTwoFactorData;
 }
 
 export const loginUser = createAsyncThunk<

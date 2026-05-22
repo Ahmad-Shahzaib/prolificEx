@@ -7,6 +7,7 @@ export interface DepositRecent {
   date: string;
   type: string;
   status: "Complete" | "Canceled" | "Finished" | "Pending" | string;
+  tx_hash?: string;
 }
 
 export interface DepositInfoData {

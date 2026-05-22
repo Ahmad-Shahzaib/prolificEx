@@ -1,6 +1,27 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { PageShell } from "@/components/dashboard/PageShell";
 import { Card, CardContent } from "@/components/common/Card";
 import { Button } from "@/components/common/Button";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { submitSupportTicket } from "@/redux/thunk/supportThunk";
+import { resetSupportState } from "@/redux/slices/supportSlice";
+
+const CATEGORIES = [
+  { value: "wallet", label: "Wallet" },
+  { value: "trading", label: "Trading" },
+  { value: "account", label: "Account" },
+  { value: "security", label: "Security" },
+  { value: "other", label: "Other" },
+];
+
+const PRIORITIES = [
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+  { value: "urgent", label: "Urgent" },
+];
 
 const faqItems = [
   { q: "How do I deposit funds?", a: "Go to the Deposit page and select your preferred cryptocurrency. Follow the instructions to complete your deposit." },
@@ -9,28 +30,131 @@ const faqItems = [
   { q: "How do I complete KYC?", a: "Navigate to KYC Verification in the sidebar and follow the step-by-step verification process." },
 ];
 
+const selectFieldClass =
+  "w-full h-10 bg-[#252630] border border-white/10 rounded-lg px-4 text-sm text-white focus:outline-none focus:border-violet-500/50 [font-family:'Inter',Helvetica] appearance-none cursor-pointer";
+
 export default function SupportPage() {
+  const dispatch = useAppDispatch();
+  const { loading, error, success, message } = useAppSelector((state) => state.support);
+
+  const [subject, setSubject] = useState("");
+  const [ticketMessage, setTicketMessage] = useState("");
+  const [category, setCategory] = useState("wallet");
+  const [priority, setPriority] = useState("high");
+
+  useEffect(() => {
+    if (success) {
+      setSubject("");
+      setTicketMessage("");
+      setCategory("wallet");
+      setPriority("high");
+    }
+  }, [success]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!subject.trim() || !ticketMessage.trim()) return;
+    dispatch(submitSupportTicket({ subject, message: ticketMessage, category, priority }));
+  };
+
+  const handleReset = () => {
+    dispatch(resetSupportState());
+  };
+
   return (
     <PageShell title="Support" description="Get help with your account and trading.">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="bg-[#1a1b23] border border-white/5 rounded-2xl">
           <CardContent className="p-6">
             <h3 className="text-white text-base font-bold [font-family:'Inter',Helvetica] mb-4">Contact Support</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="text-[#6b7280] text-xs font-medium [font-family:'Inter',Helvetica] mb-1.5 block">Subject</label>
-                <input type="text" placeholder="What do you need help with?" className="w-full h-10 bg-[#252630] border border-white/10 rounded-lg px-4 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-violet-500/50 [font-family:'Inter',Helvetica]" />
+
+            {success ? (
+              <div className="flex flex-col items-center gap-4 py-6">
+                <div className="w-12 h-12 rounded-full bg-violet-500/20 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p className="text-white text-sm font-semibold [font-family:'Inter',Helvetica] text-center">
+                  {message || "Ticket submitted successfully!"}
+                </p>
+                <p className="text-[#6b7280] text-xs [font-family:'Inter',Helvetica] text-center">
+                  Our support team will get back to you shortly.
+                </p>
+                <Button variant="primary" size="md" className="rounded-lg font-semibold mt-2" onClick={handleReset}>
+                  Submit Another Ticket
+                </Button>
               </div>
-              <div>
-                <label className="text-[#6b7280] text-xs font-medium [font-family:'Inter',Helvetica] mb-1.5 block">Message</label>
-                <textarea rows={4} placeholder="Describe your issue..." className="w-full bg-[#252630] border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-violet-500/50 [font-family:'Inter',Helvetica] resize-none" />
-              </div>
-              <Button variant="primary" size="md" className="w-full rounded-lg font-semibold">
-                Submit Ticket
-              </Button>
-            </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="text-[#6b7280] text-xs font-medium [font-family:'Inter',Helvetica] mb-1.5 block">Subject</label>
+                  <input
+                    type="text"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    placeholder="What do you need help with?"
+                    required
+                    className="w-full h-10 bg-[#252630] border border-white/10 rounded-lg px-4 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-violet-500/50 [font-family:'Inter',Helvetica]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[#6b7280] text-xs font-medium [font-family:'Inter',Helvetica] mb-1.5 block">Category</label>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className={selectFieldClass}
+                    >
+                      {CATEGORIES.map((c) => (
+                        <option key={c.value} value={c.value} className="bg-[#1a1b23]">{c.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[#6b7280] text-xs font-medium [font-family:'Inter',Helvetica] mb-1.5 block">Priority</label>
+                    <select
+                      value={priority}
+                      onChange={(e) => setPriority(e.target.value)}
+                      className={selectFieldClass}
+                    >
+                      {PRIORITIES.map((p) => (
+                        <option key={p.value} value={p.value} className="bg-[#1a1b23]">{p.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[#6b7280] text-xs font-medium [font-family:'Inter',Helvetica] mb-1.5 block">Message</label>
+                  <textarea
+                    rows={4}
+                    value={ticketMessage}
+                    onChange={(e) => setTicketMessage(e.target.value)}
+                    placeholder="Describe your issue..."
+                    required
+                    className="w-full bg-[#252630] border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-[#6b7280] focus:outline-none focus:border-violet-500/50 [font-family:'Inter',Helvetica] resize-none"
+                  />
+                </div>
+
+                {error && (
+                  <p className="text-red-400 text-xs [font-family:'Inter',Helvetica]">{error}</p>
+                )}
+
+                <Button
+                  variant="primary"
+                  size="md"
+                  className="w-full rounded-lg font-semibold"
+                  disabled={loading}
+                >
+                  {loading ? "Submitting..." : "Submit Ticket"}
+                </Button>
+              </form>
+            )}
           </CardContent>
         </Card>
+
         <Card className="bg-[#1a1b23] border border-white/5 rounded-2xl">
           <CardContent className="p-6">
             <h3 className="text-white text-base font-bold [font-family:'Inter',Helvetica] mb-4">FAQ</h3>

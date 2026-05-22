@@ -5,6 +5,8 @@ import { PortfolioOverview } from "@/components/dashboard/PortfolioOverview";
 import { ActiveOrders } from "@/components/dashboard/ActiveOrders";
 import { MyPortfolio } from "@/components/dashboard/MyPortfolio";
 import { PriceChart } from "@/components/dashboard/PriceChart";
+import { PriceWallet } from "@/components/dashboard/PriceWallet";
+import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
 import { Transactions } from "@/components/dashboard/Transactions";
 
 export default function DashboardPage() {
@@ -27,12 +29,16 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 gap-6">
+        <DashboardOverview />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <PriceChart />
         </div>
         <div>
-          <Transactions />
+          <PriceWallet />
         </div>
       </div>
     </div>
