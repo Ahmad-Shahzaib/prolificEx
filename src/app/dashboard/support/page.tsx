@@ -5,7 +5,7 @@ import { PageShell } from "@/components/dashboard/PageShell";
 import { Card, CardContent } from "@/components/common/Card";
 import { Button } from "@/components/common/Button";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-// import { submitSupportTicket } from "@/redux/thunk/supportThunk";
+import { submitSupportTicket } from "@/redux/thunk/supportThunk";
 import { resetSupportState } from "@/redux/slices/supportSlice";
 
 const CATEGORIES = [
@@ -54,7 +54,7 @@ export default function SupportPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!subject.trim() || !ticketMessage.trim()) return;
-    // dispatch(submitSupportTicket({ subject, message: ticketMessage, category, priority }));
+    dispatch(submitSupportTicket({ subject, message: ticketMessage, category, priority }));
   };
 
   const handleReset = () => {
