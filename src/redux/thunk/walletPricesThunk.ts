@@ -31,8 +31,17 @@ export interface WalletPricesResponse {
   };
 }
 
+export interface NormalizedWalletPricesResponse {
+  success: boolean;
+  message: string;
+  data: {
+    prices: Record<string, WalletPriceItem>;
+    updated_at?: string | null;
+  };
+}
+
 export const fetchWalletPrices = createAsyncThunk<
-  WalletPricesResponse,
+  NormalizedWalletPricesResponse,
   void,
   { rejectValue: string }
 >(
@@ -66,7 +75,7 @@ export const fetchWalletPrices = createAsyncThunk<
       };
 
       const normalizedPrices = Object.entries(data.data.prices || {}).reduce(
-        (acc, [key, item]: [string, RawWalletPriceValue | number]) => {
+        (acc, [key, item]) => {
           if (typeof item === "number") {
             acc[key] = {
               coin: key,
@@ -79,18 +88,19 @@ export const fetchWalletPrices = createAsyncThunk<
               last_updated: data.data.updated_at || "",
             };
           } else {
+            const rawItem = item as RawWalletPriceValue;
             acc[key] = {
-              coin: item.coin || key,
-              coingecko_id: item.coingecko_id || key.toLowerCase(),
-              name: item.name || key,
-              symbol: item.symbol || key,
-              price_usd: parseNumericValue(item.price_usd),
-              price_change_percentage_24h: parseNumericValue(item.price_change_percentage_24h),
+              coin: rawItem.coin || key,
+              coingecko_id: rawItem.coingecko_id || key.toLowerCase(),
+              name: rawItem.name || key,
+              symbol: rawItem.symbol || key,
+              price_usd: parseNumericValue(rawItem.price_usd),
+              price_change_percentage_24h: parseNumericValue(rawItem.price_change_percentage_24h),
               market_cap_usd:
-                item.market_cap_usd === null || item.market_cap_usd === undefined
+                rawItem.market_cap_usd === null || rawItem.market_cap_usd === undefined
                   ? null
-                  : parseNumericValue(item.market_cap_usd) || null,
-              last_updated: item.last_updated || data.data.updated_at || "",
+                  : parseNumericValue(rawItem.market_cap_usd) || null,
+              last_updated: rawItem.last_updated || data.data.updated_at || "",
             };
           }
           return acc;
@@ -104,7 +114,7 @@ export const fetchWalletPrices = createAsyncThunk<
           ...data.data,
           prices: normalizedPrices,
         },
-      } as WalletPricesResponse;
+      } as NormalizedWalletPricesResponse;
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while fetching wallet prices");
     }

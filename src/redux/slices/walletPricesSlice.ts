@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { fetchWalletPrices, WalletPricesResponse, WalletPriceItem } from "../thunk/walletPricesThunk";
+import { fetchWalletPrices, NormalizedWalletPricesResponse, WalletPriceItem } from "../thunk/walletPricesThunk";
 
 interface WalletPricesState {
   loading: boolean;
@@ -38,12 +38,12 @@ const walletPricesSlice = createSlice({
       })
       .addCase(
         fetchWalletPrices.fulfilled,
-        (state, action: PayloadAction<WalletPricesResponse>) => {
+        (state, action: PayloadAction<NormalizedWalletPricesResponse>) => {
           state.loading = false;
           state.error = null;
           state.message = action.payload.message;
           state.prices = action.payload.data.prices;
-          state.updatedAt = action.payload.data.updated_at;
+          state.updatedAt = action.payload.data.updated_at ?? null;
         }
       )
       .addCase(fetchWalletPrices.rejected, (state, action) => {

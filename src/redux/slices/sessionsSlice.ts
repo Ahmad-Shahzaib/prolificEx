@@ -56,17 +56,14 @@ const sessionsSlice = createSlice({
         state.revokeLoadingId = action.meta.arg.id;
         state.revokeError = null;
       })
-      .addCase(
-        revokeSession.fulfilled,
-        (state, action: PayloadAction<RevokeSessionResponse>) => {
-          state.revokeLoadingId = null;
-          state.revokeError = null;
-          if (action.meta.arg?.id != null) {
-            state.sessions = state.sessions.filter((session) => session.id !== action.meta.arg.id);
-          }
-          state.message = action.payload.message;
+      .addCase(revokeSession.fulfilled, (state, action) => {
+        state.revokeLoadingId = null;
+        state.revokeError = null;
+        if (action.meta.arg?.id != null) {
+          state.sessions = state.sessions.filter((session) => session.id !== action.meta.arg.id);
         }
-      )
+        state.message = action.payload.message;
+      })
       .addCase(revokeSession.rejected, (state, action) => {
         state.revokeLoadingId = null;
         state.revokeError = action.payload || "Failed to revoke session";
