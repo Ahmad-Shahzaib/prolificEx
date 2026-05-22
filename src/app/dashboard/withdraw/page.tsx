@@ -2,7 +2,7 @@
 import { FormEvent, useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { withdrawThunk, WithdrawPayload } from "@/redux/thunk/withdrawThunk";
+import { withdrawThunk, WithdrawPayload, WithdrawResponse } from "@/redux/thunk/withdrawThunk";
 import { resetWithdrawState } from "@/redux/slices/withdrawSlice";
 import { fetchKycStatus } from "@/redux/thunk/kycThunk";
 import { fetchWallets } from "@/redux/thunk/walletThunk";
@@ -80,6 +80,8 @@ function WithdrawContent() {
   const [walletAddress, setWalletAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [authCode, setAuthCode] = useState("");
+  const [lastWithdrawal, setLastWithdrawal] = useState<WithdrawResponse["data"] | null>(null);
+  const [copiedTxId, setCopiedTxId] = useState(false);
 
   const feeAmount = 1;
   const receiveAmount = amount ? Math.max(0, Number(amount) - feeAmount) : 0;
@@ -102,6 +104,7 @@ function WithdrawContent() {
 
   useEffect(() => {
     if (withdrawState.success && withdrawState.message) {
+      if (withdrawState.data) setLastWithdrawal(withdrawState.data);
       toast({
         title: "Withdrawal Successful",
         description: withdrawState.message,
@@ -215,15 +218,21 @@ function WithdrawContent() {
                 }}
                 className="w-full bg-[#1c1d26] border border-white/10 rounded-xl px-4 py-3 pr-10 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-violet-500/50 appearance-none"
               >
-                {withdrawOptions.map((option) => (
-                  <option
-                    key={`${option.coin}-${option.network}`}
-                    value={`${option.coin}|${option.network}`}
-                    className="bg-[#1c1d26] text-white"
-                  >
-                    {option.label}
-                  </option>
-                ))}
+                {withdrawOptions.map((option) => {
+                  const wallet = wallets.find(
+                    (w) => w.coin === option.coin && w.network === option.network
+                  );
+                  const balance = wallet ? parseFloat(wallet.available_balance).toFixed(6) : "0.000000";
+                  return (
+                    <option
+                      key={`${option.coin}-${option.network}`}
+                      value={`${option.coin}|${option.network}`}
+                      className="bg-[#1c1d26] text-white"
+                    >
+                      {option.label}  Available Balance: {balance}
+                    </option>
+                  );
+                })}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white/50">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -298,46 +307,73 @@ function WithdrawContent() {
           </form>
         </div>
 
-        {/* <div className="bg-[#13141a] border border-white/[0.07] rounded-2xl p-5 sm:p-6">
-          <p className="text-white font-semibold text-base mb-5">Latest Withdrawal</p>
-          {withdrawState.data ? (
+        {lastWithdrawal && (
+          <div className="bg-[#13141a] border border-white/[0.07] rounded-2xl p-5 sm:p-6">
+            <p className="text-white font-semibold text-base mb-5">Latest Withdrawal</p>
             <div className="bg-[#1c1d26] rounded-xl p-4 border border-white/[0.05] space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <CoinIcon coin={withdrawState.data.coin} />
+                  <CoinIcon coin={lastWithdrawal.coin} />
                   <div>
-                    <p className="text-white font-medium">{COIN_NAMES[withdrawState.data.coin] ?? withdrawState.data.coin}</p>
-                    <p className="text-white/50 text-xs">Transaction ID: {withdrawState.data.transaction_id}</p>
+                    <p className="text-white font-medium">{COIN_NAMES[lastWithdrawal.coin] ?? lastWithdrawal.coin}</p>
+                    <p className="text-white/50 text-xs">Internal ID: #{lastWithdrawal.transaction_id}</p>
                   </div>
                 </div>
-                <span className={`px-3 py-1 rounded-md text-xs font-medium ${statusStyle[withdrawState.data.status.toLowerCase()] || statusStyle.pending}`}>
-                  {withdrawState.data.status}
+                <span className={`px-3 py-1 rounded-md text-xs font-medium ${statusStyle[lastWithdrawal.status.toLowerCase()] ?? statusStyle.pending}`}>
+                  {lastWithdrawal.status}
                 </span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-white/40 text-xs">Amount</p>
-                  <p className="text-white font-medium">{withdrawState.data.amount} {withdrawState.data.coin}</p>
+                  <p className="text-white font-medium">{lastWithdrawal.amount} {lastWithdrawal.coin}</p>
                 </div>
                 <div>
                   <p className="text-white/40 text-xs">Fee</p>
-                  <p className="text-white/50">{withdrawState.data.fee} {withdrawState.data.coin}</p>
+                  <p className="text-white/50">{lastWithdrawal.fee} {lastWithdrawal.coin}</p>
                 </div>
                 <div>
                   <p className="text-white/40 text-xs">Network</p>
-                  <p className="text-white/70">{withdrawState.data.network}</p>
+                  <p className="text-white/70">{lastWithdrawal.network}</p>
                 </div>
                 <div>
-                  <p className="text-white/40 text-xs">Address</p>
-                  <p className="text-white/70 break-all">{withdrawState.data.address}</p>
+                  <p className="text-white/40 text-xs">Recipient Address</p>
+                  <p className="text-white/70 break-all font-mono text-xs">{lastWithdrawal.address}</p>
                 </div>
+                {lastWithdrawal.tx_hash && (
+                  <div className="col-span-1 md:col-span-2">
+                    <p className="text-white/40 text-xs mb-1">Transaction Hash</p>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs text-white/70 break-all">{lastWithdrawal.tx_hash}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard?.writeText(lastWithdrawal.tx_hash!);
+                          setCopiedTxId(true);
+                          setTimeout(() => setCopiedTxId(false), 1800);
+                        }}
+                        className="text-white/30 hover:text-violet-400 transition-colors flex-shrink-0"
+                        title="Copy transaction hash"
+                      >
+                        {copiedTxId ? (
+                          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#6ee7b7" strokeWidth={2.5}>
+                            <path d="M20 6L9 17l-5-5" />
+                          </svg>
+                        ) : (
+                          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          ) : (
-            <p className="text-white/40">No withdrawal history yet.</p>
-          )}
-        </div> */}
+          </div>
+        )}
       </div>
       <Toaster toasts={toasts} onDismiss={dismiss} />
     </PageShell>

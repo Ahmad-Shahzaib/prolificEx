@@ -35,7 +35,13 @@ export default function LoginPage() {
     try {
       const resultAction = await dispatch(loginUser({ identifier, password }));
       if (loginUser.fulfilled.match(resultAction)) {
-        // success will be handled by isAuthenticated effect
+        const data = resultAction.payload.data as { requires_2fa?: boolean };
+        if (data?.requires_2fa) {
+          // Hard navigation so sessionStorage is read fresh on the OTP page
+          window.location.href = "/login/otp";
+          return;
+        }
+        // Normal login — isAuthenticated effect handles the redirect
       }
     } catch {
       // thunk sets error state automatically

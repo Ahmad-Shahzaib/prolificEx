@@ -73,6 +73,36 @@ const statusStyle: Record<string, string> = {
   Pending: "bg-amber-500/20 text-amber-400",
 };
 
+const truncateHash = (hash: string) =>
+  hash.length > 16 ? `${hash.slice(0, 8)}…${hash.slice(-8)}` : hash;
+
+const TxHashCell = ({ hash }: { hash: string }) => {
+  const [copiedHash, setCopiedHash] = useState(false);
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="font-mono text-xs text-white/60">{truncateHash(hash)}</span>
+      <button
+        type="button"
+        onClick={() => {
+          navigator.clipboard?.writeText(hash);
+          setCopiedHash(true);
+          setTimeout(() => setCopiedHash(false), 1800);
+        }}
+        className="text-white/30 hover:text-violet-400 transition-colors"
+        title="Copy transaction hash"
+      >
+        {copiedHash ? (
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#6ee7b7" strokeWidth={2.5}>
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+        ) : (
+          <CopyIcon />
+        )}
+      </button>
+    </div>
+  );
+};
+
 const QRCode = ({ qrData }: { qrData?: string }) => {
   if (!qrData) {
     return (
@@ -266,6 +296,7 @@ function DepositContent() {
                       <th className="text-left font-normal pb-4 pr-6">Amount</th>
                       <th className="text-left font-normal pb-4 pr-6">Date</th>
                       <th className="text-left font-normal pb-4 pr-6">Types</th>
+                      <th className="text-left font-normal pb-4 pr-6">Tx Hash</th>
                       <th className="text-left font-normal pb-4">Status</th>
                     </tr>
                   </thead>
@@ -282,6 +313,13 @@ function DepositContent() {
                         <td className="py-4 pr-6 text-white font-medium">{d.amount}</td>
                         <td className="py-4 pr-6 text-white/50">{d.date}</td>
                         <td className="py-4 pr-6 text-white/50">{d.type}</td>
+                        <td className="py-4 pr-6">
+                          {d.tx_hash ? (
+                            <TxHashCell hash={d.tx_hash} />
+                          ) : (
+                            <span className="text-white/20 text-xs">—</span>
+                          )}
+                        </td>
                         <td className="py-4">
                           <span className={`px-3 py-1 rounded-md text-xs font-medium ${statusStyle[d.status]}`}>
                             {d.status}
@@ -321,6 +359,14 @@ function DepositContent() {
                       <div className="col-span-2">
                         <p className="text-white/40 text-xs">Type</p>
                         <p className="text-white/70">{d.type}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-white/40 text-xs mb-1">Tx Hash</p>
+                        {d.tx_hash ? (
+                          <TxHashCell hash={d.tx_hash} />
+                        ) : (
+                          <p className="text-white/20 text-xs">—</p>
+                        )}
                       </div>
                     </div>
                   </div>

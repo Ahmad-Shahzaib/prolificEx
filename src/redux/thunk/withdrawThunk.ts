@@ -13,6 +13,7 @@ export interface WithdrawResponse {
   message: string;
   data: {
     transaction_id: number;
+    tx_hash?: string;
     amount: string;
     fee: string;
     coin: string;

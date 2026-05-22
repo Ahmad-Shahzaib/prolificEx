@@ -60,6 +60,26 @@ export default function P2POrderPage({ selectedOffer }: P2POrderPageProps) {
     currentOrder?.offer_id !== selectedOffer?.id &&
     currentOrder?.status !== "active";
 
+  // Client-side validation for amount
+  const amountNum = parseFloat(amount);
+  const availableCryptoAmount = selectedOffer ? Number(selectedOffer.available_amount) : 0;
+  const pricePerCoin = selectedOffer ? Number(selectedOffer.price_per_coin) : 1;
+  const maxAvailableInUSD = availableCryptoAmount * pricePerCoin;
+  const minLimit = selectedOffer ? Number(selectedOffer.min_order_limit) : 0;
+  const maxLimit = selectedOffer ? Number(selectedOffer.max_order_limit) : Infinity;
+
+  const amountValidationError = amount.trim() && selectedOffer
+    ? isNaN(amountNum) || amountNum <= 0
+      ? "Please enter a valid amount"
+      : amountNum < minLimit
+      ? `Minimum order amount is $${minLimit.toLocaleString()}`
+      : amountNum > maxLimit
+      ? `Maximum order amount is $${maxLimit.toLocaleString()}`
+      : amountNum > maxAvailableInUSD
+      ? `Cannot create order because only ${availableCryptoAmount.toLocaleString()} ${selectedOffer.coin} is available on this offer.`
+      : ""
+    : "";
+
   // Clear Redux order+messages when the user switches to a different offer
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -108,7 +128,8 @@ export default function P2POrderPage({ selectedOffer }: P2POrderPageProps) {
     Boolean(amount.trim()) &&
     !isNaN(parseFloat(amount)) &&
     Number(amount) > 0 &&
-    !hasBlockedOrder;
+    !hasBlockedOrder &&
+    !amountValidationError;
 
   const initiateOrder = () => {
     if (!selectedOffer || !canInitiateOrder) return;
@@ -312,6 +333,11 @@ export default function P2POrderPage({ selectedOffer }: P2POrderPageProps) {
                 {cryptoAmount} {selectedCurrency}
               </span>
             </div>
+            {amountValidationError && (
+              <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-xs text-red-200">
+                {amountValidationError}
+              </div>
+            )}
           </div>
 
           {/* Send Payment Card */}

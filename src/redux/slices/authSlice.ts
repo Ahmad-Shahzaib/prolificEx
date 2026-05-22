@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { loginUser, LoginResponse } from "../thunk/loginThunk";
+import { verifyTwoFactorLogin } from "../thunk/verifyTwoFactorThunk";
 import { logoutUser, LogoutResponse } from "../thunk/logoutThunk";
 
 export interface UserPayload {
@@ -19,6 +20,8 @@ interface AuthState {
   user: UserPayload | null;
   isAuthenticated: boolean;
   message: string | null;
+  requires2fa: boolean;
+  pending2faToken: string | null;
 }
 
 const getInitialToken = () => {
@@ -42,6 +45,20 @@ const getInitialTokenType = () => {
   return localStorage.getItem("authTokenType");
 };
 
+const getInitialPendingTwoFactorToken = () => {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem("pending2faToken");
+};
+
+const persistPendingTwoFactorToken = (token: string | null) => {
+  if (typeof window === "undefined") return;
+  if (token) {
+    sessionStorage.setItem("pending2faToken", token);
+  } else {
+    sessionStorage.removeItem("pending2faToken");
+  }
+};
+
 const initialState: AuthState = {
   loading: false,
   error: null,
@@ -50,6 +67,8 @@ const initialState: AuthState = {
   user: getInitialUser(),
   isAuthenticated: !!getInitialToken(),
   message: null,
+  requires2fa: !!getInitialPendingTwoFactorToken(),
+  pending2faToken: getInitialPendingTwoFactorToken(),
 };
 
 const clearPersistedStorage = () => {
@@ -71,10 +90,17 @@ const authSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
       state.message = null;
+      state.requires2fa = false;
+      state.pending2faToken = null;
       clearPersistedStorage();
     },
     resetAuthError(state) {
       state.error = null;
+    },
+    clearPendingTwoFactorLogin(state) {
+      state.requires2fa = false;
+      state.pending2faToken = null;
+      persistPendingTwoFactorToken(null);
     },
   },
   extraReducers: (builder) => {
@@ -83,25 +109,81 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
         state.message = null;
+        state.requires2fa = false;
+        state.pending2faToken = null;
+        persistPendingTwoFactorToken(null);
       })
       .addCase(loginUser.fulfilled, (state, action: PayloadAction<LoginResponse>) => {
         state.loading = false;
         state.error = null;
-        state.token = action.payload.data.token;
-        state.token_type = action.payload.data.token_type;
-        state.user = action.payload.data.user;
+
+        if ("requires_2fa" in action.payload.data && action.payload.data.requires_2fa) {
+          state.requires2fa = true;
+          state.pending2faToken = action.payload.data.pending_token;
+          state.isAuthenticated = false;
+          state.token = null;
+          state.token_type = null;
+          state.user = null;
+          state.message = action.payload.message;
+          persistPendingTwoFactorToken(action.payload.data.pending_token);
+          return;
+        }
+
+        const successData = action.payload.data as {
+          token: string;
+          token_type: string;
+          user: UserPayload;
+        };
+
+        state.token = successData.token;
+        state.token_type = successData.token_type;
+        state.user = successData.user;
         state.isAuthenticated = true;
         state.message = action.payload.message;
+        state.requires2fa = false;
+        state.pending2faToken = null;
+        persistPendingTwoFactorToken(null);
+
         if (typeof window !== "undefined") {
-          localStorage.setItem("authToken", action.payload.data.token);
-          localStorage.setItem("authTokenType", action.payload.data.token_type);
-          localStorage.setItem("authUser", JSON.stringify(action.payload.data.user));
+          localStorage.setItem("authToken", successData.token);
+          localStorage.setItem("authTokenType", successData.token_type);
+          localStorage.setItem("authUser", JSON.stringify(successData.user));
         }
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Login failed";
         state.isAuthenticated = false;
+        state.requires2fa = false;
+        state.pending2faToken = null;
+        persistPendingTwoFactorToken(null);
+      })
+      .addCase(verifyTwoFactorLogin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.message = null;
+      })
+      .addCase(verifyTwoFactorLogin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+        state.requires2fa = false;
+        state.pending2faToken = null;
+        persistPendingTwoFactorToken(null);
+        state.token = action.payload.data.token;
+        state.token_type = action.payload.data.token_type;
+        state.user = action.payload.data.user;
+        state.isAuthenticated = true;
+        state.message = action.payload.message;
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem("authToken", action.payload.data.token);
+          localStorage.setItem("authTokenType", action.payload.data.token_type);
+          localStorage.setItem("authUser", JSON.stringify(action.payload.data.user));
+        }
+      })
+      .addCase(verifyTwoFactorLogin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Two-factor verification failed";
       })
       .addCase(logoutUser.pending, (state) => {
         state.loading = true;
@@ -116,6 +198,8 @@ const authSlice = createSlice({
         state.user = null;
         state.isAuthenticated = false;
         state.message = action.payload.message;
+        state.requires2fa = false;
+        state.pending2faToken = null;
         clearPersistedStorage();
       })
       .addCase(logoutUser.rejected, (state, action) => {
@@ -125,5 +209,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, resetAuthError } = authSlice.actions;
+export const { logout, resetAuthError, clearPendingTwoFactorLogin } = authSlice.actions;
 export default authSlice.reducer;

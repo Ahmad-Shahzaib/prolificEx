@@ -2,8 +2,10 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { fetchWallets } from "@/redux/thunk/walletThunk";
+import { convertWallet, fetchWallets } from "@/redux/thunk/walletThunk";
 import { Button } from "@/components/common/Button";
+import { useToast } from "@/hooks/use-toast";
+import { Toaster } from "@/components/common/Toast/Toast";
 
 // ─── Coin metadata ────────────────────────────────────────────────────────────
 const walletCoinMeta: Record<
@@ -181,7 +183,8 @@ function CoinSelect({ value, onChange, exclude }: CoinSelectProps) {
 export default function WalletPage() {
   const router   = useRouter();
   const dispatch = useAppDispatch();
-  const { loading, error, wallets, totalPortfolioUsd } = useAppSelector((s) => s.wallet);
+  const { loading, error, wallets, totalPortfolioUsd, convertLoading } = useAppSelector((s) => s.wallet);
+  const { toast, toasts, dismiss } = useToast();
 
   // Converter state
   const [fromAmount,   setFromAmount]   = useState("1");
@@ -266,6 +269,57 @@ export default function WalletPage() {
     setFromCurrency(toCurrency);
     setToCurrency(fromCurrency);
     setFromAmount(toAmount || "1");
+  };
+
+  const handleConvert = async () => {
+    const payloadAmount = fromAmount.trim().replace(/[^0-9.-]/g, "");
+    const numericAmount = parseFloat(payloadAmount);
+
+    if (!payloadAmount || isNaN(numericAmount) || numericAmount <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Please enter a valid amount greater than zero.",
+        type: "error",
+      });
+      return;
+    }
+
+    if (fromCurrency === toCurrency) {
+      toast({
+        title: "Invalid conversion",
+        description: "Please choose two different currencies to convert.",
+        type: "error",
+      });
+      return;
+    }
+
+    try {
+      const result = await dispatch(
+        convertWallet({
+          from_coin: fromCurrency,
+          to_coin: toCurrency,
+          amount: numericAmount.toFixed(8),
+        })
+      ).unwrap();
+
+      toast({
+        title: "Conversion successful",
+        description: result.message || "Wallet balance converted successfully.",
+        type: "success",
+      });
+
+      if (result.data?.converted_amount) {
+        setToAmount(result.data.converted_amount);
+      }
+
+      dispatch(fetchWallets());
+    } catch (error: any) {
+      toast({
+        title: "Conversion failed",
+        description: error || "Unable to convert wallet balance.",
+        type: "error",
+      });
+    }
   };
 
   // ── Asset list ────────────────────────────────────────────────────────────
@@ -663,10 +717,12 @@ export default function WalletPage() {
           {/* Convert button */}
           <button
             type="button"
-            className="w-full py-3.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90"
-            style={{ background: "#7c3aed", border: "none", cursor: "pointer" }}
+            onClick={handleConvert}
+            disabled={convertLoading}
+            className="w-full py-3.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            style={{ background: "#7c3aed", border: "none", cursor: convertLoading ? "not-allowed" : "pointer" }}
           >
-            Convert
+            {convertLoading ? "Converting…" : "Convert"}
           </button>
         </div>
       </div>
@@ -678,6 +734,7 @@ export default function WalletPage() {
           50%       { opacity: 0.3; }
         }
       `}</style>
+      <Toaster toasts={toasts} onDismiss={dismiss} />
     </div>
   );
 }
