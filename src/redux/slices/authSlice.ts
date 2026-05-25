@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { loginUser, LoginResponse } from "../thunk/loginThunk";
+import { socialLogin } from "../thunk/socialLoginThunk";
 import { verifyTwoFactorLogin } from "../thunk/verifyTwoFactorThunk";
 import { logoutUser, LogoutResponse } from "../thunk/logoutThunk";
 
@@ -78,6 +79,44 @@ const clearPersistedStorage = () => {
   }
 };
 
+const applyLoginResponse = (state: AuthState, payload: LoginResponse) => {
+  state.loading = false;
+  state.error = null;
+
+  if ("requires_2fa" in payload.data && payload.data.requires_2fa) {
+    state.requires2fa = true;
+    state.pending2faToken = payload.data.pending_token;
+    state.isAuthenticated = false;
+    state.token = null;
+    state.token_type = null;
+    state.user = null;
+    state.message = payload.message;
+    persistPendingTwoFactorToken(payload.data.pending_token);
+    return;
+  }
+
+  const successData = payload.data as {
+    token: string;
+    token_type: string;
+    user: UserPayload;
+  };
+
+  state.token = successData.token;
+  state.token_type = successData.token_type;
+  state.user = successData.user;
+  state.isAuthenticated = true;
+  state.message = payload.message;
+  state.requires2fa = false;
+  state.pending2faToken = null;
+  persistPendingTwoFactorToken(null);
+
+  if (typeof window !== "undefined") {
+    localStorage.setItem("authToken", successData.token);
+    localStorage.setItem("authTokenType", successData.token_type);
+    localStorage.setItem("authUser", JSON.stringify(successData.user));
+  }
+};
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -114,45 +153,30 @@ const authSlice = createSlice({
         persistPendingTwoFactorToken(null);
       })
       .addCase(loginUser.fulfilled, (state, action: PayloadAction<LoginResponse>) => {
-        state.loading = false;
-        state.error = null;
-
-        if ("requires_2fa" in action.payload.data && action.payload.data.requires_2fa) {
-          state.requires2fa = true;
-          state.pending2faToken = action.payload.data.pending_token;
-          state.isAuthenticated = false;
-          state.token = null;
-          state.token_type = null;
-          state.user = null;
-          state.message = action.payload.message;
-          persistPendingTwoFactorToken(action.payload.data.pending_token);
-          return;
-        }
-
-        const successData = action.payload.data as {
-          token: string;
-          token_type: string;
-          user: UserPayload;
-        };
-
-        state.token = successData.token;
-        state.token_type = successData.token_type;
-        state.user = successData.user;
-        state.isAuthenticated = true;
-        state.message = action.payload.message;
-        state.requires2fa = false;
-        state.pending2faToken = null;
-        persistPendingTwoFactorToken(null);
-
-        if (typeof window !== "undefined") {
-          localStorage.setItem("authToken", successData.token);
-          localStorage.setItem("authTokenType", successData.token_type);
-          localStorage.setItem("authUser", JSON.stringify(successData.user));
-        }
+        applyLoginResponse(state, action.payload);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Login failed";
+        state.isAuthenticated = false;
+        state.requires2fa = false;
+        state.pending2faToken = null;
+        persistPendingTwoFactorToken(null);
+      })
+      .addCase(socialLogin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.message = null;
+        state.requires2fa = false;
+        state.pending2faToken = null;
+        persistPendingTwoFactorToken(null);
+      })
+      .addCase(socialLogin.fulfilled, (state, action: PayloadAction<LoginResponse>) => {
+        applyLoginResponse(state, action.payload);
+      })
+      .addCase(socialLogin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Social login failed";
         state.isAuthenticated = false;
         state.requires2fa = false;
         state.pending2faToken = null;

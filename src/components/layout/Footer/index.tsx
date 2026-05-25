@@ -1,7 +1,14 @@
+import Link from "next/link";
 import Image from "next/image";
 
-const footerProducts = ["P2P Trading", "Markets", "Wallet"];
-const footerCompanyLinks = ["About", "Careers", "Support"];
+const footerProducts = [
+  { label: "P2P Trading", href: "/p2p" },
+  { label: "Markets", href: "/markets" },
+];
+const footerCompanyLinks = [
+  { label: "About", href: "/about" },
+  { label: "Support", href: "/support" },
+];
 
 const footerPaymentLogos = [
   { src: "/figmaAssets/visa.png", alt: "Visa" },
@@ -30,9 +37,13 @@ export function Footer() {
             </span>
             <div className="[font-family:'Inter',Helvetica] font-normal text-[#f2f2f2] text-sm sm:text-base tracking-[0] leading-[38px]">
               {footerProducts.map((item) => (
-                <div key={item} className="hover:text-white cursor-pointer transition-colors">
-                  {item}
-                </div>
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className="block hover:text-white transition-colors no-underline"
+                >
+                  {item.label}
+                </Link>
               ))}
             </div>
           </div>
@@ -43,9 +54,13 @@ export function Footer() {
             </span>
             <div className="[font-family:'Inter',Helvetica] font-normal text-[#e0e0e0] text-sm sm:text-base tracking-[0] leading-[38px]">
               {footerCompanyLinks.map((item) => (
-                <div key={item} className="hover:text-white cursor-pointer transition-colors">
-                  {item}
-                </div>
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className="block hover:text-white transition-colors no-underline"
+                >
+                  {item.label}
+                </Link>
               ))}
             </div>
           </div>
