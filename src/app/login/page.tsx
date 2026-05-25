@@ -6,7 +6,29 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { loginUser } from "@/redux/thunk/loginThunk";
+import { socialLogin } from "@/redux/thunk/socialLoginThunk";
 import { resetAuthError } from "@/redux/slices/authSlice";
+
+declare global {
+  interface Window {
+    google?: {
+      accounts?: {
+        id?: {
+          initialize: (config: {
+            client_id: string;
+            callback: (response: { credential?: string }) => void;
+            ux_mode?: "popup" | "redirect";
+          }) => void;
+          prompt: (momentListener?: (notification: {
+            isDisplayed: () => boolean;
+            isNotDisplayed: () => boolean;
+            isDismissedMoment: () => boolean;
+          }) => void) => void;
+        };
+      };
+    };
+  }
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,6 +37,9 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [googleReady, setGoogleReady] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -29,6 +54,60 @@ export default function LoginPage() {
       if (error) dispatch(resetAuthError());
     };
   }, [dispatch, error]);
+
+  useEffect(() => {
+    if (!googleClientId || typeof window === "undefined") return;
+
+    const initializeGoogle = () => {
+      if (!window.google?.accounts?.id) return;
+
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        ux_mode: "popup",
+        callback: async ({ credential }) => {
+          if (!credential) return;
+
+          const resultAction = await dispatch(
+            socialLogin({ provider: "google", id_token: credential })
+          );
+
+          if (socialLogin.fulfilled.match(resultAction)) {
+            const data = resultAction.payload.data as { requires_2fa?: boolean };
+            if (data?.requires_2fa) {
+              window.location.href = "/login/otp";
+            }
+          }
+        },
+      });
+
+      setGoogleReady(true);
+    };
+
+    if (window.google?.accounts?.id) {
+      initializeGoogle();
+      return;
+    }
+
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      'script[src="https://accounts.google.com/gsi/client"]'
+    );
+
+    if (existingScript) {
+      existingScript.addEventListener("load", initializeGoogle, { once: true });
+      return () => existingScript.removeEventListener("load", initializeGoogle);
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = initializeGoogle;
+    document.head.appendChild(script);
+
+    return () => {
+      script.onload = null;
+    };
+  }, [dispatch, googleClientId]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -46,6 +125,30 @@ export default function LoginPage() {
     } catch {
       // thunk sets error state automatically
     }
+  };
+
+  const handleGoogleLogin = () => {
+    if (!googleClientId) {
+      alert("Google login is not configured. Missing NEXT_PUBLIC_GOOGLE_CLIENT_ID.");
+      return;
+    }
+
+    if (!window.google?.accounts?.id || !googleReady) {
+      alert("Google login is still loading. Please try again in a moment.");
+      return;
+    }
+
+    setGoogleLoading(true);
+    window.google.accounts.id.prompt((notification: any) => {
+      // Hide loader once popup is shown or skipped/dismissed
+      if (
+        notification.isDisplayed() ||
+        notification.isNotDisplayed() ||
+        notification.isDismissedMoment()
+      ) {
+        setGoogleLoading(false);
+      }
+    });
   };
 
   return (
@@ -184,20 +287,31 @@ export default function LoginPage() {
           {/* Social Buttons */}
           <div className="w-full flex flex-col gap-2.5">
             <button
-              className="w-full flex items-center justify-center gap-2.5 text-white text-sm py-2.5   rounded-xl transition-all duration-200 hover:opacity-80"
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={loading || googleLoading}
+              className="w-full flex items-center justify-center gap-2.5 text-white text-sm py-2.5   rounded-xl transition-all duration-200 hover:opacity-80 disabled:opacity-60"
               style={{ backgroundColor: "#12122a", border: "1px solid #2a2a4a" }}
             >
-              {/* Google icon */}
-              <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M43.611 20.083H42V20H24v8h11.303C33.976 32.213 29.418 35 24 35c-6.075 0-11-4.925-11-11s4.925-11 11-11c2.804 0 5.354 1.063 7.29 2.796l5.657-5.657C33.963 7.333 29.261 5 24 5 12.954 5 4 13.954 4 25s8.954 20 20 20 20-8.954 20-20c0-1.341-.138-2.65-.389-3.917z" fill="#FFC107"/>
-                <path d="M6.306 14.691l6.571 4.819C14.655 16.108 19.001 13 24 13c2.804 0 5.354 1.063 7.29 2.796l5.657-5.657C33.963 7.333 29.261 5 24 5 16.318 5 9.656 8.956 6.306 14.691z" fill="#FF3D00"/>
-                <path d="M24 45c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 36.099 26.715 37 24 37c-5.398 0-9.948-3.672-11.29-8.624l-6.522 5.025C9.505 41.556 16.227 45 24 45z" fill="#4CAF50"/>
-                <path d="M43.611 20.083H42V20H24v8h11.303a11.944 11.944 0 01-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 25c0-1.341-.138-2.65-.389-3.917z" fill="#1976D2"/>
-              </svg>
-              Continue with Google
+              {googleLoading ? (
+                <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M43.611 20.083H42V20H24v8h11.303C33.976 32.213 29.418 35 24 35c-6.075 0-11-4.925-11-11s4.925-11 11-11c2.804 0 5.354 1.063 7.29 2.796l5.657-5.657C33.963 7.333 29.261 5 24 5 12.954 5 4 13.954 4 25s8.954 20 20 20 20-8.954 20-20c0-1.341-.138-2.65-.389-3.917z" fill="#FFC107"/>
+                  <path d="M6.306 14.691l6.571 4.819C14.655 16.108 19.001 13 24 13c2.804 0 5.354 1.063 7.29 2.796l5.657-5.657C33.963 7.333 29.261 5 24 5 16.318 5 9.656 8.956 6.306 14.691z" fill="#FF3D00"/>
+                  <path d="M24 45c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 36.099 26.715 37 24 37c-5.398 0-9.948-3.672-11.29-8.624l-6.522 5.025C9.505 41.556 16.227 45 24 45z" fill="#4CAF50"/>
+                  <path d="M43.611 20.083H42V20H24v8h11.303a11.944 11.944 0 01-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 25c0-1.341-.138-2.65-.389-3.917z" fill="#1976D2"/>
+                </svg>
+              )}
+              {googleLoading ? "Opening Google..." : "Continue with Google"}
             </button>
 
             <button
+              type="button"
+              onClick={() => alert("Apple login requires APPLE_CLIENT_ID setup first.")}
               className="w-full flex items-center justify-center gap-2.5 text-white text-sm py-2.5   rounded-xl transition-all duration-200 hover:opacity-80"
               style={{ backgroundColor: "#12122a", border: "1px solid #2a2a4a" }}
             >

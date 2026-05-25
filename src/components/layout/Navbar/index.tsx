@@ -6,16 +6,18 @@ import { Button } from "@/components/common/Button";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { closeMobileMenu, setActiveNavLink, toggleMobileMenu } from "@/redux/slices/uiSlice";
 import { NavLink } from "@/types";
+import { usePathname } from "next/navigation";
 
 const navLinks: NavLink[] = [
-  { label: "Markets", href: "#markets" },
-  { label: "P2P", href: "#p2p" },
-  { label: "About", href: "#about" },
+  { label: "Markets", href: "/markets" },
+  { label: "P2P", href: "/p2p" },
+  { label: "About", href: "/about" },
 ];
 
 export function Navbar() {
   const dispatch = useAppDispatch();
-  const { activeNavLink, isMobileMenuOpen } = useAppSelector((state) => state.ui);
+  const { isMobileMenuOpen } = useAppSelector((state) => state.ui);
+  const pathname = usePathname();
 
   const handleNavClick = (label: string) => {
     dispatch(setActiveNavLink(label));
@@ -40,17 +42,18 @@ export function Navbar() {
         {/* Desktop Navigation */}
         <div className="hidden md:inline-flex h-12 items-center px-4 py-3 bg-white/[0.15] rounded-[999px] border border-solid border-white/10 backdrop-blur-[20px]">
           {navLinks.map((link) => (
-            <button
+            <Link
               key={link.label}
+              href={link.href}
               onClick={() => handleNavClick(link.label)}
-              className={`inline-flex items-center px-4 py-0.5 bg-transparent border-none cursor-pointer transition-colors duration-200 ${
-                activeNavLink === link.label ? "text-white" : "text-white/90 hover:text-white"
+              className={`inline-flex items-center px-4 py-0.5 bg-transparent border-none cursor-pointer transition-colors duration-200 no-underline ${
+                pathname === link.href ? "text-white" : "text-white/90 hover:text-white"
               }`}
             >
               <span className="[font-family:'Inter',Helvetica] font-medium text-base tracking-[0] leading-6 whitespace-nowrap">
                 {link.label}
               </span>
-            </button>
+            </Link>
           ))}
         </div>
 
@@ -99,13 +102,16 @@ export function Navbar() {
           <div className="absolute top-full left-0 right-0 mt-3 mx-4 bg-[#1a1b23] border border-white/10 rounded-2xl p-4 shadow-2xl sm:hidden z-50">
             <div className="flex flex-col gap-1">
               {navLinks.map((link) => (
-                <button
+                <Link
                   key={link.label}
+                  href={link.href}
                   onClick={() => handleNavClick(link.label)}
-                  className="text-left px-4 py-3 rounded-xl text-white/90 hover:text-white hover:bg-white/5 bg-transparent border-none cursor-pointer [font-family:'Inter',Helvetica] font-medium text-base"
+                  className={`text-left px-4 py-3 rounded-xl hover:bg-white/5 bg-transparent border-none cursor-pointer [font-family:'Inter',Helvetica] font-medium text-base no-underline ${
+                    pathname === link.href ? "text-white bg-white/5" : "text-white/90 hover:text-white"
+                  }`}
                 >
                   {link.label}
-                </button>
+                </Link>
               ))}
 
               <div className="border-t border-white/10 mt-3 pt-4 flex flex-col gap-2">

@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/common/Button";
 import { Badge } from "@/components/common/Badge";
 import { FeatureBadge } from "@/types";
@@ -10,6 +13,8 @@ const featureBadges: FeatureBadge[] = [
 ];
 
 export function HeroSection() {
+  const router = useRouter();
+
   return (
     <section className="relative z-10 flex flex-col items-center gap-8 sm:gap-12 px-4 sm:px-6 pt-16 sm:pt-24 pb-20 sm:pb-32 max-w-[1240px] mx-auto text-center">
       <div className="flex flex-col items-center gap-4 sm:gap-6 w-full pt-6">
@@ -40,6 +45,7 @@ export function HeroSection() {
           variant="primary"
           size="lg"
           className="w-full sm:w-auto shadow-[0px_16px_32px_-8px_rgba(124,58,237,0.48),0px_4px_8px_rgba(124,58,237,0.12)] [background:radial-gradient(50%_50%_at_50%_50%,rgba(255,255,255,0.12)_0%,rgba(0,0,0,0)_100%),linear-gradient(0deg,rgba(124,58,237,1)_0%,rgba(124,58,237,1)_100%)] rounded-[48px] py-4"
+          onClick={() => router.push("/login")}
           leftIcon={
             <div className="relative w-6 h-6">
               <Image 
@@ -60,6 +66,7 @@ export function HeroSection() {
           variant="primary"
           size="lg"
           className="w-full sm:w-auto shadow-[0px_16px_32px_-8px_rgba(124,58,237,0.48),0px_4px_8px_rgba(124,58,237,0.12)] bg-transparent rounded-[48px] py-4"
+          onClick={() => router.push("/signup")}
           leftIcon={
             <div className="relative w-6 h-6">
               <Image 
