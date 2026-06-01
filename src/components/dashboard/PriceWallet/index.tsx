@@ -11,6 +11,14 @@ export function PriceWallet() {
 
   useEffect(() => {
     dispatch(fetchWalletPrices());
+
+    const intervalId = window.setInterval(() => {
+      dispatch(fetchWalletPrices());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
   }, [dispatch]);
 
   const priceEntries = Object.entries(prices) as Array<[
@@ -26,6 +34,8 @@ export function PriceWallet() {
       last_updated: string;
     }
   ]>;
+
+  const hasPrices = priceEntries.length > 0;
 
   return (
     <Card className="bg-[#1a1b23] border border-white/5 rounded-2xl">
@@ -44,9 +54,9 @@ export function PriceWallet() {
           </p>
         </div>
 
-        {loading ? (
+        {loading && !hasPrices ? (
           <div className="text-white/70 text-sm">Loading prices…</div>
-        ) : error ? (
+        ) : error && !hasPrices ? (
           <div className="text-rose-400 text-sm">{error}</div>
         ) : (
           <div className="space-y-3">
