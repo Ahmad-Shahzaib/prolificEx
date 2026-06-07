@@ -230,6 +230,7 @@ export default function SettingsPage() {
                   <input
                     type="email"
                     value={email}
+                    readOnly
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full bg-[#1a1b23] border border-white/10 rounded-2xl px-5 py-3.5 text-white placeholder:text-[#6b7280] focus:outline-none focus:border-white/30"
                   />

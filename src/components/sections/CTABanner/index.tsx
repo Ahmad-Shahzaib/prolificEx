@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export function CTABanner() {
   return (
@@ -10,14 +11,39 @@ export function CTABanner() {
         <div className="absolute bottom-0 right-4 sm:right-8 w-20 sm:w-[140px] h-[140px] sm:h-[185px] hidden sm:block opacity-50">
           <Image src="/figmaAssets/vector-1.svg" alt="Decoration" fill className="object-contain" />
         </div>
-        <div className="relative z-10 w-full max-w-[501px] mx-auto">
-          <Image
-            src="/figmaAssets/text.png"
-            alt="Ready to Start Trading?"
-            width={501}
-            height={186}
-            className="w-full h-auto object-contain"
-          />
+        <div className="relative z-10 w-full  mx-auto">
+          <section className="relative overflow-hidden bg-[#0F1320] py-20">
+            {/* Left Ethereum Shape */}
+            <div className="absolute left-0 top-0 opacity-10">
+              <div className="w-52 h-52 bg-gradient-to-b from-white to-transparent clip-path-ethereum" />
+            </div>
+
+            {/* Right Bitcoin Symbol */}
+            <div className="absolute right-10 bottom-0 text-[220px] font-bold text-white/5 leading-none">
+              ₿
+            </div>
+
+            <div className="container mx-auto px-6">
+              <div className="flex flex-col items-center text-center">
+                <h2 className="text-4xl md:text-6xl font-bold text-white">
+                  Ready to Start Trading?
+                </h2>
+
+                <p className="mt-6 max-w-2xl text-lg md:text-2xl text-gray-300">
+                  Join thousands of users buying and selling
+                  <br />
+                  crypto securely.
+                </p>
+
+                <Link
+                  href="/signup"
+                  className="mt-10 inline-flex rounded-full bg-gradient-to-r from-purple-600 to-violet-500 px-12 py-5 text-lg font-semibold text-white transition hover:scale-105"
+                >
+                  Create Free Account
+                </Link>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </section>

@@ -7,7 +7,6 @@ import { Upload, Check, Camera, RotateCcw, X } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { submitKyc, fetchKycStatus } from "@/redux/thunk/kycThunk";
 import { resetKycState } from "@/redux/slices/kycSlice";
-import { stat } from "fs";
 
 export default function KYCPage() {
   const dispatch = useAppDispatch();
@@ -48,6 +47,7 @@ export default function KYCPage() {
   // Cleanup
   useEffect(() => {
     return () => {
+      stopCamera();
       dispatch(resetKycState());
     };
   }, [dispatch]);
@@ -88,23 +88,61 @@ export default function KYCPage() {
       .join(" ");
   };
 
+  const isDocumentFileTypeSupported = (file: File | null) => {
+    return !!file && ["image/jpeg", "image/png", "application/pdf"].includes(file.type);
+  };
+
   // Camera Functions
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } } 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
       });
       streamRef.current = stream;
-      if (videoRef.current) videoRef.current.srcObject = stream;
       setCameraOpen(true);
-    } catch {
-      alert("Camera access denied. Please upload a selfie instead.");
+    } catch (error) {
+      console.error("Camera start error:", error);
+      // keep silent on failure to avoid blocking UI
     }
   };
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!cameraOpen || !video || !streamRef.current) return;
+
+    video.srcObject = streamRef.current;
+    video.muted = true;
+    video.playsInline = true;
+
+    const playVideo = async () => {
+      try {
+        await video.play();
+      } catch (err) {
+        console.warn("Video playback failed:", err);
+      }
+    };
+
+    if (video.readyState >= 2) {
+      playVideo();
+    } else {
+      video.onloadedmetadata = playVideo;
+    }
+
+    return () => {
+      if (video) {
+        video.onloadedmetadata = null;
+      }
+    };
+  }, [cameraOpen]);
 
   const stopCamera = () => {
     streamRef.current?.getTracks().forEach(track => track.stop());
     streamRef.current = null;
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+      videoRef.current.onloadedmetadata = null;
+    }
     setCameraOpen(false);
   };
 
@@ -128,17 +166,26 @@ export default function KYCPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (  !documentFront || !documentBack || !selfieWithId) {
-      alert("Please upload all required documents and selfie.");
+    if (!documentFront || !documentBack || !selfieWithId) {
       return;
     }
 
-    await dispatch(submitKyc({
-      document_type: documentType,
-      document_front: documentFront,
-      document_back: documentBack,
-      selfie_with_id: selfieWithId,
-    })).unwrap();
+    if (!isDocumentFileTypeSupported(documentFront) || !isDocumentFileTypeSupported(documentBack)) {
+      console.warn("Unsupported document file type. Only JPG, JPEG, PNG, PDF are allowed.");
+      return;
+    }
+
+    try {
+      await dispatch(submitKyc({
+        document_type: documentType,
+        document_front: documentFront,
+        document_back: documentBack,
+        selfie_with_id: selfieWithId,
+      })).unwrap();
+    } catch (error) {
+      // Error is handled in Redux state; prevent uncaught promise.
+      console.warn("KYC submit failed", error);
+    }
   };
 
   return (
@@ -221,7 +268,7 @@ export default function KYCPage() {
                   <input
                     ref={frontInputRef}
                     type="file"
-                    accept="image/*"
+                    accept=".jpg,.jpeg,.png,.pdf"
                     className="hidden"
                     onChange={handleFileChange(setDocumentFront, setFrontPreview)}
                   />
@@ -248,7 +295,7 @@ export default function KYCPage() {
                   <input
                     ref={backInputRef}
                     type="file"
-                    accept="image/*"
+                    accept=".jpg,.jpeg,.png,.pdf"
                     className="hidden"
                     onChange={handleFileChange(setDocumentBack, setBackPreview)}
                   />
@@ -288,7 +335,7 @@ export default function KYCPage() {
                     <input
                       ref={selfieInputRef}
                       type="file"
-                      accept="image/*"
+                      accept=".jpg,.jpeg,.png"
                       className="hidden"
                       onChange={handleFileChange(setSelfieWithId, setSelfiePreview)}
                     />
@@ -303,7 +350,7 @@ export default function KYCPage() {
                         ref={videoRef}
                         autoPlay
                         playsInline
-                        className="w-full aspect-video object-cover"
+                        className="w-full aspect-video object-cover bg-black min-h-[240px]"
                       />
                       <canvas ref={canvasRef} className="hidden" />
                     </div>
