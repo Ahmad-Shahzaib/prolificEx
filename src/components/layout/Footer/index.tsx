@@ -16,6 +16,14 @@ const footerPaymentLogos = [
   { src: "/figmaAssets/bitcoin.png", alt: "Bitcoin" },
 ];
 
+const footerSocialLinks = [
+  { label: "Facebook", href: "https://facebook.com", start: 6, width: 16 },
+  { label: "Instagram", href: "https://instagram.com", start: 58, width: 24 },
+  { label: "YouTube", href: "https://youtube.com", start: 113, width: 24 },
+  { label: "Twitter", href: "https://twitter.com", start: 170, width: 24 },
+  { label: "LinkedIn", href: "https://linkedin.com", start: 226, width: 24 },
+];
+
 export function Footer() {
   return (
     <footer className="w-full bg-[#0b0e11] mt-8 sm:mt-16">
@@ -88,13 +96,26 @@ export function Footer() {
           <span className="[font-family:'Rubik',Helvetica] font-normal text-white text-sm sm:text-base tracking-[0.16px] leading-7">
             © 2026 ProlificEx
           </span>
-          <Image
-            src="/figmaAssets/socials.png"
-            alt="Social media links"
-            width={248}
-            height={24}
-            className="object-contain"
-          />
+          <div className="flex items-center gap-3 sm:gap-4">
+            {footerSocialLinks.map((social) => (
+              <Link
+                key={social.label}
+                href={social.href}
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label={social.label}
+                className="relative block"
+                style={{ width: social.width, height: 24 }}
+              >
+                <Image
+                  src="/figmaAssets/socials.png"
+                  alt={`${social.label} icon`}
+                  fill
+                  style={{ objectFit: "none", objectPosition: `-${social.start}px 0` }}
+                />
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </footer>
