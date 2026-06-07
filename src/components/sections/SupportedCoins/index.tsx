@@ -1,5 +1,9 @@
+"use client";
+
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/common/Card";
+import { useAppSelector } from "@/redux/hooks";
 
 interface CoinCardProps {
   icon: string;
@@ -10,6 +14,7 @@ interface CoinCardProps {
   actionLabel?: string;
   actionIcon?: string;
   arrowIcon?: string;
+  onClick?: () => void;
 }
 
 function CoinCard({
@@ -21,9 +26,22 @@ function CoinCard({
   actionLabel,
   actionIcon,
   arrowIcon,
+  onClick,
 }: CoinCardProps) {
   return (
-    <Card variant="coin" className="flex flex-col items-center px-4 sm:px-6 py-8 sm:py-12">
+    <Card
+      variant="coin"
+      className="flex flex-col items-center px-4 sm:px-6 py-8 sm:py-12 cursor-pointer hover:shadow-[0_24px_48px_rgba(0,0,0,0.12)] transition-shadow"
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onClick?.();
+        }
+      }}
+    >
       <div className="relative w-16 h-16 sm:w-20 sm:h-20 mb-6 sm:mb-8">
         <Image src={icon} alt={name} fill className="object-contain" />
       </div>
@@ -62,6 +80,17 @@ function CoinCard({
 }
 
 export function SupportedCoinsSection() {
+  const router = useRouter();
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+
+  const handleCardClick = (ticker: string) => {
+    if (isAuthenticated) {
+      router.push(`/dashboard/deposit?coin=${encodeURIComponent(ticker)}`);
+    } else {
+      router.push("/login");
+    }
+  };
+
   return (
     <section className="w-full max-w-[1240px] mx-auto px-4 sm:px-6 py-12 sm:py-20">
       <h2 className="mb-8 sm:mb-12 bg-[linear-gradient(90deg,rgba(255,255,255,1)_44%,rgba(255,255,255,0.2)_100%)] [-webkit-background-clip:text] bg-clip-text [-webkit-text-fill-color:transparent] [font-family:'Inter',Helvetica] font-bold text-3xl sm:text-5xl text-center leading-tight sm:leading-[67.2px]">
@@ -77,6 +106,7 @@ export function SupportedCoinsSection() {
           variant="bitcoin"
           actionLabel="Trade BTC"
           actionIcon="/figmaAssets/group-16.png"
+          onClick={() => handleCardClick("BTC")}
         />
         <CoinCard
           icon="/figmaAssets/image-3.png"
@@ -84,6 +114,7 @@ export function SupportedCoinsSection() {
           ticker="USDT"
           description="Stablecoin pegged to USD widely used for crypto trading."
           arrowIcon="/figmaAssets/arrow-right.png"
+          onClick={() => handleCardClick("USDT")}
         />
         <CoinCard
           icon="/figmaAssets/image-2.png"
@@ -91,6 +122,7 @@ export function SupportedCoinsSection() {
           ticker="USDC"
           description="Fully backed digital dollar used across crypto markets."
           arrowIcon="/figmaAssets/arrow-right-1.png"
+          onClick={() => handleCardClick("USDC")}
         />
       </div>
     </section>
