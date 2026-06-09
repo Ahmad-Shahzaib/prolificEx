@@ -46,7 +46,6 @@ export default function P2PCryptoTable() {
 
   const { totalPortfolioUsd, loading: walletLoading } = useAppSelector((state) => state.wallet);
   const kycStatus = useAppSelector((state) => state.kyc.status);
-  const canCreateOffer = totalPortfolioUsd > 0;
 
   const [tab, setTab] = useState<"buy" | "sell">("buy");
   const [coin, setCoin] = useState("USDT");
@@ -109,7 +108,7 @@ export default function P2PCryptoTable() {
     }
     
     // Check if user has deposited any funds
-    if (totalPortfolioUsd === 0) {
+    if (!totalPortfolioUsd || Number(totalPortfolioUsd) <= 0) {
       toast({
         title: "Deposit Required",
         description: "Please deposit funds into your wallet before buying crypto. Visit the Deposit page to get started.",
@@ -147,6 +146,19 @@ export default function P2PCryptoTable() {
     setPage(1);
   };
 
+  const handleOpenOfferModal = () => {
+    if (!totalPortfolioUsd || Number(totalPortfolioUsd) <= 0) {
+      toast({
+        title: "Insufficient funds",
+        description: "You need funds in your wallet before creating a sell offer. Please deposit funds first.",
+        type: "error",
+      });
+      return;
+    }
+
+    setShowOfferModal(true);
+  };
+
   const handleCreateOffer = async () => {
     // Check KYC status first
     if (kycStatus !== 'approved') {
@@ -154,15 +166,6 @@ export default function P2PCryptoTable() {
         title: "KYC Verification Required", 
         description: "Please complete KYC verification before creating sell offers. Visit the KYC page to get started.", 
         type: "error" 
-      });
-      return;
-    }
-
-    if (!canCreateOffer) {
-      toast({
-        title: "Insufficient Funds",
-        description: "You need funds in your wallet before creating a sell offer.",
-        type: "error",
       });
       return;
     }
@@ -428,28 +431,9 @@ export default function P2PCryptoTable() {
                 Create and manage your sell offers with the form below.
               </p>
             </div>
-            <Button
-              onClick={() => {
-                if (!canCreateOffer) {
-                  toast({
-                    title: "Insufficient funds",
-                    description: "You need funds in your wallet before you can create a sell offer.",
-                    type: "error",
-                  });
-                  return;
-                }
-                setShowOfferModal(true);
-              }}
-              className="flex items-center gap-2"
-              disabled={!canCreateOffer}
-            >
+            <Button onClick={handleOpenOfferModal} className="flex items-center gap-2">
               <Plus size={16} /> Create Offer
             </Button>
-            {!canCreateOffer && (
-              <p className="text-sm text-red-400 mt-2">
-                You need funds in your wallet to create a sell offer.
-              </p>
-            )}
           </div>
         )}
 
