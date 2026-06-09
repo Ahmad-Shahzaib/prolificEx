@@ -153,12 +153,12 @@ export default function AdminDashboardPage() {
       {/* Bottom Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 md:gap-6">
         {/* User Registrations Chart */}
-        <div className="xl:col-span-7 bg-[#222531] rounded-3xl p-4 md:p-6 border border-[#23263b]">
+        <div className="xl:col-span-7 bg-[#222531] rounded-3xl p-4 md:p-6 border border-[#23263b] self-start">
           <h2 className="text-base md:text-lg font-semibold mb-4 md:mb-6">
             User Registrations
           </h2>
 
-          <div className="h-[260px] sm:h-[300px] md:h-[340px] relative">
+          <div className="h-[210px] sm:h-[240px] md:h-[280px] relative">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={registrationData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#23263b" />
@@ -210,7 +210,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Quick Alerts */}
-        <div className="xl:col-span-5 bg-[#222531] rounded-3xl p-4 md:p-6 border border-[#23263b] flex flex-col">
+        <div className="xl:col-span-5 bg-[#222531] rounded-3xl p-4 md:p-6 border border-[#23263b] flex flex-col self-start">
           <h2 className="text-base md:text-lg font-semibold mb-4 md:mb-6">
             Quick Alerts
           </h2>

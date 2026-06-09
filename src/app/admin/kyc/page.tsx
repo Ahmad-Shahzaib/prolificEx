@@ -143,6 +143,7 @@ export default function AdminKYCApprovalsPage() {
         alert(`✅ KYC approved for ${selectedUser.user.full_name || selectedUser.user.username}`);
         setNotes("");
         closeModal();
+        dispatch(fetchKycPending({ per_page: 20 }));
       } else {
         alert(`❌ Failed to approve KYC: ${resultAction.payload || "Unknown error"}`);
       }
@@ -163,6 +164,7 @@ export default function AdminKYCApprovalsPage() {
         alert(`✅ KYC rejected for ${selectedUser.user.full_name || selectedUser.user.username}`);
         setNotes("");
         closeModal();
+        dispatch(fetchKycPending({ per_page: 20 }));
       } else {
         alert(`❌ Failed to reject KYC: ${resultAction.payload || "Unknown error"}`);
       }

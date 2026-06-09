@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { forgotPassword } from "@/redux/thunk/forgotPasswordThunk";
 import { resetPassword } from "@/redux/thunk/resetPasswordThunk";
+import { verifyForgotPasswordOtp } from "@/redux/thunk/verifyForgotPasswordOtpThunk";
 import { resetForgotPassword } from "@/redux/slices/forgotPasswordSlice";
 import { resetResetPassword } from "@/redux/slices/resetPasswordSlice";
 
@@ -28,6 +29,8 @@ export default function ForgotPasswordPage() {
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const isPageLoading = sendingOtp || resetting || verifyingOtp;
 
   useEffect(() => {
     return () => {
@@ -63,7 +66,7 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const handleVerifyOtp = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleVerifyOtp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!code.trim()) {
       setLocalError("Please enter the OTP code.");
@@ -71,7 +74,16 @@ export default function ForgotPasswordPage() {
     }
 
     setLocalError(null);
-    setStep(3);
+    setVerifyingOtp(true);
+
+    try {
+      await dispatch(verifyForgotPasswordOtp({ email, code })).unwrap();
+      setStep(3);
+    } catch (error: any) {
+      setLocalError(error || "Invalid OTP. Please try again.");
+    } finally {
+      setVerifyingOtp(false);
+    }
   };
 
   const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -160,9 +172,10 @@ export default function ForgotPasswordPage() {
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-[#7c3aed] to-[#9333ea] text-white font-semibold py-2.5 rounded-xl transition duration-200 hover:opacity-90"
+                disabled={verifyingOtp}
+                className="w-full bg-gradient-to-r from-[#7c3aed] to-[#9333ea] text-white font-semibold py-2.5 rounded-xl transition duration-200 hover:opacity-90 disabled:opacity-50"
               >
-                Verify OTP
+                {verifyingOtp ? "Verifying..." : "Verify OTP"}
               </button>
             </form>
 
@@ -238,6 +251,14 @@ export default function ForgotPasswordPage() {
           </Link>
         </div>
       </div>
+      {isPageLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="flex flex-col items-center gap-3 rounded-3xl bg-[#111125] bg-opacity-95 border border-white/10 p-6 shadow-xl">
+            <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+            <p className="text-sm text-white">Please wait...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
