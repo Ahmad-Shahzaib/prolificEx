@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
     try {
       await dispatch(forgotPassword({ email })).unwrap();
     } catch {
-      // error is handled in state
+    
     }
   };
 

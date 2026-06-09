@@ -213,7 +213,7 @@ export default function SettingsPage() {
                 {loading && <div className="text-sm text-gray-300">Loading...</div>}
 
 
-                {/* Display Name */}
+              
                 <div>
                   <label className="block text-[#6b7280] text-sm mb-2">Name </label>
                   <input

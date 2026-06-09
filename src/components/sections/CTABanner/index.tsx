@@ -18,7 +18,7 @@ export function CTABanner() {
               <div className="w-52 h-52 bg-gradient-to-b from-white to-transparent clip-path-ethereum" />
             </div>
 
-            {/* Right Bitcoin Symbol */}
+            
             <div className="absolute right-10 bottom-0 text-[220px] font-bold text-white/5 leading-none">
               ₿
             </div>
