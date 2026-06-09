@@ -183,7 +183,7 @@ export default function KYCPage() {
         selfie_with_id: selfieWithId,
       })).unwrap();
     } catch (error) {
-      // Error is handled in Redux state; prevent uncaught promise.
+      
       console.warn("KYC submit failed", error);
     }
   };

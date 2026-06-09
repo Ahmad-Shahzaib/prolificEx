@@ -12,13 +12,13 @@ const STORAGE_ROOT = (() => {
   const raw = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
   try {
     const { origin } = new URL(raw);
-    return `${origin}/storage`;
+    return `${origin}/public/storage`;
   } catch {
     try {
       const { origin } = new URL(`https://${raw}`);
-      return `${origin}/storage`;
+      return `${origin}/public/storage`;
     } catch {
-      return "/storage";
+      return "/public/storage";
     }
   }
 })();
@@ -26,18 +26,42 @@ const STORAGE_ROOT = (() => {
 function resolveImageUrl(path: string | null): string | null {
   if (!path) return null;
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
-  // path is like: kyc/uuid/front/filename.jpg
+  // path is like: kyc/uuid/front/filename.jpg or avatars/uuid/filename.jpg
   return `${STORAGE_ROOT}/${path}`;
+}
+
+function ProfileAvatar({ src, alt }: { src: string | null; alt: string }) {
+  const resolved = resolveImageUrl(src);
+  const [errored, setErrored] = useState(false);
+
+  if (!resolved || errored) {
+    return (
+      <div className="w-9 h-9 bg-[#2a2d3f] rounded-full flex items-center justify-center text-gray-400">
+        <User className="w-5 h-5" />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={resolved}
+      alt={alt}
+      className="w-9 h-9 rounded-full object-cover"
+      onError={() => setErrored(true)}
+    />
+  );
 }
 
 function DocImage({
   src,
   alt,
   fallback,
+  onClick,
 }: {
   src: string | null;
   alt: string;
   fallback?: React.ReactNode;
+  onClick?: React.MouseEventHandler<HTMLImageElement>;
 }) {
   const resolved = resolveImageUrl(src);
   const [errored, setErrored] = useState(false);
@@ -55,8 +79,9 @@ function DocImage({
     <img
       src={resolved}
       alt={alt}
-      className="w-full h-full object-cover rounded-xl"
+      className={`w-full h-full object-cover rounded-xl ${onClick ? "cursor-zoom-in" : ""}`}
       onError={() => setErrored(true)}
+      onClick={onClick}
     />
   );
 }
@@ -75,10 +100,20 @@ export default function AdminKYCApprovalsPage() {
 
   const [selectedUser, setSelectedUser] = useState<KycPendingEntry | null>(null);
   const [notes, setNotes] = useState("");
+  const [previewImage, setPreviewImage] = useState<{ src: string; alt: string } | null>(null);
 
   useEffect(() => {
     dispatch(fetchKycPending({ per_page: 20 }));
   }, [dispatch]);
+
+  const openImagePreview = (src: string | null, alt: string) => {
+    const resolved = resolveImageUrl(src);
+    if (resolved) {
+      setPreviewImage({ src: resolved, alt });
+    }
+  };
+
+  const closeImagePreview = () => setPreviewImage(null);
 
   const getKycText = (level: number | null | undefined) => {
     if (level === 0) return "Not Submitted";
@@ -175,9 +210,10 @@ export default function AdminKYCApprovalsPage() {
                   className="md:grid md:grid-cols-12 gap-4 px-6 lg:px-8 py-5 items-center hover:bg-[#222531] transition-colors flex flex-col md:flex-row gap-4 md:gap-0"
                 >
                   <div className="flex items-center gap-3 w-full md:col-span-2">
-                    <div className="w-9 h-9 bg-[#2a2d3f] rounded-full flex items-center justify-center flex-shrink-0">
-                      <User className="w-5 h-5 text-gray-400" />
-                    </div>
+                    <ProfileAvatar
+                      src={entry.user.avatar}
+                      alt={entry.user.full_name || entry.user.username || "User avatar"}
+                    />
                     <div>
                       <span className="font-medium block">
                         {entry.user.full_name || entry.user.username}
@@ -240,18 +276,24 @@ export default function AdminKYCApprovalsPage() {
 
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-[#23263b] flex-shrink-0">
-              <div>
-                <h2 className="text-lg font-semibold">
-                  {selectedUser.user.full_name || selectedUser.user.username}
-                </h2>
-                <p className="text-sm text-gray-400 mt-0.5">
-                  KYC Review —{" "}
-                  <span className="capitalize font-medium text-gray-300">
-                    {DOC_TYPE_LABELS[selectedUser.document_type] ?? selectedUser.document_type ?? "Unknown"}
-                  </span>
-                  {" · "}
-                  <span className="text-yellow-400 capitalize">{selectedUser.status}</span>
-                </p>
+              <div className="flex items-center gap-4">
+                <ProfileAvatar
+                  src={selectedUser.user.avatar}
+                  alt={selectedUser.user.full_name || selectedUser.user.username || "User avatar"}
+                />
+                <div>
+                  <h2 className="text-lg font-semibold">
+                    {selectedUser.user.full_name || selectedUser.user.username}
+                  </h2>
+                  <p className="text-sm text-gray-400 mt-0.5">
+                    KYC Review —{" "}
+                    <span className="capitalize font-medium text-gray-300">
+                      {DOC_TYPE_LABELS[selectedUser.document_type] ?? selectedUser.document_type ?? "Unknown"}
+                    </span>
+                    {" · "}
+                    <span className="text-yellow-400 capitalize">{selectedUser.status}</span>
+                  </p>
+                </div>
               </div>
               <button
                 onClick={closeModal}
@@ -277,6 +319,7 @@ export default function AdminKYCApprovalsPage() {
                     <DocImage
                       src={selectedUser.document_front}
                       alt="Document Front"
+                      onClick={() => openImagePreview(selectedUser.document_front, "Document Front")}
                       fallback={
                         <>
                           <CreditCard className="w-6 h-6 text-gray-600" />
@@ -297,6 +340,7 @@ export default function AdminKYCApprovalsPage() {
                     <DocImage
                       src={selectedUser.document_back}
                       alt="Document Back"
+                      onClick={() => openImagePreview(selectedUser.document_back, "Document Back")}
                       fallback={
                         <>
                           <FileText className="w-6 h-6 text-gray-600" />
@@ -317,6 +361,7 @@ export default function AdminKYCApprovalsPage() {
                     <DocImage
                       src={selectedUser.selfie_with_id}
                       alt="Selfie with ID"
+                      onClick={() => openImagePreview(selectedUser.selfie_with_id, "Selfie with ID")}
                       fallback={
                         <>
                           <Camera className="w-6 h-6 text-gray-600" />
@@ -386,6 +431,30 @@ export default function AdminKYCApprovalsPage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={closeImagePreview}
+        >
+          <div
+            className="relative max-w-full max-h-full rounded-3xl overflow-hidden border border-white/10 bg-[#0f172a] shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              onClick={closeImagePreview}
+              className="absolute right-3 top-3 z-10 rounded-full bg-black/50 p-2 text-white hover:bg-black"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img
+              src={previewImage.src}
+              alt={previewImage.alt}
+              className="max-h-[85vh] max-w-[90vw] object-contain bg-[#0f172a]"
+            />
           </div>
         </div>
       )}
