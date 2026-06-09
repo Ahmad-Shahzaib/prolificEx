@@ -146,12 +146,17 @@ function DepositContent() {
   }, [selectedCoin, selectedNetwork]);
 
   useEffect(() => {
+    dispatch(fetchKycStatus());
+  }, [dispatch]);
+
+  useEffect(() => {
     const networks = networkOptionsByCoin[selectedCoin] ?? [selectedCoin];
     const network = networks.includes(selectedNetwork) ? selectedNetwork : networks[0];
     dispatch(clearDepositState());
     dispatch(fetchDepositInfo({ coin: selectedCoin, network }));
-  }, [dispatch, selectedCoin, selectedNetwork]);
+  }, [dispatch, selectedCoin, selectedNetwork, kycStatus]);
 
+  const isPageLoading = depositLoading && kycStatus === 'approved';
   const currentAddress = !depositLoading && !depositError ? depositInfo?.address ?? "" : "";
   const qrValue = !depositLoading && !depositError ? depositInfo?.qr_data ?? currentAddress : undefined;
   const minDepositLabel = depositInfo?.min_deposit != null ? depositInfo.min_deposit : "—";
@@ -376,6 +381,14 @@ function DepositContent() {
           )}
         </div>
       </div>
+      {isPageLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="flex flex-col items-center gap-3 rounded-3xl bg-[#111125] bg-opacity-95 border border-white/10 p-6 shadow-xl">
+            <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+            <p className="text-sm text-white">Please wait...</p>
+          </div>
+        </div>
+      )}
     </PageShell>
   );
 }

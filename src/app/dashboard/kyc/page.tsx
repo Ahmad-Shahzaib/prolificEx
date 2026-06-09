@@ -24,6 +24,7 @@ export default function KYCPage() {
     reviewedAt,
     reviewNotes,
   } = useAppSelector((state) => state.kyc);
+  const isPageLoading = loading;
 
   const [documentType, setDocumentType] = useState<"national_id" | "passport" | "driver_license" | string>("national_id");
   const [documentFront, setDocumentFront] = useState<File | null>(null);
@@ -57,7 +58,7 @@ export default function KYCPage() {
     dispatch(fetchKycStatus());
   }, [dispatch]);
 
-  // Reset form after success
+  // Reset form after success and reload latest KYC status
   useEffect(() => {
     if (success) {
       setDocumentType("national_id");
@@ -67,8 +68,10 @@ export default function KYCPage() {
       frontInputRef.current && (frontInputRef.current.value = "");
       backInputRef.current && (backInputRef.current.value = "");
       selfieInputRef.current && (selfieInputRef.current.value = "");
+
+      dispatch(fetchKycStatus());
     }
-  }, [success]);
+  }, [success, dispatch]);
 
   const handleFileChange = (
     setter: React.Dispatch<React.SetStateAction<File | null>>,
@@ -416,6 +419,14 @@ export default function KYCPage() {
       </Card>
   ) 
  }
+      {isPageLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="flex flex-col items-center gap-3 rounded-3xl bg-[#111125] bg-opacity-95 border border-white/10 p-6 shadow-xl">
+            <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+            <p className="text-sm text-white">Please wait...</p>
+          </div>
+        </div>
+      )}
      
     </PageShell>
   );

@@ -40,6 +40,7 @@ export default function LoginPage() {
   const [googleReady, setGoogleReady] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+  const isPageLoading = loading || googleLoading;
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -332,6 +333,14 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+      {isPageLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="flex flex-col items-center gap-3 rounded-3xl bg-[#111125] bg-opacity-95 border border-white/10 p-6 shadow-xl">
+            <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+            <p className="text-sm text-white">Please wait...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
