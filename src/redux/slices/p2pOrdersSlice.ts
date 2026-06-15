@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { confirmOrderPayment, fetchMyOrders, P2POrderItem, P2POrdersResponse } from "../thunk/p2pOrdersThunk";
+import { confirmOrderPayment, fetchMyOrders, fetchP2POrder, P2POrderItem, P2POrdersResponse } from "../thunk/p2pOrdersThunk";
 
 interface P2POrdersState {
   loading: boolean;
@@ -90,6 +90,28 @@ const p2pOrdersSlice = createSlice({
       .addCase(fetchMyOrders.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to fetch orders";
+      })
+      .addCase(fetchP2POrder.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchP2POrder.fulfilled, (state, action: PayloadAction<P2POrderItem>) => {
+        state.loading = false;
+        state.error = null;
+        const fetchedOrder = action.payload;
+        const orderIndex = state.orders.findIndex((item) => item.id === fetchedOrder.id);
+        if (orderIndex !== -1) {
+          state.orders[orderIndex] = {
+            ...state.orders[orderIndex],
+            ...fetchedOrder,
+          };
+        } else {
+          state.orders.push(fetchedOrder);
+        }
+      })
+      .addCase(fetchP2POrder.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to fetch order";
       })
       .addCase(confirmOrderPayment.pending, (state, action) => {
         state.confirmLoading = true;

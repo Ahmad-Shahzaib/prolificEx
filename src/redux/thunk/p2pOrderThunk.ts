@@ -36,6 +36,8 @@ export interface P2POrderItem {
   fiat_currency: string;
   payment_method: string;
   status: string;
+  payment_proof: string | null;
+  paid_at: string | null;
   expired_at: string;
   order_number: string;
   updated_at: string;
