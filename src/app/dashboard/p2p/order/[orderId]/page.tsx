@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, Paperclip } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { fetchP2POrderMessages, sendP2POrderMessage } from "@/redux/thunk/p2pOrderMessagesThunk";
+import { confirmOrderPayment, fetchP2POrder } from "@/redux/thunk/p2pOrdersThunk";
 import { clearP2POrderMessages } from "@/redux/slices/p2pOrderMessagesSlice";
 
 export default function SellerOrderChatPage() {
@@ -18,6 +19,7 @@ export default function SellerOrderChatPage() {
   );
 
   const order = useAppSelector((state) => state.p2pOrders.orders.find((item) => item.id === orderId));
+  const { confirmLoading, confirmingOrderId, confirmError, confirmMessage } = useAppSelector((state) => state.p2pOrders);
   const currentUserUuid = useAppSelector((state) => state.auth.user?.uuid);
 
   const [inputMsg, setInputMsg] = useState("");
@@ -28,11 +30,14 @@ export default function SellerOrderChatPage() {
   useEffect(() => {
     if (!orderId) return;
     dispatch(fetchP2POrderMessages(orderId));
+    if (!order) {
+      dispatch(fetchP2POrder(orderId));
+    }
 
     return () => {
       dispatch(clearP2POrderMessages());
     };
-  }, [dispatch, orderId]);
+  }, [dispatch, orderId, order]);
 
   const formattedMessages = useMemo(() => {
     const safeMessages = Array.isArray(messages) ? messages : [];
@@ -79,6 +84,9 @@ export default function SellerOrderChatPage() {
     attachment.startsWith("http")
       ? attachment
       : `https://api.prolificex.softsuitetech.com/public/storage/${attachment.replace(/^\/+/, "")}`;
+
+  const isSeller = order?.seller?.uuid === currentUserUuid;
+  const showConfirmPaymentButton = isSeller && order?.status === "paid";
 
   const formattedStatus = order?.status
     ? order.status
@@ -142,6 +150,28 @@ export default function SellerOrderChatPage() {
                 <span className="font-medium">{order?.seller.full_name || "-"}</span>
               </div>
             </div>
+            {showConfirmPaymentButton && (
+              <div className="mt-6">
+                {confirmMessage && (
+                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-200 mb-3">
+                    {confirmMessage}
+                  </div>
+                )}
+                {confirmError && (
+                  <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200 mb-3">
+                    {confirmError}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => dispatch(confirmOrderPayment({ order_id: orderId }))}
+                  disabled={confirmLoading && confirmingOrderId === orderId}
+                  className="w-full rounded-2xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white hover:bg-violet-500 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {confirmLoading && confirmingOrderId === orderId ? "Confirming…" : "Confirm payment"}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Chat Section - Fixed Height with Scroll */}
@@ -221,8 +251,8 @@ export default function SellerOrderChatPage() {
                 />
 
                 <div className="flex items-center gap-3">
-                  <label className="flex-1 rounded-2xl border border-[#1f1f2e] bg-[#13131c] px-4 py-3 text-sm text-white/70 cursor-pointer hover:border-violet-500 transition">
-                    {attachmentFile ? attachmentFile.name : "Attach image or PDF"}
+                  <label className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#1f1f2e] bg-[#13131c] text-white/70 cursor-pointer hover:border-violet-500 transition">
+                    <Paperclip size={18} />
                     <input
                       type="file"
                       accept="image/*,.pdf"

@@ -26,6 +26,7 @@ import p2pOffersReducer from "./slices/p2pOffersSlice";
 import p2pOrderReducer from "./slices/p2pOrderSlice";
 import p2pOrderMessagesReducer from "./slices/p2pOrderMessagesSlice";
 import p2pOrdersReducer from "./slices/p2pOrdersSlice";
+import p2pOrderRatingReducer from "./slices/p2pOrderRatingSlice";
 import withdrawReducer from "./slices/withdrawSlice";
 import sessionsReducer from "./slices/sessionsSlice";
 import supportReducer from "./slices/supportSlice";
@@ -55,6 +56,7 @@ const appReducer = combineReducers({
   p2pOffers: p2pOffersReducer,
   p2pOrder: p2pOrderReducer,
   p2pOrderMessages: p2pOrderMessagesReducer,
+  p2pOrderRating: p2pOrderRatingReducer,
   p2pOrders: p2pOrdersReducer,
   withdraw: withdrawReducer,
   sessions: sessionsReducer,

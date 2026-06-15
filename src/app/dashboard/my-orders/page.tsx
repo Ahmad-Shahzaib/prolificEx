@@ -143,16 +143,7 @@ export default function MyOrdersPage() {
                         <span className="inline-block px-4 py-1 rounded-full text-xs font-medium bg-violet-600/10 text-violet-300 capitalize">
                           {order.status.replaceAll("_", " ")}
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => dispatch(confirmOrderPayment({ order_id: order.id }))}
-                          disabled={order.status !== "paid" || (confirmLoading && confirmingOrderId === order.id)}
-                          title={order.status !== "paid" ? "Order must be paid before confirming" : undefined}
-                          className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-[#11121c] px-3 py-2 text-[11px] font-semibold text-white transition-colors hover:bg-[#1f1f2e] disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          {confirmLoading && confirmingOrderId === order.id ? "Confirming…" : "Confirm payment"}
-                        </button>
-                      </div>
+                        </div>
                     </td>
                     <td className="py-5 text-sm text-white">
                       <Link href={`/dashboard/p2p/order/${order.id}`} className="relative inline-flex items-center gap-2 rounded-full px-3 py-2 bg-[#11121c] hover:bg-[#1f1f2e] transition">
@@ -212,15 +203,6 @@ export default function MyOrdersPage() {
                   <span className="inline-block px-3 py-1 bg-violet-600/10 text-violet-200 text-xs font-medium rounded-full capitalize">
                     {order.status.replaceAll("_", " ")}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => dispatch(confirmOrderPayment({ order_id: order.id }))}
-                    disabled={order.status !== "paid" || (confirmLoading && confirmingOrderId === order.id)}
-                    title={order.status !== "paid" ? "Order must be paid before confirming" : undefined}
-                    className="mt-2 inline-flex items-center justify-center rounded-2xl border border-white/10 bg-[#11121c] px-3 py-2 text-[11px] font-semibold text-white transition-colors hover:bg-[#1f1f2e] disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {confirmLoading && confirmingOrderId === order.id ? "Confirming…" : "Confirm payment"}
-                  </button>
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-sm text-[#d1d5db]">
                   <div>

@@ -151,6 +151,40 @@ export const fetchMyOrders = createAsyncThunk<
   }
 );
 
+export const fetchP2POrder = createAsyncThunk<
+  P2POrderItem,
+  number,
+  { rejectValue: string }
+>(
+  "p2pOrders/fetchP2POrder",
+  async (orderId, { rejectWithValue }) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      if (!baseUrl) {
+        return rejectWithValue("Missing NEXT_PUBLIC_API_BASE_URL in environment");
+      }
+
+      const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+      const response = await fetch(`${baseUrl}/p2p/orders/${orderId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data?.success) {
+        return rejectWithValue(data?.message || `Failed to fetch order (${response.status})`);
+      }
+
+      return data.data as P2POrderItem;
+    } catch (error: any) {
+      return rejectWithValue(error?.message || "Network error while fetching order");
+    }
+  }
+);
+
 export const confirmOrderPayment = createAsyncThunk<
   ConfirmP2POrderResponse,
   ConfirmP2POrderPayload,

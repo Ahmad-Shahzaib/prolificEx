@@ -107,16 +107,6 @@ export default function P2PCryptoTable() {
       return;
     }
     
-    // Check if user has deposited any funds
-    if (!totalPortfolioUsd || Number(totalPortfolioUsd) <= 0) {
-      toast({
-        title: "Deposit Required",
-        description: "Please deposit funds into your wallet before buying crypto. Visit the Deposit page to get started.",
-        type: "error"
-      });
-      return;
-    }
-
     if (typeof window !== "undefined") {
       sessionStorage.setItem("selectedP2POffer", JSON.stringify(offer));
     }
@@ -147,15 +137,6 @@ export default function P2PCryptoTable() {
   };
 
   const handleOpenOfferModal = () => {
-    if (!totalPortfolioUsd || Number(totalPortfolioUsd) <= 0) {
-      toast({
-        title: "Insufficient funds",
-        description: "You need funds in your wallet before creating a sell offer. Please deposit funds first.",
-        type: "error",
-      });
-      return;
-    }
-
     setShowOfferModal(true);
   };
 
