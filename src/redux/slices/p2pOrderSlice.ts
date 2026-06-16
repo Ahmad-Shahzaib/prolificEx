@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {
   initiateP2POrder,
   P2POrderResponseData,
+  P2PDisputeResponseData,
   submitP2PPaymentProof,
   P2PPaymentProofResponseData,
   disputeP2POrder,
