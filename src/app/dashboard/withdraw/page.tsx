@@ -1,5 +1,6 @@
 "use client";
 import { FormEvent, useState, useEffect, Suspense } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { withdrawThunk, WithdrawPayload, WithdrawResponse } from "@/redux/thunk/withdrawThunk";
@@ -84,6 +85,7 @@ function WithdrawContent() {
   const [authCode, setAuthCode] = useState("");
   const [lastWithdrawal, setLastWithdrawal] = useState<WithdrawResponse["data"] | null>(null);
   const [copiedTxId, setCopiedTxId] = useState(false);
+  const [twoFaRequired, setTwoFaRequired] = useState(false);
 
   const feeAmount = 1;
   const receiveAmount = amount ? Math.max(0, Number(amount) - feeAmount) : 0;
@@ -118,6 +120,8 @@ function WithdrawContent() {
 
   useEffect(() => {
     if (withdrawState.error) {
+      const requiresTwoFa = /2fa|two[-\s]?factor/i.test(withdrawState.error);
+      setTwoFaRequired(requiresTwoFa);
       toast({
         title: "Withdrawal Failed",
         description: withdrawState.error,
@@ -186,6 +190,7 @@ function WithdrawContent() {
         two_fa_code: authCode,
       } as WithdrawPayload)
     );
+    setTwoFaRequired(false);
     setWalletAddress("");
     setAmount("");
     setAuthCode("");
@@ -225,6 +230,22 @@ function WithdrawContent() {
               <p className="text-amber-500 font-medium">KYC Verification Required</p>
               <p className="text-gray-400 text-sm mt-1">You must complete KYC verification before making withdrawals. Please visit the <a href="/dashboard/kyc" className="text-violet-400 hover:underline">KYC page</a> to verify your identity.</p>
             </div>
+          </div>
+        )}
+        {twoFaRequired && (
+          <div className="bg-violet-500/10 border border-violet-500/30 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p className="text-violet-300 font-medium">Two-factor authentication required</p>
+              <p className="text-gray-400 text-sm mt-1">
+                Enable 2FA from security settings, then enter your authenticator code before withdrawing.
+              </p>
+            </div>
+            <Link
+              href="/dashboard/security"
+              className="inline-flex items-center justify-center rounded-xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white hover:bg-violet-500 transition"
+            >
+              Enable 2FA
+            </Link>
           </div>
         )}
         <div className="bg-[#13141a] border border-white/[0.07] rounded-2xl p-5 sm:p-6 space-y-6">
@@ -303,15 +324,24 @@ function WithdrawContent() {
             </div>
 
             <div className="space-y-3 justify-end flex flex-col sm:flex-row items-start sm:items-center gap-3">
-              {/* <p className="text-white/70 text-sm font-medium">2FA verification</p> */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                {/* <input
+              <div className="flex-1 w-full space-y-1.5">
+                <div className="flex items-center justify-between gap-3">
+                  <label className="text-white/70 text-sm font-medium block">2FA verification code</label>
+                  <Link href="/dashboard/security" className="text-xs text-violet-400 hover:text-violet-300 hover:underline">
+                    Enable 2FA
+                  </Link>
+                </div>
+                <input
                   type="text"
                   placeholder="Enter your Google Authenticator code"
                   value={authCode}
                   onChange={(e) => setAuthCode(e.target.value)}
-                  className="flex-1 bg-[#1c1d26] border border-white/10 rounded-xl px-4 py-3 text-white/70 text-sm placeholder:text-white/20 focus:outline-none focus:border-violet-500/50"
-                /> */}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  className="w-full bg-[#1c1d26] border border-white/10 rounded-xl px-4 py-3 text-white/70 text-sm placeholder:text-white/20 focus:outline-none focus:border-violet-500/50"
+                />
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   type="submit"
                   disabled={withdrawState.loading || kycStatus !== 'approved'}

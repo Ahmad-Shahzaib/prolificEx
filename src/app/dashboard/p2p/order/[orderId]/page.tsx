@@ -20,7 +20,7 @@ export default function SellerOrderChatPage() {
     (state) => state.p2pOrderMessages
   );
 
-  const order = useAppSelector((state) => state.p2pOrders.orders.find((item) => item.id === orderId));
+  const order = useAppSelector((state) => state.p2pOrders.orders.find((item: { id: number; }) => item.id === orderId));
   const { confirmLoading, confirmingOrderId, confirmError, confirmMessage, cancelLoading, cancellingOrderId, cancelError, cancelMessage } = useAppSelector((state) => state.p2pOrders);
   const { paymentProofLoading, paymentProofError, paymentProofSuccessMessage } = useAppSelector((state) => state.p2pOrder);
   const currentUserUuid = useAppSelector((state) => state.auth.user?.uuid);
@@ -85,7 +85,10 @@ export default function SellerOrderChatPage() {
 
   const formattedMessages = useMemo(() => {
     const safeMessages = Array.isArray(messages) ? messages : [];
-    return safeMessages.map((message) => ({
+    const sortedMessages = [...safeMessages].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    return sortedMessages.map((message) => ({
       id: message.id,
       text: message.message,
       sender: message.sender?.uuid === currentUserUuid ? "user" : "merchant",
@@ -141,6 +144,11 @@ export default function SellerOrderChatPage() {
     setPaymentProofFile(null);
   };
 
+  useEffect(() => {
+    if (!orderId || !paymentProofSuccessMessage) return;
+    dispatch(fetchP2POrder(orderId));
+  }, [dispatch, orderId, paymentProofSuccessMessage]);
+
   const cancelPayment = () => {
     if (!cancelReason.trim() || !orderId) return;
 
@@ -164,7 +172,7 @@ export default function SellerOrderChatPage() {
     ? order.status
         .replace(/_/g, " ")
         .split(" ")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(" ")
     : "";
 
@@ -221,6 +229,30 @@ export default function SellerOrderChatPage() {
                 <span className="text-white/40">Seller</span>
                 <span className="font-medium">{order?.seller.full_name || "-"}</span>
               </div>
+            </div>
+            <div className="mt-6 rounded-2xl border border-[#1f1f2e] bg-[#1a1a27] p-4">
+              <h3 className="text-sm font-semibold text-white/80">Buyer payment proof</h3>
+              {order?.payment_proof ? (
+                <div className="mt-3 space-y-2">
+                  <a
+                    href={getAttachmentUrl(order.payment_proof)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex w-full items-center justify-center rounded-2xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-violet-500"
+                  >
+                    View payment proof
+                  </a>
+                  {order.paid_at && (
+                    <p className="text-xs text-white/40">
+                      Submitted {new Date(order.paid_at).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-white/50">
+                  No payment proof has been submitted yet.
+                </p>
+              )}
             </div>
             {(showConfirmPaymentButton || showSubmitPaymentProof) && (
               <div className="mt-6 space-y-4">

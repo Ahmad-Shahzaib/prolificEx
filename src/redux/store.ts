@@ -31,6 +31,7 @@ import withdrawReducer from "./slices/withdrawSlice";
 import sessionsReducer from "./slices/sessionsSlice";
 import supportReducer from "./slices/supportSlice";
 import notificationsReducer from "./slices/notificationsSlice";
+import userActivityChartReducer from "./slices/userActivityChartSlice";
 
 const appReducer = combineReducers({
   ui: uiReducer,
@@ -62,6 +63,7 @@ const appReducer = combineReducers({
   sessions: sessionsReducer,
   support: supportReducer,
   notifications: notificationsReducer,
+  userActivityChart: userActivityChartReducer,
 });
 
 const rootReducer = (state: any, action: any) => {

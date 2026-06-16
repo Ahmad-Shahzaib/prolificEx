@@ -1,9 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { withdrawThunk, WithdrawPayload, WithdrawResponse } from '../thunk/withdrawThunk';
+import { withdrawThunk, WithdrawResponse } from '../thunk/withdrawThunk';
 
 interface WithdrawState {
   loading: boolean;
   error: string | null;
+  authRequired: boolean;
   success: boolean;
   message: string | null;
   data: WithdrawResponse['data'] | null;
@@ -12,6 +13,7 @@ interface WithdrawState {
 const initialState: WithdrawState = {
   loading: false,
   error: null,
+  authRequired: false,
   success: false,
   message: null,
   data: null,
@@ -24,6 +26,7 @@ const withdrawSlice = createSlice({
     resetWithdrawState: (state) => {
       state.loading = false;
       state.error = null;
+      state.authRequired = false;
       state.success = false;
       state.message = null;
       state.data = null;
@@ -34,6 +37,7 @@ const withdrawSlice = createSlice({
       .addCase(withdrawThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.authRequired = false;
         state.success = false;
         state.message = null;
       })
@@ -45,7 +49,9 @@ const withdrawSlice = createSlice({
       })
       .addCase(withdrawThunk.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string || 'Withdrawal failed';
+        const errorMessage = action.payload || 'Withdrawal failed';
+        state.error = errorMessage;
+        state.authRequired = /session|login|authorization|jwt|token/i.test(errorMessage);
         state.success = false;
       });
   },
