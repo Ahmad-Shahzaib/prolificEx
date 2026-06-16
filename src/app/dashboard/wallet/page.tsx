@@ -26,8 +26,7 @@ const CONVERTER_COINS = [
   { id: "USDT", name: "Tether",    icon: "₮", bg: "#26a17b", cgId: "tether"        },
   { id: "USDC", name: "USD Coin",  icon: "$", bg: "#2775ca", cgId: "usd-coin"      },
   { id: "SOL",  name: "Solana",    icon: "◎", bg: "#9945ff", cgId: "solana"        },
-  { id: "BNB",  name: "BNB",       icon: "B", bg: "#f3ba2f", cgId: "binancecoin"   },
-  { id: "USD",  name: "US Dollar", icon: "$", bg: "#22c55e", cgId: null            },
+  
 ];
 
 // ─── CoinSelect dropdown ──────────────────────────────────────────────────────

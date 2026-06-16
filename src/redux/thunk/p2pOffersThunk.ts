@@ -21,6 +21,9 @@ export interface P2POffer {
   instructions: string;
   status: string;
   rating: string;
+  rating_count?: number;
+  trader_rating?: string;
+  trader_rating_count?: number;
   created_at: string;
   updated_at: string;
   user?: {
@@ -28,6 +31,8 @@ export interface P2POffer {
     uuid: string;
     full_name: string;
     username: string | null;
+    rating: string;
+    rating_count: number;
   };
 }
 

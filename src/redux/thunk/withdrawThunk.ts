@@ -1,4 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
+import type { RootState } from '../store';
 
 export interface WithdrawPayload {
   coin: string;
@@ -23,23 +24,42 @@ export interface WithdrawResponse {
   };
 }
 
+const getValidToken = (value: unknown) => {
+  if (typeof value !== 'string') return '';
+
+  const token = value.trim();
+  if (!token || token === 'null' || token === 'undefined') {
+    return '';
+  }
+
+  return token;
+};
+
 export const withdrawThunk = createAsyncThunk<
   WithdrawResponse,
   WithdrawPayload,
-  { rejectValue: string }
+  { state: RootState; rejectValue: string }
 >(
   'withdraw/withdrawThunk',
-  async (payload, { rejectWithValue }) => {
+  async (payload, { rejectWithValue, getState }) => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
       const url = baseUrl ? `${baseUrl}/wallet/withdraw` : '/wallet/withdraw';
-      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+      const authState = getState().auth;
+      const storedToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+      const storedTokenType = typeof window !== 'undefined' ? localStorage.getItem('authTokenType') : null;
+      const token = getValidToken(authState.token) || getValidToken(storedToken);
+      const tokenType = getValidToken(authState.token_type) || getValidToken(storedTokenType) || 'Bearer';
+
+      if (!token) {
+        return rejectWithValue('Your login session has expired. Please log in again before withdrawing.');
+      }
 
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          Authorization: `${tokenType} ${token}`,
         },
         body: JSON.stringify(payload),
       });

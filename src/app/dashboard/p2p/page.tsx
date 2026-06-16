@@ -28,6 +28,16 @@ const RATINGS = ["All", "5 Stars", "4+ Stars", "3+ Stars"];
 
 const PAGE_SIZE = 9;
 
+const getMerchantUserRating = (offer: P2POffer) => {
+  const rating = Number(offer.user?.rating ?? offer.trader_rating ?? 0);
+
+  if (!Number.isFinite(rating)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(5, Math.round(rating)));
+};
+
 export default function P2PCryptoTable() {
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -544,7 +554,7 @@ export default function P2PCryptoTable() {
               ) : (
                 paginatedBuyOffers.map((offer: P2POffer) => {
                   const sellerName = offer.user?.full_name || offer.user?.username || "Merchant";
-                  const sellerRating = Math.round(Number(offer.rating) || 0);
+                  const sellerRating = getMerchantUserRating(offer);
 
                   return (
                     <div

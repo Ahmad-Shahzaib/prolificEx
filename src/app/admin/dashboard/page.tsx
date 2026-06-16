@@ -152,10 +152,10 @@ export default function AdminDashboardPage() {
 
       {/* Bottom Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 md:gap-6">
-        {/* User Registrations Chart */}
+        {/* User Activity Chart */}
         <div className="xl:col-span-7 bg-[#222531] rounded-3xl p-4 md:p-6 border border-[#23263b] self-start">
           <h2 className="text-base md:text-lg font-semibold mb-4 md:mb-6">
-            User Registrations
+            User Activity
           </h2>
 
           <div className="h-[210px] sm:h-[240px] md:h-[280px] relative">

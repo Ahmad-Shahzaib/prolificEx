@@ -6,6 +6,7 @@ import { Star, Send, Paperclip } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { initiateP2POrder, submitP2PPaymentProof, disputeP2POrder } from "@/redux/thunk/p2pOrderThunk";
 import { fetchP2POrderMessages, sendP2POrderMessage } from "@/redux/thunk/p2pOrderMessagesThunk";
+import { fetchP2POrder } from "@/redux/thunk/p2pOrdersThunk";
 import { P2POffer } from "@/redux/thunk/p2pOffersThunk";
 import { clearP2POrderMessages } from "@/redux/slices/p2pOrderMessagesSlice";
 import { clearP2POrderState, restoreP2POrderState } from "@/redux/slices/p2pOrderSlice";
@@ -55,8 +56,14 @@ export default function P2POrderPage({ selectedOffer }: P2POrderPageProps) {
     loading: ratingLoading,
     error: ratingError,
     successMessage: ratingSuccessMessage,
+    data: ratingData,
   } = useAppSelector((state) => state.p2pOrderRating);
   const currentUserUuid = useAppSelector((state) => state.auth.user?.uuid);
+  const syncedOrder = useAppSelector((state) =>
+    orderResult?.order?.id
+      ? state.p2pOrders.orders.find((item) => item.id === orderResult.order.id)
+      : undefined
+  );
   const [amount, setAmount] = useState("");
   const [inputMsg, setInputMsg] = useState("");
   const [chatAttachmentFile, setChatAttachmentFile] = useState<File | null>(null);
@@ -64,6 +71,7 @@ export default function P2POrderPage({ selectedOffer }: P2POrderPageProps) {
   const [disputeReason, setDisputeReason] = useState("");
   const [rating, setRating] = useState(0);
   const [ratingComment, setRatingComment] = useState("");
+  const [ratedOrderIds, setRatedOrderIds] = useState<number[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -72,7 +80,7 @@ export default function P2POrderPage({ selectedOffer }: P2POrderPageProps) {
       ? (parseFloat(amount) / Number(selectedOffer.price_per_coin)).toFixed(2)
       : "0.00";
 
-  const currentOrder = orderResult?.order;
+  const currentOrder = syncedOrder ?? orderResult?.order;
   // Blocked only when there's an existing order with the same seller from a DIFFERENT offer
   // (same offer_id means it's the user's own active order — not a block)
   const hasBlockedOrder =
@@ -183,9 +191,10 @@ export default function P2POrderPage({ selectedOffer }: P2POrderPageProps) {
   const selectedCurrency = selectedOffer?.coin ?? "USDT";
   const orderId = orderResult?.order?.id;
   const isOrderInitiated = Boolean(orderId);
+  const hasRatedCurrentOrder = orderId ? ratedOrderIds.includes(orderId) : false;
 
-  const formattedOrderStatus = orderResult?.order?.status
-    ? orderResult.order.status
+  const formattedOrderStatus = currentOrder?.status
+    ? currentOrder.status
       .replace(/_/g, " ")
       .split(" ")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
@@ -194,7 +203,10 @@ export default function P2POrderPage({ selectedOffer }: P2POrderPageProps) {
 
   const formattedMessages: Message[] = useMemo(() => {
     const safeMessages = Array.isArray(chatMessages) ? chatMessages : [];
-    return safeMessages.map((message) => ({
+    const sortedMessages = [...safeMessages].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    return sortedMessages.map((message) => ({
       id: message.id,
       text: message.message,
       sender: message.sender?.uuid === currentUserUuid ? "user" : "merchant",
@@ -213,6 +225,7 @@ export default function P2POrderPage({ selectedOffer }: P2POrderPageProps) {
     }
 
     dispatch(fetchP2POrderMessages(orderId));
+    dispatch(fetchP2POrder(orderId));
   }, [dispatch, orderId]);
 
   useEffect(() => {
@@ -318,6 +331,8 @@ export default function P2POrderPage({ selectedOffer }: P2POrderPageProps) {
 
   const canSubmitRating =
     Boolean(orderId) &&
+    currentOrder?.status?.toLowerCase().replace(/\s+/g, "_") === "completed" &&
+    !hasRatedCurrentOrder &&
     rating > 0 &&
     ratingComment.trim().length > 0 &&
     !ratingLoading;
@@ -335,7 +350,52 @@ export default function P2POrderPage({ selectedOffer }: P2POrderPageProps) {
 
   const showRatingSection =
     Boolean(orderId) &&
-    (paymentProofSuccessMessage || orderResult?.order.payment_proof || orderResult?.order.paid_at);
+    currentOrder?.status?.toLowerCase().replace(/\s+/g, "_") === "completed" &&
+    !hasRatedCurrentOrder;
+
+  const markOrderRated = (ratedOrderId: number) => {
+    setRatedOrderIds((currentIds) => {
+      if (currentIds.includes(ratedOrderId)) {
+        return currentIds;
+      }
+
+      const nextIds = [...currentIds, ratedOrderId];
+      if (typeof window !== "undefined") {
+        localStorage.setItem("p2pRatedOrderIds", JSON.stringify(nextIds));
+      }
+
+      return nextIds;
+    });
+    setRating(0);
+    setRatingComment("");
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const stored = localStorage.getItem("p2pRatedOrderIds");
+      const parsed = stored ? JSON.parse(stored) : [];
+      if (Array.isArray(parsed)) {
+        setRatedOrderIds(parsed.filter((id) => Number.isInteger(id)));
+      }
+    } catch {
+      localStorage.removeItem("p2pRatedOrderIds");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!orderId) return;
+
+    if (ratingData?.order_id === orderId || ratingSuccessMessage) {
+      markOrderRated(orderId);
+    }
+  }, [orderId, ratingData?.order_id, ratingSuccessMessage]);
+
+  useEffect(() => {
+    if (!orderId || !ratingError?.toLowerCase().includes("already rated")) return;
+    markOrderRated(orderId);
+  }, [orderId, ratingError]);
 
   useEffect(() => {
     if (chatContainerRef.current) {
