@@ -73,7 +73,15 @@ export default function HistoryPage() {
           </div>
 
           {loading && (
-            <div className="text-sm text-[#9ca3af] mb-4">Loading transactions…</div>
+            <div className="space-y-3 mb-4 animate-pulse" aria-label="Loading transactions">
+              {[0, 1, 2, 3].map((row) => (
+                <div key={row} className="grid grid-cols-2 md:grid-cols-7 gap-3">
+                  {[0, 1, 2, 3, 4, 5, 6].map((cell) => (
+                    <div key={cell} className="h-10 rounded-xl bg-white/5" />
+                  ))}
+                </div>
+              ))}
+            </div>
           )}
 
           {error && (

@@ -1,15 +1,19 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { confirmOrderPayment, fetchMyOrders, fetchP2POrder, P2POrderItem, P2POrdersResponse } from "../thunk/p2pOrdersThunk";
+import { cancelOrderPayment, confirmOrderPayment, fetchMyOrders, fetchP2POrder, P2POrderItem, P2POrdersResponse } from "../thunk/p2pOrdersThunk";
 
 interface P2POrdersState {
   loading: boolean;
   confirmLoading: boolean;
   confirmingOrderId: number | null;
+  cancelLoading: boolean;
+  cancellingOrderId: number | null;
   error: string | null;
   confirmError: string | null;
+  cancelError: string | null;
   orders: P2POrderItem[];
   message: string | null;
   confirmMessage: string | null;
+  cancelMessage: string | null;
   pagination: {
     currentPage: number;
     lastPage: number;
@@ -23,11 +27,15 @@ const initialState: P2POrdersState = {
   loading: false,
   confirmLoading: false,
   confirmingOrderId: null,
+  cancelLoading: false,
+  cancellingOrderId: null,
   error: null,
   confirmError: null,
+  cancelError: null,
   orders: [],
   message: null,
   confirmMessage: null,
+  cancelMessage: null,
   pagination: {
     currentPage: 1,
     lastPage: 1,
@@ -138,6 +146,35 @@ const p2pOrdersSlice = createSlice({
         state.confirmLoading = false;
         state.confirmingOrderId = null;
         state.confirmError = action.payload || "Failed to confirm payment";
+      })
+      .addCase(cancelOrderPayment.pending, (state, action) => {
+        state.cancelLoading = true;
+        state.cancellingOrderId = action.meta.arg.order_id;
+        state.cancelError = null;
+        state.cancelMessage = null;
+      })
+      .addCase(cancelOrderPayment.fulfilled, (state, action) => {
+        state.cancelLoading = false;
+        state.cancellingOrderId = null;
+        state.cancelError = null;
+        state.cancelMessage = action.payload.message;
+
+        const updatedOrderIndex = state.orders.findIndex((item) => item.id === action.meta.arg.order_id);
+        if (updatedOrderIndex !== -1) {
+          const existingOrder = state.orders[updatedOrderIndex];
+          state.orders[updatedOrderIndex] = {
+            ...existingOrder,
+            status: action.payload.data.status,
+            payment_attempts: action.payload.data.payment_attempts,
+            last_payment_rejection_reason: action.payload.data.last_payment_rejection_reason,
+            payment_rejected_at: action.payload.data.payment_rejected_at,
+          } as P2POrderItem;
+        }
+      })
+      .addCase(cancelOrderPayment.rejected, (state, action) => {
+        state.cancelLoading = false;
+        state.cancellingOrderId = null;
+        state.cancelError = action.payload || "Failed to report payment not received";
       });
   },
 });

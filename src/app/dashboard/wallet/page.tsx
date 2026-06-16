@@ -252,10 +252,9 @@ export default function WalletPage() {
   };
 
   const conversionRateLabel = useMemo(() => {
-    if (ratesLoading) return "Fetching live rate…";
     const rate = convert(1, fromCurrency, toCurrency);
     return `1 ${fromCurrency} = ${formatAmount(rate)} ${toCurrency}`;
-  }, [fromCurrency, toCurrency, rates, ratesLoading]);
+  }, [fromCurrency, toCurrency, rates]);
 
   useEffect(() => {
     if (!fromAmount.trim()) { setToAmount(""); return; }
@@ -381,7 +380,7 @@ export default function WalletPage() {
           >
             <p className="text-gray-400 text-sm mb-1">Total Portfolio Value</p>
             <p className="text-white text-3xl font-bold mb-2">
-              {loading ? "Loading..." : formattedTotalPortfolio}
+              {loading ? <span className="block h-9 w-44 rounded-xl bg-white/10 animate-pulse" /> : formattedTotalPortfolio}
             </p>
             {error && (
               <p className="text-sm text-red-400 mb-4">
@@ -453,7 +452,15 @@ export default function WalletPage() {
             </div>
 
             {loading ? (
-              <div className="px-6 py-8 text-gray-400 text-sm">Loading wallets…</div>
+              <div className="space-y-3 px-6 py-5 animate-pulse" aria-label="Loading wallets">
+                {[0, 1, 2, 3].map((row) => (
+                  <div key={row} className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    {[0, 1, 2, 3, 4].map((cell) => (
+                      <div key={cell} className="h-10 rounded-xl bg-white/5" />
+                    ))}
+                  </div>
+                ))}
+              </div>
             ) : error ? (
               <div className="px-6 py-8 text-red-400 text-sm">{error}</div>
             ) : depositAssets.length === 0 && withdrawAssets.length === 0 ? (
@@ -686,7 +693,11 @@ export default function WalletPage() {
 
           {/* Rate row */}
           <div className="flex items-center justify-between mb-5 mt-2 px-1">
-            <p className="text-gray-500 text-xs">{conversionRateLabel}</p>
+            {ratesLoading ? (
+              <div className="h-3 w-36 rounded bg-white/10 animate-pulse" aria-label="Loading conversion rate" />
+            ) : (
+              <p className="text-gray-500 text-xs">{conversionRateLabel}</p>
+            )}
             <span
               style={{
                 display: "flex",

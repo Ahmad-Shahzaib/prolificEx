@@ -45,7 +45,7 @@ export default function P2PCryptoTable() {
   } = useAppSelector((state) => state.p2pOffers);
 
   const { totalPortfolioUsd, loading: walletLoading } = useAppSelector((state) => state.wallet);
-  const kycStatus = useAppSelector((state) => state.kyc.status);
+  const { status: kycStatus, statusLoading: kycStatusLoading } = useAppSelector((state) => state.kyc);
 
   const [tab, setTab] = useState<"buy" | "sell">("buy");
   const [coin, setCoin] = useState("USDT");
@@ -274,7 +274,7 @@ export default function P2PCryptoTable() {
       <div className="min-h-screen bg-[#0d0d14] text-white font-sans">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
 
-        {kycStatus !== 'approved' && (
+        {!kycStatusLoading && kycStatus !== 'approved' && (
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 flex gap-4 mb-6">
             <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center flex-shrink-0">
               <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -432,7 +432,15 @@ export default function P2PCryptoTable() {
               </div>
 
               {loading ? (
-                <div className="py-20 text-center text-white/40 text-sm">Loading your offers…</div>
+                <div className="space-y-3 px-6 py-5 animate-pulse" aria-label="Loading your offers">
+                  {[0, 1, 2, 3].map((row) => (
+                    <div key={row} className="grid grid-cols-2 md:grid-cols-6 gap-4">
+                      {[0, 1, 2, 3, 4, 5].map((cell) => (
+                        <div key={cell} className="h-10 rounded-xl bg-white/5" />
+                      ))}
+                    </div>
+                  ))}
+                </div>
               ) : error ? (
                 <div className="py-20 text-center text-red-400 text-sm">{error}</div>
               ) : (
@@ -518,7 +526,15 @@ export default function P2PCryptoTable() {
               </div>
 
               {offersLoading ? (
-                <div className="py-20 text-center text-white/40 text-sm">Loading buy offers…</div>
+                <div className="space-y-3 px-6 py-5 animate-pulse" aria-label="Loading buy offers">
+                  {[0, 1, 2, 3].map((row) => (
+                    <div key={row} className="grid grid-cols-2 md:grid-cols-6 gap-4">
+                      {[0, 1, 2, 3, 4, 5].map((cell) => (
+                        <div key={cell} className="h-10 rounded-xl bg-white/5" />
+                      ))}
+                    </div>
+                  ))}
+                </div>
               ) : offersError ? (
                 <div className="py-20 text-center text-red-400 text-sm">{offersError}</div>
               ) : paginatedBuyOffers.length === 0 ? (

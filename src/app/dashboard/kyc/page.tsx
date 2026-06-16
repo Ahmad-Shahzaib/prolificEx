@@ -24,7 +24,7 @@ export default function KYCPage() {
     reviewedAt,
     reviewNotes,
   } = useAppSelector((state) => state.kyc);
-  const isPageLoading = loading;
+  const isPageLoading = statusLoading;
 
   const [documentType, setDocumentType] = useState<"national_id" | "passport" | "driver_license" | string>("national_id");
   const [documentFront, setDocumentFront] = useState<File | null>(null);
@@ -191,6 +191,33 @@ export default function KYCPage() {
     }
   };
 
+  if (isPageLoading) {
+    return (
+      <PageShell title="KYC Verification" description="Complete your verification to unlock full trading features.">
+        <div className="space-y-6 animate-pulse" aria-label="Loading KYC details">
+          <div className="h-24 rounded-2xl border border-white/[0.07] bg-[#13141a] p-6">
+            <div className="h-4 w-64 max-w-full rounded bg-white/10" />
+          </div>
+          <div className="rounded-3xl border border-white/[0.07] bg-[#13141a] p-6 sm:p-10 space-y-8">
+            <div className="flex justify-between gap-4">
+              <div className="space-y-3">
+                <div className="h-7 w-72 max-w-full rounded bg-white/10" />
+                <div className="h-4 w-52 rounded bg-white/10" />
+              </div>
+              <div className="h-9 w-28 rounded-full bg-white/10" />
+            </div>
+            <div className="h-12 rounded-2xl bg-white/10" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="h-64 rounded-3xl bg-white/10" />
+              <div className="h-64 rounded-3xl bg-white/10" />
+            </div>
+            <div className="h-52 rounded-3xl bg-white/10" />
+          </div>
+        </div>
+      </PageShell>
+    );
+  }
+
   return (
     <PageShell title="KYC Verification" description="Complete your verification to unlock full trading features.">
       {status === 'approved' && (
@@ -232,7 +259,7 @@ export default function KYCPage() {
               </div>
             </div>
             <div className="mb-6 text-sm text-gray-300">
-              {statusLoading && <p>Fetching latest KYC status...</p>}
+              {statusLoading && <div className="h-4 w-64 max-w-full rounded bg-white/10 animate-pulse" aria-label="Loading KYC status" />}
               {!statusLoading && statusError && <p className="text-red-400">{statusError}</p>}
               {!statusLoading && !statusError && status && (
                 <p>
@@ -419,15 +446,6 @@ export default function KYCPage() {
       </Card>
   ) 
  }
-      {isPageLoading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="flex flex-col items-center gap-3 rounded-3xl bg-[#111125] bg-opacity-95 border border-white/10 p-6 shadow-xl">
-            <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin" />
-            <p className="text-sm text-white">Please wait...</p>
-          </div>
-        </div>
-      )}
-     
     </PageShell>
   );
 }

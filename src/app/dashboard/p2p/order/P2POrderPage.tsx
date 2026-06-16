@@ -4,13 +4,14 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Star, Send, Paperclip } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { initiateP2POrder, submitP2PPaymentProof } from "@/redux/thunk/p2pOrderThunk";
+import { initiateP2POrder, submitP2PPaymentProof, disputeP2POrder } from "@/redux/thunk/p2pOrderThunk";
 import { fetchP2POrderMessages, sendP2POrderMessage } from "@/redux/thunk/p2pOrderMessagesThunk";
 import { P2POffer } from "@/redux/thunk/p2pOffersThunk";
 import { clearP2POrderMessages } from "@/redux/slices/p2pOrderMessagesSlice";
 import { clearP2POrderState, restoreP2POrderState } from "@/redux/slices/p2pOrderSlice";
 import { clearP2POrderRatingState } from "@/redux/slices/p2pOrderRatingSlice";
 import { submitP2POrderRating } from "@/redux/thunk/p2pOrderRatingThunk";
+import { createEcho } from "@/lib/echo";
 
 interface Message {
   id: number;
@@ -35,6 +36,9 @@ export default function P2POrderPage({ selectedOffer }: P2POrderPageProps) {
     paymentProofLoading,
     paymentProofError,
     paymentProofSuccessMessage,
+    disputeLoading,
+    disputeError,
+    disputeSuccessMessage,
   } = useAppSelector((state) => state.p2pOrder);
   const {
     messages: chatMessages,
@@ -57,6 +61,7 @@ export default function P2POrderPage({ selectedOffer }: P2POrderPageProps) {
   const [inputMsg, setInputMsg] = useState("");
   const [chatAttachmentFile, setChatAttachmentFile] = useState<File | null>(null);
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [disputeReason, setDisputeReason] = useState("");
   const [rating, setRating] = useState(0);
   const [ratingComment, setRatingComment] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -210,6 +215,45 @@ export default function P2POrderPage({ selectedOffer }: P2POrderPageProps) {
     dispatch(fetchP2POrderMessages(orderId));
   }, [dispatch, orderId]);
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !orderId) return;
+    const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+    if (!token) return;
+
+    const echo = createEcho(token);
+    if (!echo) return;
+
+    const channel = echo.private(`p2p.order.${orderId}`);
+    const connector = echo.connector as any;
+
+    if (connector?.pusher?.connection?.bind) {
+      connector.pusher.connection.bind("connected", () => {
+        console.log("Reverb connected", echo.socketId());
+      });
+      connector.pusher.connection.bind("error", (error: any) => {
+        console.error("Reverb connection error", error);
+      });
+    }
+
+    channel.subscribed(() => {
+      console.log("Subscribed to", `p2p.order.${orderId}`);
+    });
+
+    channel.error((error: any) => {
+      console.error("Channel subscription failed", error);
+    });
+
+    channel.listen(".trade.message.sent", ({ message }: { message: any }) => {
+      console.log("Live message event received", message);
+      dispatch(fetchP2POrderMessages(orderId));
+    });
+
+    return () => {
+      echo.leave(`p2p.order.${orderId}`);
+      echo.disconnect();
+    };
+  }, [dispatch, orderId]);
+
   const getTime = () => {
     const now = new Date();
     return `${now.getHours().toString().padStart(2, "0")}:${now
@@ -252,6 +296,18 @@ export default function P2POrderPage({ selectedOffer }: P2POrderPageProps) {
     setInputMsg("");
     setAttachmentFile(null);
   };
+
+  const openDispute = () => {
+    if (!orderId || !disputeReason.trim()) return;
+    dispatch(
+      disputeP2POrder({
+        order_id: orderId,
+        reason: disputeReason.trim(),
+      })
+    );
+  };
+
+  const canSubmitDispute = Boolean(orderId) && disputeReason.trim().length > 0 && !disputeLoading;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -632,6 +688,7 @@ export default function P2POrderPage({ selectedOffer }: P2POrderPageProps) {
                       className="hidden"
                     />
                   </label>
+                  
                   <button
                     onClick={sendPaymentProof}
                     disabled={!attachmentFile || paymentProofLoading}
@@ -639,11 +696,31 @@ export default function P2POrderPage({ selectedOffer }: P2POrderPageProps) {
                   >
                     {paymentProofLoading ? "Submitting..." : "Mark as Paid"}
                   </button>
+                  <button
+                    type="button"
+                    onClick={openDispute}
+                    disabled={!canSubmitDispute}
+                    className="w-full px-4 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 transition text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {disputeLoading ? "Submitting dispute..." : "Report Dispute"}
+                  </button>
+                  <textarea
+                    value={disputeReason}
+                    onChange={(e) => setDisputeReason(e.target.value)}
+                    placeholder="Describe why you're opening a dispute"
+                    className="w-full min-h-[100px] resize-none rounded-2xl border border-[#1f1f2e] bg-[#1a1a27] px-4 py-3 text-sm text-white/80 outline-none"
+                  />
                   {paymentProofError && (
                     <p className="text-xs text-red-300">{paymentProofError}</p>
                   )}
                   {paymentProofSuccessMessage && (
                     <p className="text-xs text-emerald-300">{paymentProofSuccessMessage}</p>
+                  )}
+                  {disputeError && (
+                    <p className="text-xs text-red-300">{disputeError}</p>
+                  )}
+                  {disputeSuccessMessage && (
+                    <p className="text-xs text-emerald-300">{disputeSuccessMessage}</p>
                   )}
                 </div>
               </div>

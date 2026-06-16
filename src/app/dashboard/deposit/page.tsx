@@ -171,6 +171,38 @@ function DepositContent() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  if (isPageLoading) {
+    return (
+      <PageShell title="Deposit" description="">
+        <div className="space-y-6 px-4 sm:px-6 py-2 animate-pulse" aria-label="Loading deposit details">
+          <div className="rounded-2xl border border-white/[0.07] bg-[#13141a] p-5 sm:p-6 space-y-6">
+            <div className="flex items-center justify-between gap-4">
+              <div className="h-5 w-28 rounded bg-white/10" />
+              <div className="h-10 w-64 rounded-full bg-white/10" />
+            </div>
+            <div className="h-12 rounded-xl bg-white/10" />
+            <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-5">
+              <div className="h-28 rounded-xl bg-white/10" />
+              <div className="space-y-4">
+                <div className="h-4 w-48 rounded bg-white/10" />
+                <div className="h-12 rounded-xl bg-white/10" />
+                <div className="h-3 w-56 rounded bg-white/10" />
+              </div>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-white/[0.07] bg-[#13141a] p-5 sm:p-6 space-y-4">
+            <div className="h-5 w-36 rounded bg-white/10" />
+            {[0, 1, 2].map((row) => (
+              <div key={row} className="grid grid-cols-2 md:grid-cols-7 gap-3">
+                {[0, 1, 2, 3, 4, 5, 6].map((cell) => <div key={cell} className="h-10 rounded-lg bg-white/10" />)}
+              </div>
+            ))}
+          </div>
+        </div>
+      </PageShell>
+    );
+  }
+
   return (
     <PageShell title="Deposit" description="">
       <div className="space-y-6 px-4 sm:px-6 py-2">
@@ -251,7 +283,7 @@ function DepositContent() {
                 <div>
                   <p className="text-white/80 text-sm font-medium">Wallet Deposit Address</p>
                   <p className="text-white text-sm mt-1 break-all sm:break-normal font-mono">
-                    {kycStatus !== 'approved' ? "KYC verification required" : (depositLoading ? "Loading address..." : currentAddress || "Address unavailable")}
+                    {kycStatus !== 'approved' ? "KYC verification required" : (depositLoading ? <span className="block h-4 w-64 max-w-full rounded bg-white/10 animate-pulse" /> : currentAddress || "Address unavailable")}
                   </p>
                 </div>
                 <button
@@ -267,11 +299,11 @@ function DepositContent() {
               <div className="space-y-2 text-xs">
                 <div className="flex items-center gap-2">
                   <CheckCircleIcon />
-                  <span className="text-white/40">Minimum deposit: {depositLoading ? "Loading..." : minDepositLabel}</span>
+                  <span className="text-white/40 flex items-center gap-2">Minimum deposit: {depositLoading ? <span className="inline-block h-3 w-12 rounded bg-white/10 animate-pulse" /> : minDepositLabel}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircleIcon />
-                  <span className="text-white/40">Network confirmations: {depositLoading ? "Loading..." : confirmationLabel} required</span>
+                  <span className="text-white/40 flex items-center gap-2">Network confirmations: {depositLoading ? <span className="inline-block h-3 w-12 rounded bg-white/10 animate-pulse" /> : confirmationLabel} required</span>
                 </div>
               </div>
             </div>
@@ -287,7 +319,15 @@ function DepositContent() {
           <p className="text-white font-semibold text-base mb-5">Recent Deposits</p>
 
           {depositLoading ? (
-            <div className="px-6 py-8 text-gray-400 text-sm">Loading recent deposits…</div>
+            <div className="space-y-3 py-2 animate-pulse" aria-label="Loading recent deposits">
+              {[0, 1, 2, 3].map((row) => (
+                <div key={row} className="grid grid-cols-2 md:grid-cols-7 gap-3">
+                  {[0, 1, 2, 3, 4, 5, 6].map((cell) => (
+                    <div key={cell} className="h-10 rounded-xl bg-white/5" />
+                  ))}
+                </div>
+              ))}
+            </div>
           ) : recentDeposits.length === 0 ? (
             <div className="px-6 py-8 text-gray-400 text-sm">No recent deposits available.</div>
           ) : (
@@ -381,14 +421,6 @@ function DepositContent() {
           )}
         </div>
       </div>
-      {isPageLoading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="flex flex-col items-center gap-3 rounded-3xl bg-[#111125] bg-opacity-95 border border-white/10 p-6 shadow-xl">
-            <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin" />
-            <p className="text-sm text-white">Please wait...</p>
-          </div>
-        </div>
-      )}
     </PageShell>
   );
 }

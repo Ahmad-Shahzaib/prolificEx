@@ -38,12 +38,16 @@ export function DashboardOverview() {
             </h3>
           </div>
           <div className="text-right text-sm text-[#9ca3af] [font-family:'Inter',Helvetica]">
-            {loading ? "Loading…" : error ? error : "Live data"}
+            {loading ? <div className="h-4 w-20 rounded bg-white/10 animate-pulse" /> : error ? error : "Live data"}
           </div>
         </div>
 
         {loading ? (
-          <div className="text-white/70 text-sm">Loading dashboard overview…</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-pulse" aria-label="Loading dashboard overview">
+            {[0, 1, 2].map((item) => (
+              <div key={item} className="h-28 rounded-3xl bg-white/5 border border-white/5" />
+            ))}
+          </div>
         ) : error ? (
           <div className="text-rose-400 text-sm">{error}</div>
         ) : (

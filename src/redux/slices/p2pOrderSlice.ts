@@ -4,6 +4,7 @@ import {
   P2POrderResponseData,
   submitP2PPaymentProof,
   P2PPaymentProofResponseData,
+  disputeP2POrder,
 } from "../thunk/p2pOrderThunk";
 
 interface P2POrderState {
@@ -14,6 +15,9 @@ interface P2POrderState {
   paymentProofLoading: boolean;
   paymentProofError: string | null;
   paymentProofSuccessMessage: string | null;
+  disputeLoading: boolean;
+  disputeError: string | null;
+  disputeSuccessMessage: string | null;
 }
 
 const initialState: P2POrderState = {
@@ -24,6 +28,9 @@ const initialState: P2POrderState = {
   paymentProofLoading: false,
   paymentProofError: null,
   paymentProofSuccessMessage: null,
+  disputeLoading: false,
+  disputeError: null,
+  disputeSuccessMessage: null,
 };
 
 const p2pOrderSlice = createSlice({
@@ -35,12 +42,24 @@ const p2pOrderSlice = createSlice({
       state.error = null;
       state.order = null;
       state.successMessage = null;
+      state.paymentProofLoading = false;
+      state.paymentProofError = null;
+      state.paymentProofSuccessMessage = null;
+      state.disputeLoading = false;
+      state.disputeError = null;
+      state.disputeSuccessMessage = null;
     },
     restoreP2POrderState(state, action: PayloadAction<P2POrderState>) {
       state.loading = action.payload.loading;
       state.error = action.payload.error;
       state.order = action.payload.order;
       state.successMessage = action.payload.successMessage;
+      state.paymentProofLoading = false;
+      state.paymentProofError = null;
+      state.paymentProofSuccessMessage = null;
+      state.disputeLoading = false;
+      state.disputeError = null;
+      state.disputeSuccessMessage = null;
     },
   },
   extraReducers: (builder) => {
@@ -102,6 +121,30 @@ const p2pOrderSlice = createSlice({
         state.paymentProofLoading = false;
         state.paymentProofSuccessMessage = null;
         state.paymentProofError = action.payload || "Failed to submit payment proof";
+      })
+      .addCase(disputeP2POrder.pending, (state) => {
+        state.disputeLoading = true;
+        state.disputeError = null;
+        state.disputeSuccessMessage = null;
+      })
+      .addCase(disputeP2POrder.fulfilled, (state, action: PayloadAction<P2PDisputeResponseData>) => {
+        state.disputeLoading = false;
+        state.disputeError = null;
+        state.disputeSuccessMessage = "Dispute submitted successfully. Support will review your order.";
+        if (state.order) {
+          state.order = {
+            ...state.order,
+            order: {
+              ...state.order.order,
+              ...action.payload,
+            } as any,
+          } as P2POrderResponseData;
+        }
+      })
+      .addCase(disputeP2POrder.rejected, (state, action) => {
+        state.disputeLoading = false;
+        state.disputeSuccessMessage = null;
+        state.disputeError = action.payload || "Failed to submit dispute";
       });
   },
 });
