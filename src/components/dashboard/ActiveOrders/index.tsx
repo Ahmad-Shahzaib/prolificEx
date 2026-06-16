@@ -56,7 +56,20 @@ export function ActiveOrders() {
         </div>
 
         {loading && (
-          <p className="text-[#6b7280] text-sm [font-family:'Inter',Helvetica] py-4">Loading orders...</p>
+          <div className="space-y-3 py-2 animate-pulse" aria-label="Loading orders">
+            <div className="grid grid-cols-4 gap-4 border-b border-white/5 pb-3">
+              {[0, 1, 2, 3].map((item) => (
+                <div key={item} className="h-3 rounded bg-white/10" />
+              ))}
+            </div>
+            {[0, 1].map((row) => (
+              <div key={row} className="grid grid-cols-4 gap-4 py-2">
+                {[0, 1, 2, 3].map((item) => (
+                  <div key={item} className="h-8 rounded-lg bg-white/10" />
+                ))}
+              </div>
+            ))}
+          </div>
         )}
 
         {!loading && latestFive.length === 0 && (

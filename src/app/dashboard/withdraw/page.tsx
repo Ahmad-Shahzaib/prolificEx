@@ -68,7 +68,9 @@ function WithdrawContent() {
   const dispatch = useAppDispatch();
   const withdrawState = useAppSelector((state) => state.withdraw);
   const kycStatus = useAppSelector((state) => state.kyc.status);
+  const kycStatusLoading = useAppSelector((state) => state.kyc.statusLoading);
   const wallets = useAppSelector((state) => state.wallet.wallets);
+  const walletsLoading = useAppSelector((state) => state.wallet.loading);
   const { toast, toasts, dismiss } = useToast();
   const searchParams = useSearchParams();
   const coinParam = searchParams.get("coin")?.toUpperCase() ?? "USDT";
@@ -188,6 +190,28 @@ function WithdrawContent() {
     setAmount("");
     setAuthCode("");
   };
+
+  if (walletsLoading || kycStatusLoading) {
+    return (
+      <PageShell title="Withdraw" description="Initiate a withdrawal to your wallet address.">
+        <div className="space-y-6 px-4 sm:px-6 py-2 animate-pulse" aria-label="Loading withdrawal details">
+          <div className="h-20 rounded-2xl border border-white/[0.07] bg-[#13141a] p-5">
+            <div className="h-4 w-64 max-w-full rounded bg-white/10" />
+          </div>
+          <div className="rounded-2xl border border-white/[0.07] bg-[#13141a] p-5 sm:p-6 space-y-6">
+            <div className="h-4 w-24 rounded bg-white/10" />
+            <div className="h-12 rounded-xl bg-white/10" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="h-12 rounded-xl bg-white/10" />
+              <div className="h-12 rounded-xl bg-white/10" />
+            </div>
+            <div className="h-10 w-72 max-w-full rounded-xl bg-white/10" />
+            <div className="ml-auto h-12 w-44 rounded-xl bg-white/10" />
+          </div>
+        </div>
+      </PageShell>
+    );
+  }
 
   return (
     <PageShell title="Withdraw" description="Initiate a withdrawal to your wallet address.">

@@ -109,7 +109,7 @@ export interface P2PPaymentProofResponseData {
   status: string;
   payment_proof: string | null;
   escrow_txid: string | null;
-  dispute_reason: string | null;
+  reason: string | null;
   paid_at: string | null;
   confirmed_at: string | null;
   cancelled_at: string | null;
@@ -151,6 +151,53 @@ export const submitP2PPaymentProof = createAsyncThunk<
       return data.data as P2PPaymentProofResponseData;
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while submitting payment proof");
+    }
+  }
+);
+
+export interface P2PDisputePayload {
+  order_id: number;
+  reason: string;
+}
+
+export interface P2PDisputeResponseData {
+  id: number;
+  status: string;
+  reason: string | null;
+  [key: string]: any;
+}
+
+export const disputeP2POrder = createAsyncThunk<
+  P2PDisputeResponseData,
+  P2PDisputePayload,
+  { rejectValue: string }
+>(
+  "p2pOrder/disputeP2POrder",
+  async (payload, { rejectWithValue }) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      if (!baseUrl) {
+        return rejectWithValue("Missing NEXT_PUBLIC_API_BASE_URL in environment");
+      }
+
+      const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+      const response = await fetch(`${baseUrl}/p2p/orders/${payload.order_id}/dispute`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ reason: payload.reason }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data?.success) {
+        return rejectWithValue(data?.message || `Failed to submit dispute (${response.status})`);
+      }
+
+      return data.data as P2PDisputeResponseData;
+    } catch (error: any) {
+      return rejectWithValue(error?.message || "Network error while submitting dispute");
     }
   }
 );

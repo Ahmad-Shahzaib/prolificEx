@@ -160,7 +160,11 @@ export function NetworkFeeCalculator() {
         <p className="text-white text-lg font-semibold mb-4">Fee estimate</p>
 
         {loading ? (
-          <div className="rounded-2xl bg-white/5 p-6 text-sm text-white/60">Loading fee details…</div>
+          <div className="grid gap-4 sm:grid-cols-2 animate-pulse" aria-label="Loading fee details">
+            {[0, 1].map((item) => (
+              <div key={item} className="h-36 rounded-3xl border border-white/10 bg-white/5" />
+            ))}
+          </div>
         ) : feeData ? (
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-3xl border border-white/10 bg-[#0f1119] p-5">

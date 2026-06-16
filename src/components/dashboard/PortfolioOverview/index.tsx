@@ -16,9 +16,7 @@ export function PortfolioOverview() {
     dispatch(fetchWallets());
   }, [dispatch]);
 
-  const formattedValue = loading
-    ? "Loading..."
-    : `$${totalPortfolioUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formattedValue = `$${totalPortfolioUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return (
     <Card className="bg-[#1a1b23] border border-white/5 rounded-2xl">
@@ -38,7 +36,11 @@ export function PortfolioOverview() {
           </Button>
         </div>
         <h2 className="[font-family:'Inter',Helvetica] font-bold text-white text-2xl sm:text-[32px] leading-[44px] tracking-tight mb-5">
-          {formattedValue}
+          {loading ? (
+            <span className="block h-9 w-40 rounded-xl bg-white/10 animate-pulse" />
+          ) : (
+            formattedValue
+          )}
         </h2>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Button

@@ -6,8 +6,10 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, Send, Paperclip } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { fetchP2POrderMessages, sendP2POrderMessage } from "@/redux/thunk/p2pOrderMessagesThunk";
-import { confirmOrderPayment, fetchP2POrder } from "@/redux/thunk/p2pOrdersThunk";
+import { cancelOrderPayment, confirmOrderPayment, fetchP2POrder } from "@/redux/thunk/p2pOrdersThunk";
+import { submitP2PPaymentProof } from "@/redux/thunk/p2pOrderThunk";
 import { clearP2POrderMessages } from "@/redux/slices/p2pOrderMessagesSlice";
+import { createEcho } from "@/lib/echo";
 
 export default function SellerOrderChatPage() {
   const params = useParams();
@@ -19,11 +21,14 @@ export default function SellerOrderChatPage() {
   );
 
   const order = useAppSelector((state) => state.p2pOrders.orders.find((item) => item.id === orderId));
-  const { confirmLoading, confirmingOrderId, confirmError, confirmMessage } = useAppSelector((state) => state.p2pOrders);
+  const { confirmLoading, confirmingOrderId, confirmError, confirmMessage, cancelLoading, cancellingOrderId, cancelError, cancelMessage } = useAppSelector((state) => state.p2pOrders);
+  const { paymentProofLoading, paymentProofError, paymentProofSuccessMessage } = useAppSelector((state) => state.p2pOrder);
   const currentUserUuid = useAppSelector((state) => state.auth.user?.uuid);
 
   const [inputMsg, setInputMsg] = useState("");
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -38,6 +43,45 @@ export default function SellerOrderChatPage() {
       dispatch(clearP2POrderMessages());
     };
   }, [dispatch, orderId, order]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !orderId) return;
+    const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+    if (!token) return;
+
+    const echo = createEcho(token);
+    if (!echo) return;
+
+    const channel = echo.private(`p2p.order.${orderId}`);
+    const connector = echo.connector as any;
+
+    if (connector?.pusher?.connection?.bind) {
+      connector.pusher.connection.bind("connected", () => {
+        console.log("Reverb connected", echo.socketId());
+      });
+      connector.pusher.connection.bind("error", (error: any) => {
+        console.error("Reverb connection error", error);
+      });
+    }
+
+    channel.subscribed(() => {
+      console.log("Subscribed to", `p2p.order.${orderId}`);
+    });
+
+    channel.error((error: any) => {
+      console.error("Channel subscription failed", error);
+    });
+
+    channel.listen(".trade.message.sent", ({ message }: { message: any }) => {
+      console.log("Live message event received", message);
+      dispatch(fetchP2POrderMessages(orderId));
+    });
+
+    return () => {
+      echo.leave(`p2p.order.${orderId}`);
+      echo.disconnect();
+    };
+  }, [dispatch, orderId]);
 
   const formattedMessages = useMemo(() => {
     const safeMessages = Array.isArray(messages) ? messages : [];
@@ -58,6 +102,12 @@ export default function SellerOrderChatPage() {
     setAttachmentFile(file);
   };
 
+  const normalizedStatus = order?.status?.toLowerCase().replace(/\s+/g, "_");
+  const isSeller = order?.seller?.uuid === currentUserUuid;
+  const showConfirmPaymentButton = isSeller && normalizedStatus === "paid";
+  const showCancelPaymentButton = isSeller && normalizedStatus === "paid";
+  const showSubmitPaymentProof = !isSeller && normalizedStatus === "awaiting_payment";
+
   const sendMessage = () => {
     if ((!inputMsg.trim() && !attachmentFile) || !orderId) return;
 
@@ -73,6 +123,31 @@ export default function SellerOrderChatPage() {
     setAttachmentFile(null);
   };
 
+  const handlePaymentProofChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    setPaymentProofFile(file);
+  };
+
+  const sendPaymentProof = () => {
+    if (!paymentProofFile || !orderId) return;
+
+    dispatch(
+      submitP2PPaymentProof({
+        order_id: orderId,
+        payment_proof: paymentProofFile,
+      })
+    );
+
+    setPaymentProofFile(null);
+  };
+
+  const cancelPayment = () => {
+    if (!cancelReason.trim() || !orderId) return;
+
+    dispatch(cancelOrderPayment({ order_id: orderId, reason: cancelReason.trim() }));
+    setCancelReason("");
+  };
+
   // Auto scroll to bottom when new messages arrive
   useEffect(() => {
     if (chatEndRef.current) {
@@ -84,9 +159,6 @@ export default function SellerOrderChatPage() {
     attachment.startsWith("http")
       ? attachment
       : `https://api.prolificex.softsuitetech.com/public/storage/${attachment.replace(/^\/+/, "")}`;
-
-  const isSeller = order?.seller?.uuid === currentUserUuid;
-  const showConfirmPaymentButton = isSeller && order?.status === "paid";
 
   const formattedStatus = order?.status
     ? order.status
@@ -150,26 +222,90 @@ export default function SellerOrderChatPage() {
                 <span className="font-medium">{order?.seller.full_name || "-"}</span>
               </div>
             </div>
-            {showConfirmPaymentButton && (
-              <div className="mt-6">
+            {(showConfirmPaymentButton || showSubmitPaymentProof) && (
+              <div className="mt-6 space-y-4">
                 {confirmMessage && (
-                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-200 mb-3">
+                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-200">
                     {confirmMessage}
                   </div>
                 )}
+                {paymentProofSuccessMessage && (
+                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-200">
+                    {paymentProofSuccessMessage}
+                  </div>
+                )}
                 {confirmError && (
-                  <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200 mb-3">
+                  <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200">
                     {confirmError}
                   </div>
                 )}
-                <button
-                  type="button"
-                  onClick={() => dispatch(confirmOrderPayment({ order_id: orderId }))}
-                  disabled={confirmLoading && confirmingOrderId === orderId}
-                  className="w-full rounded-2xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white hover:bg-violet-500 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {confirmLoading && confirmingOrderId === orderId ? "Confirming…" : "Confirm payment"}
-                </button>
+                {paymentProofError && (
+                  <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200">
+                    {paymentProofError}
+                  </div>
+                )}
+                {cancelMessage && (
+                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-200">
+                    {cancelMessage}
+                  </div>
+                )}
+                {cancelError && (
+                  <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200">
+                    {cancelError}
+                  </div>
+                )}
+                {showConfirmPaymentButton && (
+                  <button
+                    type="button"
+                    onClick={() => dispatch(confirmOrderPayment({ order_id: orderId }))}
+                    disabled={confirmLoading && confirmingOrderId === orderId}
+                    className="w-full rounded-2xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white hover:bg-violet-500 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {confirmLoading && confirmingOrderId === orderId ? "Confirming…" : "Confirm payment"}
+                  </button>
+                )}
+                {showSubmitPaymentProof && (
+                  <div className="space-y-3">
+                    <label className="block text-sm font-medium text-white/70">Upload payment proof</label>
+                    <label className="flex h-12 items-center justify-between rounded-2xl border border-[#1f1f2e] bg-[#1a1a27] px-4 text-sm text-white/70 cursor-pointer hover:border-violet-500 transition">
+                      <span>{paymentProofFile ? paymentProofFile.name : "Select image or PDF proof"}</span>
+                      <input
+                        type="file"
+                        accept="image/*,.pdf"
+                        onChange={handlePaymentProofChange}
+                        className="hidden"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={sendPaymentProof}
+                      disabled={!paymentProofFile || paymentProofLoading}
+                      className="w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-500 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {paymentProofLoading ? "Submitting..." : "Mark as Paid"}
+                    </button>
+                  </div>
+                )}
+                {showConfirmPaymentButton && (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-white/70">Reason payment was not received</label>
+                    <textarea
+                      value={cancelReason}
+                      onChange={(e) => setCancelReason(e.target.value)}
+                      rows={3}
+                      placeholder="Enter a short reason"
+                      className="w-full resize-none rounded-2xl border border-[#1f1f2e] bg-[#1a1a27] px-4 py-3 text-sm text-white/80 placeholder-white/40 outline-none focus:border-violet-500 transition"
+                    />
+                    <button
+                      type="button"
+                      onClick={cancelPayment}
+                      disabled={cancelLoading && cancellingOrderId === orderId}
+                      className="w-full rounded-2xl bg-red-600 px-4 py-3 text-sm font-semibold text-white hover:bg-red-500 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {cancelLoading && cancellingOrderId === orderId ? "Reporting…" : "Report payment not received"}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

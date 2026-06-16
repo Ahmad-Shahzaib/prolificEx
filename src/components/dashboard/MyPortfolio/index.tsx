@@ -31,14 +31,30 @@ export function MyPortfolio() {
         </h3>
 
         {loading && (
-          <p className="text-[#6b7280] text-sm [font-family:'Inter',Helvetica]">Loading wallets...</p>
+          <div className="space-y-4 animate-pulse" aria-label="Loading wallets">
+            {[0, 1, 2].map((item) => (
+              <div key={item} className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-white/10" />
+                  <div className="space-y-2">
+                    <div className="h-3 w-16 rounded bg-white/10" />
+                    <div className="h-2 w-12 rounded bg-white/10" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-3 w-20 rounded bg-white/10" />
+                  <div className="ml-auto h-2 w-14 rounded bg-white/10" />
+                </div>
+              </div>
+            ))}
+          </div>
         )}
 
         {!loading && wallets.length === 0 && (
           <p className="text-[#6b7280] text-sm [font-family:'Inter',Helvetica]">No wallets found.</p>
         )}
 
-        <div className="space-y-4">
+        <div className={loading ? "hidden" : "space-y-4"}>
           {wallets.map((wallet) => {
             const iconBg = coinColors[wallet.coin.toUpperCase()] || "bg-[#6b7280]";
             const iconLetter = wallet.coin.slice(0, 1).toUpperCase();

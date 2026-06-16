@@ -50,11 +50,14 @@ export interface P2POrderItem {
   status: string;
   payment_proof: string | null;
   escrow_txid: string | null;
-  dispute_reason: string | null;
+  reason: string | null;
   paid_at: string | null;
   confirmed_at: string | null;
   cancelled_at: string | null;
   expired_at: string | null;
+  last_payment_rejection_reason?: string | null;
+  payment_attempts?: number;
+  payment_rejected_at?: string | null;
   created_at: string;
   updated_at: string;
   unread_messages?: number;
@@ -106,6 +109,22 @@ export interface ConfirmP2POrderResponse {
 
 export interface ConfirmP2POrderPayload {
   order_id: number;
+}
+
+export interface CancelP2POrderPaymentPayload {
+  order_id: number;
+  reason: string;
+}
+
+export interface CancelP2POrderPaymentResponse {
+  success: boolean;
+  message: string;
+  data: {
+    status: string;
+    payment_attempts: number;
+    last_payment_rejection_reason: string | null;
+    payment_rejected_at: string | null;
+  };
 }
 
 export const fetchMyOrders = createAsyncThunk<
@@ -215,6 +234,52 @@ export const confirmOrderPayment = createAsyncThunk<
       return data as ConfirmP2POrderResponse;
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while confirming payment");
+    }
+  }
+);
+
+export const cancelOrderPayment = createAsyncThunk<
+  CancelP2POrderPaymentResponse,
+  CancelP2POrderPaymentPayload,
+  { rejectValue: string }
+>(
+  "p2pOrders/cancelOrderPayment",
+  async ({ order_id, reason }, { rejectWithValue }) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      if (!baseUrl) {
+        return rejectWithValue("Missing NEXT_PUBLIC_API_BASE_URL in environment");
+      }
+
+      const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+      const response = await fetch(`${baseUrl}/p2p/orders/${order_id}/payment-not-received`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ reason }),
+      });
+
+      let data: any;
+      try {
+        data = await response.json();
+      } catch {
+        const text = await response.text();
+        return rejectWithValue(
+          response.ok
+            ? `Unexpected response while cancelling payment`
+            : text || `Failed to cancel payment (${response.status})`
+        );
+      }
+
+      if (!response.ok || !data?.success) {
+        return rejectWithValue(data?.message || `Failed to cancel payment (${response.status})`);
+      }
+
+      return data as CancelP2POrderPaymentResponse;
+    } catch (error: any) {
+      return rejectWithValue(error?.message || "Network error while cancelling payment");
     }
   }
 );
