@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 import { useSidebar } from "@/components/providers/SidebarContext";
@@ -268,6 +268,8 @@ export function Sidebar() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { isOpen, close } = useSidebar();
+  const [isClient, setIsClient] = useState(false);
+
   const role = useAppSelector((state) => {
     const userEmail = state.auth.user?.email?.toLowerCase() || "";
     if (userEmail.startsWith("admin") || userEmail.includes("@admin")) {
@@ -275,6 +277,10 @@ export function Sidebar() {
     }
     return "user";
   });
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -321,14 +327,14 @@ export function Sidebar() {
               alt="Prolific Logo"
               width={100}
               height={100}
-              className="object-contain"
+              className="object-contain h-auto"
               priority
             />
          
         </div>
 
         <nav className="flex-1 px-3 py-3 space-y-1">
-          {links.map((link) => {
+          {isClient && links.map((link) => {
             const isActive = pathname === link.href;
             return (
               <Link
@@ -351,7 +357,7 @@ export function Sidebar() {
         </nav>
 
         <div className="px-3 pb-5 space-y-1">
-          {bottomLinks.map((link) => {
+          {isClient && bottomLinks.map((link) => {
             const isActive = pathname === link.href;
             if (link.label === "Logout") {
               return (

@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { Button } from "@/components/common/Button";
 import { fetchNetworkFee } from "@/redux/thunk/networkFeeThunk";
 import { clearNetworkFeeState } from "@/redux/slices/networkFeeSlice";
 
@@ -41,10 +40,20 @@ export function NetworkFeeCalculator() {
 
   useEffect(() => {
     const numericAmount = parseFloat(amount);
-    if (numericAmount > 0) {
-      dispatch(fetchNetworkFee({ coin: selectedCoin, network: selectedNetwork, amount: numericAmount }));
+    setValidationError(null);
+
+    if (!numericAmount || numericAmount <= 0) {
+      return;
     }
-  }, [dispatch, selectedCoin, selectedNetwork]);
+
+    const debounce = window.setTimeout(() => {
+      dispatch(fetchNetworkFee({ coin: selectedCoin, network: selectedNetwork, amount: numericAmount }));
+    }, 500);
+
+    return () => {
+      window.clearTimeout(debounce);
+    };
+  }, [dispatch, selectedCoin, selectedNetwork, amount]);
 
   useEffect(() => {
     return () => {
@@ -52,7 +61,7 @@ export function NetworkFeeCalculator() {
     };
   }, [dispatch]);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setValidationError(null);
 

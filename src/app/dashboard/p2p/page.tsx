@@ -20,6 +20,7 @@ import { fetchKycStatus } from "@/redux/thunk/kycThunk";
 import { Toaster } from "@/components/common/Toast";
 import { useToast } from "@/hooks/use-toast";
 const COINS = ["USDT", "BTC", "ETH", "BNB", "USDC"];
+const COIN_FILTERS = ["All", ...COINS];
 const NETWORKS = ["TRC20", "ERC20", "BEP20"];
 const PAYMENT_METHODS = ["All", "Bank Transfer", "PayPal", "Wise", "Revolut"];
 const PRICE_TYPES = ["fixed"];
@@ -58,8 +59,10 @@ export default function P2PCryptoTable() {
   const { status: kycStatus, statusLoading: kycStatusLoading } = useAppSelector((state) => state.kyc);
 
   const [tab, setTab] = useState<"buy" | "sell">("buy");
+  const [selectedCoinFilter, setSelectedCoinFilter] = useState("All");
   const [coin, setCoin] = useState("USDT");
-  const [amount, setAmount] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [offerAmount, setOfferAmount] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("All");
   const [page, setPage] = useState(1);
   const [showCoinDropdown, setShowCoinDropdown] = useState(false);
@@ -123,24 +126,87 @@ export default function P2PCryptoTable() {
     router.push(`/dashboard/p2p/order?selectedOfferId=${offer.id}`);
   };
 
-  const filtered = offers.filter((offer: P2POffer) => {
+  const matchesSearchQuery = (offer: P2POffer, query: string) => {
+    const trimmedQuery = query.trim().toLowerCase();
+    if (!trimmedQuery) {
+      return true;
+    }
+
+    const sellerName = (offer.user?.full_name || offer.user?.username || "Merchant").toLowerCase();
+    const coinText = String(offer.coin || "").toLowerCase();
+    const paymentMethodText = String(offer.payment_method || "").toLowerCase();
+    const priceText = String(offer.price_per_coin || "").toLowerCase();
+    const minLimitText = String(offer.min_order_limit || "").toLowerCase();
+    const maxLimitText = String(offer.max_order_limit || "").toLowerCase();
+    const availableText = String(offer.available_amount || "").toLowerCase();
+    const networkText = String(offer.network || "").toLowerCase();
+    const bankText = String(offer.bank_name || "").toLowerCase();
+    const fiatCurrencyText = String(offer.fiat_currency || "").toLowerCase();
+    const statusText = String(offer.status || "").toLowerCase();
+
+    const typeText = String(offer.type || "").toLowerCase();
+    const usernameText = String(offer.user?.username || "").toLowerCase();
+    const numericQueryString = trimmedQuery.match(/[0-9.]+/g)?.join("") ?? "";
+    const numericQuery = numericQueryString ? Number(numericQueryString) : NaN;
+    const matchesNumericValue =
+      numericQueryString !== "" &&
+      Number.isFinite(numericQuery) &&
+      (Number(offer.price_per_coin) === numericQuery ||
+        Number(offer.min_order_limit) === numericQuery ||
+        Number(offer.max_order_limit) === numericQuery ||
+        Number(offer.available_amount) === numericQuery);
+
+    return (
+      sellerName.includes(trimmedQuery) ||
+      usernameText.includes(trimmedQuery) ||
+      coinText.includes(trimmedQuery) ||
+      typeText.includes(trimmedQuery) ||
+      paymentMethodText.includes(trimmedQuery) ||
+      priceText.includes(trimmedQuery) ||
+      minLimitText.includes(trimmedQuery) ||
+      maxLimitText.includes(trimmedQuery) ||
+      availableText.includes(trimmedQuery) ||
+      networkText.includes(trimmedQuery) ||
+      bankText.includes(trimmedQuery) ||
+      fiatCurrencyText.includes(trimmedQuery) ||
+      statusText.includes(trimmedQuery) ||
+      matchesNumericValue
+    );
+  };
+
+  const filteredOffers = offers.filter((offer: P2POffer) => {
+    const normalizedPaymentFilter = paymentFilter.trim().toLowerCase();
+    const offerPaymentMethod = String(offer.payment_method || "").trim().toLowerCase();
     const matchPayment =
-      paymentFilter === "All" ? true : offer.payment_method === paymentFilter;
+      normalizedPaymentFilter === "all" ? true : offerPaymentMethod === normalizedPaymentFilter;
 
-    const minLimit = Number(offer.min_order_limit);
-    const maxLimit = Number(offer.max_order_limit);
-    const matchAmount =
-      amount === ""
-        ? true
-        : Number(amount) >= minLimit && Number(amount) <= maxLimit;
+    const normalizedCoinFilter = selectedCoinFilter.trim().toLowerCase();
+    const offerCoin = String(offer.coin || "").trim().toLowerCase();
+    const matchCoin =
+      normalizedCoinFilter === "all" ? true : offerCoin === normalizedCoinFilter;
 
-    return matchPayment && matchAmount;
+    const matchQuery = matchesSearchQuery(offer, searchQuery);
+    return matchPayment && matchCoin && matchQuery;
   });
 
-  const currentRows = tab === "buy" ? filtered : myOffers;
+  const filteredMyOffers = myOffers.filter((offer: P2POffer) => {
+    const normalizedPaymentFilter = paymentFilter.trim().toLowerCase();
+    const offerPaymentMethod = String(offer.payment_method || "").trim().toLowerCase();
+    const matchPayment =
+      normalizedPaymentFilter === "all" ? true : offerPaymentMethod === normalizedPaymentFilter;
+
+    const normalizedCoinFilter = selectedCoinFilter.trim().toLowerCase();
+    const offerCoin = String(offer.coin || "").trim().toLowerCase();
+    const matchCoin =
+      normalizedCoinFilter === "all" ? true : offerCoin === normalizedCoinFilter;
+
+    return matchPayment && matchCoin && matchesSearchQuery(offer, searchQuery);
+  });
+
+  const currentRows = tab === "buy" ? filteredOffers : filteredMyOffers;
   const totalPages = Math.ceil(currentRows.length / PAGE_SIZE);
-  const paginatedBuyOffers = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const paginatedOffers = myOffers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const paginatedBuyOffers = filteredOffers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const paginatedOffers = filteredMyOffers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleSearch = () => {
     setPage(1);
@@ -162,12 +228,12 @@ export default function P2PCryptoTable() {
     }
     
     // Validation
-    if (!amount || amount.trim() === "") {
+    if (!offerAmount || offerAmount.trim() === "") {
       toast({ title: "Amount is required", description: "Please enter the amount you want to sell", type: "error" });
       return;
     }
 
-    if (Number(amount) <= 0 || isNaN(Number(amount))) {
+    if (Number(offerAmount) <= 0 || isNaN(Number(offerAmount))) {
       toast({ title: "Invalid amount", description: "Please enter a valid positive number for amount", type: "error" });
       return;
     }
@@ -238,7 +304,7 @@ export default function P2PCryptoTable() {
           type: "sell",
           coin,
           network,
-          amount,
+          amount: offerAmount,
           min_order_limit: minOrderLimit,
           max_order_limit: maxOrderLimit,
           price_per_coin: pricePerCoin,
@@ -260,7 +326,7 @@ export default function P2PCryptoTable() {
       });
       
       setShowOfferModal(false);
-      setAmount("");
+      setOfferAmount("");
       setMinOrderLimit("100");
       setMaxOrderLimit("2000");
       setPricePerCoin("1.01");
@@ -333,22 +399,23 @@ export default function P2PCryptoTable() {
             >
               <div className="flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-amber-400 flex items-center justify-center text-xs font-bold text-black">₿</span>
-                <span>{coin}</span>
+                <span>{selectedCoinFilter}</span>
               </div>
               <ChevronDown size={16} className="text-white/50" />
             </Button>
 
             {showCoinDropdown && (
               <div className="absolute z-50 top-full mt-2 left-0 w-full lg:w-40 bg-[#1e1e2e] border border-white/10 rounded-xl shadow-2xl overflow-hidden">
-                {COINS.map((c) => (
+                {COIN_FILTERS.map((c) => (
                   <button
                     key={c}
                     onClick={() => {
-                      setCoin(c);
+                      setSelectedCoinFilter(c);
+                      setPage(1);
                       setShowCoinDropdown(false);
                     }}
                     className={`w-full text-left px-4 py-3 text-sm hover:bg-violet-600/20 transition ${
-                      coin === c ? "text-violet-400 bg-violet-600/10" : "text-white/80"
+                      selectedCoinFilter === c ? "text-violet-400 bg-violet-600/10" : "text-white/80"
                     }`}
                   >
                     {c}
@@ -358,13 +425,16 @@ export default function P2PCryptoTable() {
             )}
           </div>
 
-          {/* Amount Input */}
+          {/* Search Input */}
           <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="Enter Amount (USD)"
-            className="w-full lg:flex-1 bg-[#1e1e2e] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none placeholder:text-white/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Search merchants, price, limits, payment method"
+            className="w-full lg:flex-1 bg-[#1e1e2e] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none placeholder:text-white/40"
           />
 
           {/* Search Button */}
@@ -453,6 +523,10 @@ export default function P2PCryptoTable() {
                 </div>
               ) : error ? (
                 <div className="py-20 text-center text-red-400 text-sm">{error}</div>
+              ) : paginatedOffers.length === 0 ? (
+                <div className="py-20 text-center text-white/40 text-sm">
+                  No offers found for your search criteria.
+                </div>
               ) : (
                 paginatedOffers.map((offer: P2POffer) => (
                   <div
@@ -753,8 +827,8 @@ export default function P2PCryptoTable() {
                   <input
                     name="amount"
                     type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    value={offerAmount}
+                    onChange={(e) => setOfferAmount(e.target.value)}
                     placeholder="2500"
                     autoComplete="off"
                     className="w-full rounded-2xl bg-[#161724] border border-white/10 px-4 py-3 text-sm text-white outline-none"

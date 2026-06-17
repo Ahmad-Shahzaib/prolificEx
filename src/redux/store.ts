@@ -12,6 +12,8 @@ import adminUsersReducer from "./slices/adminUsersSlice";
 import adminUserDetailReducer from "./slices/adminUserDetailSlice";
 import adminKycPendingReducer from "./slices/adminKycPendingSlice";
 import adminP2PStatsReducer from "./slices/adminP2PStatsSlice";
+import adminWithdrawalsReducer from "./slices/adminWithdrawalsSlice";
+import adminDisputesReducer from "./slices/adminDisputesSlice";
 import profileReducer from "./slices/profileSlice";
 import walletReducer from "./slices/walletSlice";
 import walletPricesReducer from "./slices/walletPricesSlice";
@@ -45,6 +47,8 @@ const appReducer = combineReducers({
   adminUserDetail: adminUserDetailReducer,
   adminKycPending: adminKycPendingReducer,
   adminP2PStats: adminP2PStatsReducer,
+  adminWithdrawals: adminWithdrawalsReducer,
+  adminDisputes: adminDisputesReducer,
   profile: profileReducer,
   wallet: walletReducer,
   walletPrices: walletPricesReducer,
