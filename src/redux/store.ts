@@ -12,6 +12,13 @@ import adminUsersReducer from "./slices/adminUsersSlice";
 import adminUserDetailReducer from "./slices/adminUserDetailSlice";
 import adminKycPendingReducer from "./slices/adminKycPendingSlice";
 import adminP2PStatsReducer from "./slices/adminP2PStatsSlice";
+import adminWithdrawalsReducer from "./slices/adminWithdrawalsSlice";
+import adminDisputesReducer from "./slices/adminDisputesSlice";
+import adminTradeMonitoringReducer from "./slices/adminTradeMonitoringSlice";
+import adminSystemLogsReducer from "./slices/adminSystemLogsSlice";
+import adminDepositMonitoringReducer from "./slices/adminDepositMonitoringSlice";
+import adminUserActivityReducer from "./slices/adminUserActivitySlice";
+import adminQuickAlertsReducer from "./slices/adminQuickAlertsSlice";
 import profileReducer from "./slices/profileSlice";
 import walletReducer from "./slices/walletSlice";
 import walletPricesReducer from "./slices/walletPricesSlice";
@@ -45,6 +52,13 @@ const appReducer = combineReducers({
   adminUserDetail: adminUserDetailReducer,
   adminKycPending: adminKycPendingReducer,
   adminP2PStats: adminP2PStatsReducer,
+  adminWithdrawals: adminWithdrawalsReducer,
+  adminDisputes: adminDisputesReducer,
+  adminTradeMonitoring: adminTradeMonitoringReducer,
+  adminSystemLogs: adminSystemLogsReducer,
+  adminDepositMonitoring: adminDepositMonitoringReducer,
+  adminUserActivity: adminUserActivityReducer,
+  adminQuickAlerts: adminQuickAlertsReducer,
   profile: profileReducer,
   wallet: walletReducer,
   walletPrices: walletPricesReducer,

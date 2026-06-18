@@ -82,6 +82,7 @@ const p2pOrdersSlice = createSlice({
       .addCase(fetchMyOrders.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.orders = []; // Clear existing orders when fetching new ones
       })
       .addCase(fetchMyOrders.fulfilled, (state, action: PayloadAction<P2POrdersResponse>) => {
         state.loading = false;
