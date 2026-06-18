@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { Users, TrendingUp, BarChart3, FileText, Scale } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { AlertTriangle, BarChart3, FileText, Scale, TrendingUp, Users } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -13,15 +14,8 @@ import {
 } from "recharts";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks";
 import { fetchDashboardStats } from "../../../redux/thunk/dashboardStatsThunk";
-
-const registrationData = [
-  { date: "Apr 1", users: 45000 },
-  { date: "Apr 2", users: 42000 },
-  { date: "Apr 3", users: 38000 },
-  { date: "Apr 4", users: 48000 },
-  { date: "Apr 5", users: 32000 },
-  { date: "Apr 6", users: 28000 },
-];
+import { fetchAdminUserActivity, AdminUserActivityRange } from "@/redux/thunk/adminUserActivityThunk";
+import { fetchAdminQuickAlerts } from "@/redux/thunk/adminQuickAlertsThunk";
 
 const defaultStats = [
   {
@@ -64,11 +58,33 @@ const defaultStats = [
 
 export default function AdminDashboardPage() {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const { stats: statsData, loading, error } = useAppSelector((state) => state.dashboard);
+  const {
+    data: activityData,
+    loading: activityLoading,
+    error: activityError,
+  } = useAppSelector((state) => state.adminUserActivity);
+  const {
+    alerts,
+    total: alertsTotal,
+    loading: alertsLoading,
+    error: alertsError,
+  } = useAppSelector((state) => state.adminQuickAlerts);
+
+  const [activityRange, setActivityRange] = useState<AdminUserActivityRange>("1w");
 
   useEffect(() => {
     dispatch(fetchDashboardStats());
+    dispatch(fetchAdminQuickAlerts({ limit: 10 }));
   }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchAdminUserActivity({ range: activityRange }));
+  }, [activityRange, dispatch]);
+
+  const chartPoints = useMemo(() => activityData?.series.points ?? [], [activityData]);
+  const lineKey = activityData?.series.line_key ?? "value";
 
   const stats = statsData
     ? [
@@ -125,6 +141,11 @@ export default function AdminDashboardPage() {
       {error && (
         <div className="mb-4 text-sm text-red-400">Error: {error}</div>
       )}
+      {(activityError || alertsError) && (
+        <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {activityError || alertsError}
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-6 md:mb-8">
@@ -154,87 +175,151 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 md:gap-6">
         {/* User Activity Chart */}
         <div className="xl:col-span-7 bg-[#222531] rounded-3xl p-4 md:p-6 border border-[#23263b] self-start">
-          <h2 className="text-base md:text-lg font-semibold mb-4 md:mb-6">
-            User Activity
-          </h2>
+          <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-start md:mb-6">
+            <div>
+              <h2 className="text-base md:text-lg font-semibold">
+                {activityData?.title ?? "User Activity"}
+              </h2>
+              <p className="mt-1 text-sm text-gray-400">
+                {activityData?.subtitle ?? "Registrations and active sessions"}
+              </p>
+            </div>
+            <div className="flex rounded-xl border border-[#2a2d3f] bg-[#1a1c2e] p-1">
+              {(["1w", "1m", "3m", "6m"] as AdminUserActivityRange[]).map((range) => (
+                <button
+                  key={range}
+                  type="button"
+                  onClick={() => setActivityRange(range)}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                    activityRange === range
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  {range}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div className="h-[210px] sm:h-[240px] md:h-[280px] relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={registrationData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#23263b" />
-                <XAxis
-                  dataKey="date"
-                  stroke="#666"
-                  tick={{ fill: "#888", fontSize: 11 }}
-                  interval="preserveStartEnd"
-                />
-                <YAxis
-                  stroke="#666"
-                  tick={{ fill: "#888", fontSize: 11 }}
-                  domain={[10000, 50000]}
-                  width={50}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#1a1c2e",
-                    border: "none",
-                    borderRadius: "12px",
-                    color: "#fff",
-                    boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.3)",
-                  }}
-                />
-                <Line
-                  type="natural"
-                  dataKey="users"
-                  stroke="#3b82f6"
-                  strokeWidth={4}
-                  dot={false}
-                  activeDot={{
-                    r: 8,
-                    fill: "#3b82f6",
-                    stroke: "#121212",
-                    strokeWidth: 3,
-                  }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-
-            {/* Custom Highlight Tooltip */}
-            <div className="absolute left-1/2 top-[22%] -translate-x-1/2 pointer-events-none">
-              <div className="bg-blue-600 text-white text-xs font-medium px-3 md:px-4 py-1.5 rounded-full shadow-xl flex items-center gap-2">
-                64,364.77
-                <div className="w-2.5 h-2.5 bg-blue-400 rounded-full" />
+            {activityLoading ? (
+              <div className="flex h-full items-center justify-center text-sm text-gray-400">
+                Loading activity...
               </div>
-            </div>
+            ) : chartPoints.length === 0 ? (
+              <div className="flex h-full items-center justify-center text-sm text-gray-400">
+                No activity data found.
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartPoints}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#23263b" />
+                  <XAxis
+                    dataKey="label"
+                    stroke="#666"
+                    tick={{ fill: "#888", fontSize: 11 }}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    stroke="#666"
+                    tick={{ fill: "#888", fontSize: 11 }}
+                    width={50}
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#1a1c2e",
+                      border: "1px solid #2a2d3f",
+                      borderRadius: "12px",
+                      color: "#fff",
+                      boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.3)",
+                    }}
+                    labelStyle={{ color: "#cbd5e1" }}
+                  />
+                  <Line
+                    type="natural"
+                    dataKey={lineKey}
+                    name="New Users"
+                    stroke="#3b82f6"
+                    strokeWidth={4}
+                    dot={false}
+                    activeDot={{
+                      r: 8,
+                      fill: "#3b82f6",
+                      stroke: "#121212",
+                      strokeWidth: 3,
+                    }}
+                  />
+                  <Line
+                    type="natural"
+                    dataKey="active_sessions"
+                    name="Active Sessions"
+                    stroke="#22c55e"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
         {/* Quick Alerts */}
-        <div className="xl:col-span-5 bg-[#222531] rounded-3xl p-4 md:p-6 border border-[#23263b] flex flex-col self-start">
-          <h2 className="text-base md:text-lg font-semibold mb-4 md:mb-6">
-            Quick Alerts
-          </h2>
+        <div className="xl:col-span-5 bg-[#222531] rounded-3xl p-4 md:p-6 border border-[#23263b] flex h-[420px] flex-col self-start">
+          <div className="mb-4 flex items-center justify-between gap-3 md:mb-6">
+            <div>
+              <h2 className="text-base md:text-lg font-semibold">Quick Alerts</h2>
+              <p className="mt-1 text-sm text-gray-400">{alertsTotal} total</p>
+            </div>
+            <AlertTriangle className="h-5 w-5 text-amber-400" />
+          </div>
 
-          <div className="flex-1 space-y-3 md:space-y-4 overflow-y-auto pr-1 md:pr-2 max-h-[360px] xl:max-h-none custom-scroll">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <div
-                key={i}
-                className="bg-[#23263b] rounded-2xl p-4 md:p-5 flex items-center justify-between gap-3 border border-[#2a2d3f]"
-              >
-                <div className="min-w-0">
-                  <p className="font-medium truncate">dave.king1</p>
-                  <p className="text-xs sm:text-sm text-gray-400 truncate">
-                    daveking@email.com
-                  </p>
-                  <p className="text-xs text-amber-400 mt-1.5 md:mt-2">
-                    High Risk Account
-                  </p>
-                </div>
-                <button className="bg-blue-600 hover:bg-blue-700 transition-all px-4 md:px-6 py-2 md:py-2.5 rounded-xl text-xs sm:text-sm font-medium flex-shrink-0">
-                  Review
-                </button>
+          <div className="min-h-0 flex-1 space-y-3 md:space-y-4 overflow-y-auto pr-1 md:pr-2 custom-scroll">
+            {alertsLoading ? (
+              <div className="rounded-2xl border border-[#2a2d3f] bg-[#23263b] p-5 text-sm text-gray-400">
+                Loading alerts...
               </div>
-            ))}
+            ) : alerts.length === 0 ? (
+              <div className="rounded-2xl border border-[#2a2d3f] bg-[#23263b] p-5 text-sm text-gray-400">
+                No quick alerts found.
+              </div>
+            ) : (
+              alerts.map((alert) => (
+                <div
+                  key={`${alert.type}-${alert.reference_id}-${alert.created_at}`}
+                  className="bg-[#23263b] rounded-2xl p-4 md:p-5 flex items-center justify-between gap-3 border border-[#2a2d3f]"
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`h-2.5 w-2.5 rounded-full ${
+                          alert.severity === "high"
+                            ? "bg-red-400"
+                            : alert.severity === "medium"
+                              ? "bg-amber-400"
+                              : "bg-blue-400"
+                        }`}
+                      />
+                      <p className="font-medium truncate">{alert.title}</p>
+                    </div>
+                    <p className="text-xs sm:text-sm text-gray-400 truncate">
+                      {alert.subtitle}
+                    </p>
+                    <p className="text-xs text-amber-400 mt-1.5 md:mt-2">
+                      {alert.message}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => router.push(alert.action_path)}
+                    className="bg-blue-600 hover:bg-blue-700 transition-all px-4 md:px-6 py-2 md:py-2.5 rounded-xl text-xs sm:text-sm font-medium flex-shrink-0"
+                  >
+                    {alert.action_label || "Review"}
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

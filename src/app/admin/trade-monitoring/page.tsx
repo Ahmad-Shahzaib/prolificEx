@@ -1,255 +1,324 @@
 "use client";
 
-import React, { useState } from "react";
-import { Search, Filter, TrendingUp, ArrowUp, ArrowDown } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Filter, Search, TrendingUp } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { fetchAdminTradeMonitoring } from "@/redux/thunk/adminTradeMonitoringThunk";
 
-const trades = [
-  {
-    id: "#TR-8942",
-    user: "TraderMax",
-    email: "eleanor.pena@example.com",
-    pair: "BTC/USDT",
-    type: "Buy",
-    amount: "0.842 BTC",
-    price: "$68,420.50",
-    total: "$57,650.12",
-    time: "2 min ago",
-    status: "Completed",
-  },
-  {
-    id: "#TR-8941",
-    user: "TraderMax",
-    email: "eleanor.pena@example.com",
-    pair: "ETH/BTC",
-    type: "Sell",
-    amount: "12.45 ETH",
-    price: "$0.0421",
-    total: "0.524 BTC",
-    time: "7 min ago",
-    status: "Completed",
-  },
-  {
-    id: "#TR-8940",
-    user: "TraderMax",
-    email: "eleanor.pena@example.com",
-    pair: "BTC/USDT",
-    type: "Buy",
-    amount: "1.25 BTC",
-    price: "$67,890.00",
-    total: "$84,862.50",
-    time: "14 min ago",
-    status: "Pending",
-  },
-  {
-    id: "#TR-8939",
-    user: "TraderMax",
-    email: "eleanor.pena@example.com",
-    pair: "SOL/USDT",
-    type: "Sell",
-    amount: "245.8 SOL",
-    price: "$142.30",
-    total: "$34,977.34",
-    time: "29 min ago",
-    status: "Completed",
-  },
-  {
-    id: "#TR-8938",
-    user: "TraderMax",
-    email: "eleanor.pena@example.com",
-    pair: "BTC/USDT",
-    type: "Buy",
-    amount: "0.5 BTC",
-    price: "$68,150.75",
-    total: "$34,075.38",
-    time: "41 min ago",
-    status: "Completed",
-  },
-];
+const coinOptions = ["BTC", "ETH", "USDT", "BNB", "SOL"];
+const statusOptions = ["completed", "pending", "disputed", "cancelled", "failed"];
 
-export default function AdminTradeMonitoringPage() {
-  const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState("All");
+const formatDate = (value: string | null) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
 
-  const filteredTrades = trades.filter((trade) => {
-    const matchesSearch = 
-      trade.user.toLowerCase().includes(search.toLowerCase()) ||
-      trade.pair.toLowerCase().includes(search.toLowerCase()) ||
-      trade.id.toLowerCase().includes(search.toLowerCase());
-    
-    const matchesFilter = filterType === "All" || trade.type === filterType;
-    
-    return matchesSearch && matchesFilter;
-  });
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+};
+
+const titleCase = (value: string) =>
+  value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : "-";
+
+function SummaryCard({ label, value, tone }: { label: string; value: number; tone: string }) {
+  return (
+    <div className="rounded-2xl border border-[#272a40] bg-[#181a27] px-5 py-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+      <p className={`mt-2 text-2xl font-semibold ${tone}`}>{value}</p>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const normalized = status.toLowerCase();
+  const tone =
+    normalized === "completed"
+      ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+      : normalized === "disputed"
+        ? "border-violet-400/20 bg-violet-400/10 text-violet-300"
+        : normalized === "pending"
+          ? "border-amber-400/20 bg-amber-400/10 text-amber-300"
+          : "border-rose-400/20 bg-rose-400/10 text-rose-300";
 
   return (
-    <div className="min-h-screen bg-[#10111a] text-white p-4 sm:p-6 font-sans">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${tone}`}>
+      {titleCase(status)}
+    </span>
+  );
+}
+
+function TypeBadge({ type }: { type: string }) {
+  const isBuy = type.toLowerCase() === "buy";
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+        isBuy ? "bg-emerald-500/10 text-emerald-300" : "bg-rose-500/10 text-rose-300"
+      }`}
+    >
+      {isBuy ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />}
+      {titleCase(type)}
+    </span>
+  );
+}
+
+export default function AdminTradeMonitoringPage() {
+  const dispatch = useAppDispatch();
+  const { rows, summary, loading, error, currentPage, perPage, total } = useAppSelector(
+    (state) => state.adminTradeMonitoring
+  );
+
+  const [search, setSearch] = useState("");
+  const [coin, setCoin] = useState("");
+  const [status, setStatus] = useState("");
+  const [type, setType] = useState<"buy" | "sell" | "">("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [page, setPage] = useState(1);
+
+  const queryParams = useMemo(
+    () => ({
+      search: search.trim(),
+      coin,
+      status,
+      type,
+      date_from: dateFrom,
+      date_to: dateTo,
+      per_page: 20,
+      page,
+    }),
+    [coin, dateFrom, dateTo, page, search, status, type]
+  );
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      dispatch(fetchAdminTradeMonitoring(queryParams));
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [dispatch, queryParams]);
+
+  const resetFilters = () => {
+    setSearch("");
+    setCoin("");
+    setStatus("");
+    setType("");
+    setDateFrom("");
+    setDateTo("");
+    setPage(1);
+  };
+
+  const updateFilter = (setter: (value: string) => void, value: string) => {
+    setter(value);
+    setPage(1);
+  };
+
+  const from = rows.length ? (currentPage - 1) * perPage + 1 : 0;
+  const to = rows.length ? from + rows.length - 1 : 0;
+  const canGoBack = currentPage > 1;
+  const canGoForward = to < total;
+
+  return (
+    <div className="min-h-screen bg-[#10111a] p-4 font-sans text-white sm:p-6">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">Trade Monitoring</h1>
-            <p className="text-gray-400 text-sm mt-1">Real-time overview of all user trades</p>
+            <p className="mt-1 text-sm text-slate-400">Backend-backed overview of user P2P trades.</p>
           </div>
-          
-          <div className="flex items-center gap-3 text-sm">
-            <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-xl">
-              <TrendingUp className="w-4 h-4" />
-              <span>Live Market</span>
-            </div>
-          </div>
+
+          {/* <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 px-3 py-1.5 text-sm text-emerald-300">
+            <TrendingUp className="h-4 w-4" />
+            <span>{loading ? "Refreshing..." : "API Connected"}</span>
+          </div> */}
         </div>
 
-        {/* Search + Filter Bar */}
-        <div className="bg-[#181a27] rounded-2xl border border-[#22253a] p-4 mb-6 flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 relative">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-              <Search className="w-5 h-5" />
-            </div>
-            <input
-              type="text"
-              placeholder="Search by user, pair, or trade ID..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-[#0f1017] border border-[#22253a] rounded-xl pl-11 py-3 text-sm focus:outline-none focus:border-blue-600 placeholder-gray-500"
-            />
-          </div>
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <SummaryCard label="Total Trades" value={summary.total_count} tone="text-white" />
+          <SummaryCard label="Completed" value={summary.completed_count} tone="text-emerald-300" />
+          <SummaryCard label="Pending" value={summary.pending_count} tone="text-amber-300" />
+          <SummaryCard label="Disputed" value={summary.disputed_count} tone="text-violet-300" />
+        </div>
 
-          <div className="flex gap-3">
+        <div className="mb-6 rounded-2xl border border-[#272a40] bg-[#181a27] p-4">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(220px,1fr)_150px_160px_140px_150px_150px_auto]">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <input
+                type="text"
+                placeholder="Search user, email, pair, or trade ID..."
+                value={search}
+                onChange={(event) => updateFilter(setSearch, event.target.value)}
+                className="h-11 w-full rounded-xl border border-[#2a2d45] bg-[#0f1017] pl-11 pr-4 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-500/60"
+              />
+            </div>
+
             <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="bg-[#1e2133] border border-[#2a2d45] rounded-xl px-4 py-3 text-sm text-gray-300 focus:outline-none"
+              value={coin}
+              onChange={(event) => updateFilter(setCoin, event.target.value)}
+              className="h-11 rounded-xl border border-[#2a2d45] bg-[#202337] px-3 text-sm text-slate-200 outline-none focus:border-violet-500/60"
             >
-              <option value="All">All Types</option>
-              <option value="Buy">Buy Only</option>
-              <option value="Sell">Sell Only</option>
+              <option value="">All Coins</option>
+              {coinOptions.map((item) => (
+                <option key={item} value={item}>{item}</option>
+              ))}
             </select>
 
-            <button className="flex items-center gap-2 bg-[#1e2133] border border-[#2a2d45] rounded-xl px-5 py-3 text-sm hover:bg-[#252840] transition-colors">
-              <Filter className="w-4 h-4" />
-              More Filters
+            <select
+              value={status}
+              onChange={(event) => updateFilter(setStatus, event.target.value)}
+              className="h-11 rounded-xl border border-[#2a2d45] bg-[#202337] px-3 text-sm text-slate-200 outline-none focus:border-violet-500/60"
+            >
+              <option value="">All Status</option>
+              {statusOptions.map((item) => (
+                <option key={item} value={item}>{titleCase(item)}</option>
+              ))}
+            </select>
+
+            <select
+              value={type}
+              onChange={(event) => updateFilter((value) => setType(value as "buy" | "sell" | ""), event.target.value)}
+              className="h-11 rounded-xl border border-[#2a2d45] bg-[#202337] px-3 text-sm text-slate-200 outline-none focus:border-violet-500/60"
+            >
+              <option value="">All Types</option>
+              <option value="buy">Buy</option>
+              <option value="sell">Sell</option>
+            </select>
+
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(event) => updateFilter(setDateFrom, event.target.value)}
+              className="h-11 rounded-xl border border-[#2a2d45] bg-[#202337] px-3 text-sm text-slate-200 outline-none focus:border-violet-500/60"
+            />
+
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(event) => updateFilter(setDateTo, event.target.value)}
+              className="h-11 rounded-xl border border-[#2a2d45] bg-[#202337] px-3 text-sm text-slate-200 outline-none focus:border-violet-500/60"
+            />
+
+            <button
+              onClick={resetFilters}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#2a2d45] bg-[#202337] px-4 text-sm font-semibold text-slate-200 transition hover:border-[#3b3f60] hover:bg-[#252941]"
+            >
+              <Filter className="h-4 w-4" />
+              Reset
             </button>
           </div>
         </div>
 
-        {/* Trades Table */}
-        <div className="bg-[#181a27] rounded-3xl border border-[#22253a] overflow-hidden">
-          {/* Table Header */}
-          <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 border-b border-[#22253a] text-xs text-gray-500 font-medium">
-            <div className="col-span-2">Trade ID</div>
-            <div className="col-span-3">User</div>
-            <div className="col-span-2">Pair</div>
-            <div className="col-span-1 text-center">Type</div>
-            <div className="col-span-1 text-right">Amount</div>
-            <div className="col-span-1 text-right">Price</div>
-            <div className="col-span-1 text-right">Total</div>
-            <div className="col-span-1 text-center">Status</div>
+        <div className="overflow-hidden rounded-2xl border border-[#272a40] bg-[#181a27] shadow-2xl shadow-black/20">
+          <div className="hidden grid-cols-[minmax(130px,1fr)_minmax(230px,1.5fr)_110px_95px_120px_120px_120px_120px_150px] gap-4 border-b border-[#272a40] bg-[#151724] px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-500 xl:grid">
+            <div>Trade ID</div>
+            <div>Buyer / Seller</div>
+            <div>Pair</div>
+            <div>Type</div>
+            <div className="text-right">Amount</div>
+            <div className="text-right">Price</div>
+            <div className="text-right">Total</div>
+            <div className="text-center">Status</div>
+            <div className="text-right">Created</div>
           </div>
 
-          {/* Trade Rows */}
-          <div className="divide-y divide-[#22253a]">
-            {filteredTrades.map((trade, index) => (
-              <div
-                key={index}
-                className="grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-5 md:py-4 hover:bg-[#1e2133] transition-colors items-start md:items-center"
-              >
-                {/* Mobile Header */}
-                <div className="flex justify-between md:hidden mb-3">
-                  <div className="font-mono text-sm text-gray-400">{trade.id}</div>
-                  <div className="text-xs text-gray-500">{trade.time}</div>
-                </div>
+          <div className="divide-y divide-[#272a40]">
+            {loading ? (
+              <div className="p-8 text-center text-slate-300">Loading trade monitoring data...</div>
+            ) : error ? (
+              <div className="p-8 text-center text-rose-300">{error}</div>
+            ) : rows.length === 0 ? (
+              <div className="p-12 text-center text-slate-400">No trades found for the selected filters.</div>
+            ) : (
+              rows.map((trade) => (
+                <div
+                  key={trade.id}
+                  className="grid grid-cols-1 gap-4 px-5 py-5 transition hover:bg-[#1e2133]/70 xl:grid-cols-[minmax(130px,1fr)_minmax(230px,1.5fr)_110px_95px_120px_120px_120px_120px_150px] xl:items-center xl:py-4"
+                >
+                  <div>
+                    <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500 xl:hidden">Trade ID</span>
+                    <span className="font-mono text-sm text-slate-300">{trade.trade_id}</span>
+                  </div>
 
-                {/* Trade ID */}
-                <div className="md:col-span-2">
-                  <div className="hidden md:block font-mono text-sm text-gray-400">{trade.id}</div>
-                  <div className="md:hidden text-xs text-gray-500">Trade ID</div>
-                </div>
-
-                {/* User */}
-                <div className="md:col-span-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#23263a] flex items-center justify-center text-gray-400 flex-shrink-0">
-                      👤
-                    </div>
-                    <div>
-                      <div className="font-medium text-sm">{trade.user}</div>
-                      <div className="text-xs text-gray-500 truncate">{trade.email}</div>
+                  <div className="min-w-0">
+                    <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500 xl:hidden">Buyer / Seller</span>
+                    <div className="space-y-1">
+                      <p className="truncate text-sm font-semibold text-white">
+                        Buyer: {trade.user?.buyer_name || "-"}
+                      </p>
+                      <p className="truncate text-xs text-slate-500">{trade.user?.buyer_email || "-"}</p>
+                      <p className="truncate text-sm font-semibold text-slate-200">
+                        Seller: {trade.user?.seller_name || "-"}
+                      </p>
+                      <p className="truncate text-xs text-slate-500">{trade.user?.seller_email || "-"}</p>
                     </div>
                   </div>
-                </div>
 
-                {/* Pair */}
-                <div className="md:col-span-2 text-sm font-medium">
-                  <span className="md:hidden text-xs text-gray-500 block mb-1">Pair</span>
-                  {trade.pair}
-                </div>
+                  <div>
+                    <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500 xl:hidden">Pair</span>
+                    <span className="text-sm font-semibold text-white">{trade.pair}</span>
+                    <span className="mt-1 block text-xs text-slate-500">{trade.network}</span>
+                  </div>
 
-                {/* Type */}
-                <div className="md:col-span-1 flex justify-start md:justify-center">
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-4 py-1 rounded-full text-xs font-semibold ${
-                      trade.type === "Buy"
-                        ? "bg-emerald-500/10 text-emerald-400"
-                        : "bg-red-500/10 text-red-400"
-                    }`}
-                  >
-                    {trade.type === "Buy" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
-                    {trade.type}
-                  </span>
-                </div>
+                  <div>
+                    <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500 xl:hidden">Type</span>
+                    <TypeBadge type={trade.type} />
+                  </div>
 
-                {/* Amount */}
-                <div className="md:col-span-1 text-right md:text-right">
-                  <span className="md:hidden text-xs text-gray-500 block">Amount</span>
-                  <span className="text-sm font-medium">{trade.amount}</span>
-                </div>
+                  <div className="xl:text-right">
+                    <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500 xl:hidden">Amount</span>
+                    <span className="font-mono text-sm text-slate-100">{trade.amount}</span>
+                  </div>
 
-                {/* Price */}
-                <div className="md:col-span-1 text-right">
-                  <span className="md:hidden text-xs text-gray-500 block">Price</span>
-                  <span className="text-sm text-gray-300">{trade.price}</span>
-                </div>
+                  <div className="xl:text-right">
+                    <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500 xl:hidden">Price</span>
+                    <span className="font-mono text-sm text-slate-300">{trade.price}</span>
+                  </div>
 
-                {/* Total */}
-                <div className="md:col-span-1 text-right font-medium">
-                  <span className="md:hidden text-xs text-gray-500 block">Total</span>
-                  {trade.total}
-                </div>
+                  <div className="xl:text-right">
+                    <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500 xl:hidden">Total</span>
+                    <span className="font-mono text-sm font-semibold text-white">{trade.total}</span>
+                  </div>
 
-                {/* Status + Time */}
-                <div className="md:col-span-1 flex flex-col md:items-end gap-1">
-                  <span
-                    className={`inline-block px-3.5 py-1 rounded-full text-xs font-medium ${
-                      trade.status === "Completed"
-                        ? "bg-emerald-500/10 text-emerald-400"
-                        : "bg-amber-500/10 text-amber-400"
-                    }`}
-                  >
-                    {trade.status}
-                  </span>
-                  <span className="text-xs text-gray-500 md:hidden mt-1">{trade.time}</span>
+                  <div className="xl:text-center">
+                    <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500 xl:hidden">Status</span>
+                    <StatusBadge status={trade.status} />
+                  </div>
+
+                  <div className="xl:text-right">
+                    <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500 xl:hidden">Created</span>
+                    <span className="text-xs text-slate-400">{formatDate(trade.created_at)}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
-
-          {/* Empty State */}
-          {filteredTrades.length === 0 && (
-            <div className="py-20 text-center text-gray-400">
-              No trades found matching your search.
-            </div>
-          )}
         </div>
 
-        {/* Pagination */}
-        <div className="flex flex-col sm:flex-row items-center justify-between mt-6 text-sm text-gray-400">
-          <p>Showing 1–{filteredTrades.length} of {trades.length} trades</p>
-          <div className="flex items-center gap-2 mt-4 sm:mt-0">
-            <button className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#22253a] hover:bg-[#1e2133] transition-colors">
-              ←
+        <div className="mt-6 flex flex-col items-center justify-between gap-4 text-sm text-slate-400 sm:flex-row">
+          <p>Showing {from}-{to} of {total} trades</p>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={!canGoBack || loading}
+              onClick={() => setPage((value) => Math.max(1, value - 1))}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#272a40] transition hover:bg-[#1e2133] disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="h-4 w-4" />
             </button>
-            <button className="w-9 h-9 flex items-center justify-center rounded-xl border border-[#22253a] hover:bg-[#1e2133] transition-colors">
-              →
+            <span className="px-2 text-xs text-slate-500">Page {currentPage}</span>
+            <button
+              disabled={!canGoForward || loading}
+              onClick={() => setPage((value) => value + 1)}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#272a40] transition hover:bg-[#1e2133] disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Next page"
+            >
+              <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         </div>
