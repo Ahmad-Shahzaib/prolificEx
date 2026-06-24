@@ -274,12 +274,12 @@ export default function AdminEscrowDisputesPage() {
                     >
                       {resolveLoading ? "Processing..." : "Return to Seller"}
                     </button>
-                    <button
+                    {/* <button
                       disabled={resolveLoading}
                       className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-2xl transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Request More Evidence
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               </div>

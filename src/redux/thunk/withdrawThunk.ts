@@ -6,7 +6,7 @@ export interface WithdrawPayload {
   network: string;
   address: string;
   amount: string;
-  two_fa_code: string;
+  two_fa_code?: string;
 }
 
 export interface WithdrawResponse {

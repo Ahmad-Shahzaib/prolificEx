@@ -7,6 +7,7 @@ import { withdrawThunk, WithdrawPayload, WithdrawResponse } from "@/redux/thunk/
 import { resetWithdrawState } from "@/redux/slices/withdrawSlice";
 import { fetchKycStatus } from "@/redux/thunk/kycThunk";
 import { fetchWallets } from "@/redux/thunk/walletThunk";
+import { fetchUserProfile } from "@/redux/thunk/profileThunk";
 import { PageShell } from "@/components/dashboard/PageShell";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/common/Toast/Toast";
@@ -72,6 +73,8 @@ function WithdrawContent() {
   const kycStatusLoading = useAppSelector((state) => state.kyc.statusLoading);
   const wallets = useAppSelector((state) => state.wallet.wallets);
   const walletsLoading = useAppSelector((state) => state.wallet.loading);
+  const profile = useAppSelector((state) => state.profile.profile);
+  const profileLoading = useAppSelector((state) => state.profile.loading);
   const { toast, toasts, dismiss } = useToast();
   const searchParams = useSearchParams();
   const coinParam = searchParams.get("coin")?.toUpperCase() ?? "USDT";
@@ -86,6 +89,7 @@ function WithdrawContent() {
   const [lastWithdrawal, setLastWithdrawal] = useState<WithdrawResponse["data"] | null>(null);
   const [copiedTxId, setCopiedTxId] = useState(false);
   const [twoFaRequired, setTwoFaRequired] = useState(false);
+  const isTwoFaEnabled = !!profile?.two_factor_enabled;
 
   const feeAmount = 1;
   const receiveAmount = amount ? Math.max(0, Number(amount) - feeAmount) : 0;
@@ -104,6 +108,7 @@ function WithdrawContent() {
   useEffect(() => {
     dispatch(fetchKycStatus());
     dispatch(fetchWallets());
+    dispatch(fetchUserProfile());
   }, [dispatch]);
 
   useEffect(() => {
@@ -181,22 +186,25 @@ function WithdrawContent() {
       return;
     }
 
-    dispatch(
-      withdrawThunk({
-        coin: selectedCoinKey,
-        network: selectedNetwork,
-        address: walletAddress,
-        amount,
-        two_fa_code: authCode,
-      } as WithdrawPayload)
-    );
+    const payload: WithdrawPayload = {
+      coin: selectedCoinKey,
+      network: selectedNetwork,
+      address: walletAddress,
+      amount,
+    };
+
+    if (isTwoFaEnabled) {
+      payload.two_fa_code = authCode;
+    }
+
+    dispatch(withdrawThunk(payload));
     setTwoFaRequired(false);
     setWalletAddress("");
     setAmount("");
     setAuthCode("");
   };
 
-  if (walletsLoading || kycStatusLoading) {
+  if (walletsLoading || kycStatusLoading || profileLoading) {
     return (
       <PageShell title="Withdraw" description="Initiate a withdrawal to your wallet address.">
         <div className="space-y-6 px-4 sm:px-6 py-2 animate-pulse" aria-label="Loading withdrawal details">
@@ -232,7 +240,7 @@ function WithdrawContent() {
             </div>
           </div>
         )}
-        {twoFaRequired && (
+        {twoFaRequired && isTwoFaEnabled && (
           <div className="bg-violet-500/10 border border-violet-500/30 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <p className="text-violet-300 font-medium">Two-factor authentication required</p>
@@ -324,23 +332,25 @@ function WithdrawContent() {
             </div>
 
             <div className="space-y-3 justify-end flex flex-col sm:flex-row items-start sm:items-center gap-3">
-              <div className="flex-1 w-full space-y-1.5">
-                <div className="flex items-center justify-between gap-3">
-                  <label className="text-white/70 text-sm font-medium block">2FA verification code</label>
-                  <Link href="/dashboard/security" className="text-xs text-violet-400 hover:text-violet-300 hover:underline">
-                    Enable 2FA
-                  </Link>
+              {isTwoFaEnabled && (
+                <div className="flex-1 w-full space-y-1.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <label className="text-white/70 text-sm font-medium block">2FA verification code</label>
+                    <Link href="/dashboard/security" className="text-xs text-violet-400 hover:text-violet-300 hover:underline">
+                      Manage 2FA
+                    </Link>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Enter your Google Authenticator code"
+                    value={authCode}
+                    onChange={(e) => setAuthCode(e.target.value)}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    className="w-full bg-[#1c1d26] border border-white/10 rounded-xl px-4 py-3 text-white/70 text-sm placeholder:text-white/20 focus:outline-none focus:border-violet-500/50"
+                  />
                 </div>
-                <input
-                  type="text"
-                  placeholder="Enter your Google Authenticator code"
-                  value={authCode}
-                  onChange={(e) => setAuthCode(e.target.value)}
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  className="w-full bg-[#1c1d26] border border-white/10 rounded-xl px-4 py-3 text-white/70 text-sm placeholder:text-white/20 focus:outline-none focus:border-violet-500/50"
-                />
-              </div>
+              )}
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   type="submit"
