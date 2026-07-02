@@ -1,451 +1,248 @@
-'use client';
-import { useEffect, useRef, useState } from "react";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { AlertTriangle, Check, ExternalLink, RefreshCcw, ShieldCheck } from "lucide-react";
 import { PageShell } from "@/components/dashboard/PageShell";
 import { Card, CardContent } from "@/components/common/Card";
 import { Button } from "@/components/common/Button";
-import { Upload, Check, Camera, RotateCcw, X } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { submitKyc, fetchKycStatus } from "@/redux/thunk/kycThunk";
-import { resetKycState } from "@/redux/slices/kycSlice";
+import { fetchKycDocuments, fetchKycStatus, startKyc } from "@/redux/thunk/kycThunk";
+
+const formatStatus = (status?: string | null) => {
+  if (!status) return "Not Started";
+  return status
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
+const getStatusConfig = (status: string) => {
+  switch (status) {
+    case "approved":
+      return {
+        title: "KYC verified successfully.",
+        description: "Your identity is verified. You can now access P2P trading.",
+        button: "Go to P2P",
+        tone: "emerald",
+      };
+    case "in_progress":
+      return {
+        title: "Your KYC verification is in progress / under review.",
+        description: "Continue your Didit session if it is still open, or refresh status after review completes.",
+        button: "Continue Verification",
+        tone: "blue",
+      };
+    case "in_review":
+      return {
+        title: "Your KYC verification is under review.",
+        description: "Please check again later. We will unlock P2P once your status is approved.",
+        button: "Refresh Status",
+        tone: "amber",
+      };
+    case "declined":
+      return {
+        title: "Your KYC verification was declined.",
+        description: "Please try again or contact support if you believe this is a mistake.",
+        button: "Restart KYC Verification",
+        tone: "red",
+      };
+    case "expired":
+      return {
+        title: "Your KYC verification session has expired.",
+        description: "Start a new Didit verification session to continue.",
+        button: "Start New Verification",
+        tone: "red",
+      };
+    default:
+      return {
+        title: "KYC verification is required to access P2P trading.",
+        description: "Start your Didit verification session and complete the checks securely.",
+        button: "Start KYC Verification",
+        tone: "violet",
+      };
+  }
+};
+
+const getToneClasses = (tone: string) => {
+  switch (tone) {
+    case "emerald":
+      return "bg-emerald-500/10 border-emerald-500/30 text-emerald-400";
+    case "blue":
+      return "bg-blue-500/10 border-blue-500/30 text-blue-400";
+    case "amber":
+      return "bg-amber-500/10 border-amber-500/30 text-amber-400";
+    case "red":
+      return "bg-red-500/10 border-red-500/30 text-red-400";
+    default:
+      return "bg-violet-500/10 border-violet-500/30 text-violet-300";
+  }
+};
 
 export default function KYCPage() {
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const {
     loading,
     statusLoading,
     error,
     statusError,
-    success,
     message,
-    kycId,
     status,
-    kycLevel,
     submittedAt,
     reviewedAt,
     reviewNotes,
+    verificationUrl,
+    sessionId,
+    verifiedAt,
+    provider,
+    providerStatus,
   } = useAppSelector((state) => state.kyc);
-  const isPageLoading = statusLoading;
 
-  const [documentType, setDocumentType] = useState<"national_id" | "passport" | "driver_license" | string>("national_id");
-  const [documentFront, setDocumentFront] = useState<File | null>(null);
-  const [documentBack, setDocumentBack] = useState<File | null>(null);
-  const [selfieWithId, setSelfieWithId] = useState<File | null>(null);
+  const currentStatus = status || "not_started";
+  const statusConfig = getStatusConfig(currentStatus);
+  const toneClasses = getToneClasses(statusConfig.tone);
+  const isAuthError = `${error || ""} ${statusError || ""}`.toLowerCase();
 
-  const [frontPreview, setFrontPreview] = useState<string | null>(null);
-  const [backPreview, setBackPreview] = useState<string | null>(null);
-  const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
-
-  const [cameraOpen, setCameraOpen] = useState(false);
-
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-
-  const frontInputRef = useRef<HTMLInputElement>(null);
-  const backInputRef = useRef<HTMLInputElement>(null);
-  const selfieInputRef = useRef<HTMLInputElement>(null);
-
-  // Cleanup
-  useEffect(() => {
-    return () => {
-      stopCamera();
-      dispatch(resetKycState());
-    };
-  }, [dispatch]);
-
-  // Load KYC status on mount
   useEffect(() => {
     dispatch(fetchKycStatus());
+    dispatch(fetchKycDocuments());
   }, [dispatch]);
 
-  // Reset form after success and reload latest KYC status
   useEffect(() => {
-    if (success) {
-      setDocumentType("national_id");
-      setDocumentFront(null); setDocumentBack(null); setSelfieWithId(null);
-      setFrontPreview(null); setBackPreview(null); setSelfiePreview(null);
-      
-      frontInputRef.current && (frontInputRef.current.value = "");
-      backInputRef.current && (backInputRef.current.value = "");
-      selfieInputRef.current && (selfieInputRef.current.value = "");
+    if (
+      isAuthError.includes("401") ||
+      isAuthError.includes("unauthorized") ||
+      isAuthError.includes("unauthenticated")
+    ) {
+      router.push("/login");
+    }
+  }, [isAuthError, router]);
 
+  const redirectToVerification = (url: string) => {
+    window.location.href = url;
+  };
+
+  const handleStartOrContinue = async () => {
+    if (currentStatus === "approved") {
+      router.push("/dashboard/p2p");
+      return;
+    }
+
+    if (currentStatus === "in_review" || (currentStatus === "in_progress" && !verificationUrl)) {
       dispatch(fetchKycStatus());
-    }
-  }, [success, dispatch]);
-
-  const handleFileChange = (
-    setter: React.Dispatch<React.SetStateAction<File | null>>,
-    previewSetter: React.Dispatch<React.SetStateAction<string | null>>
-  ) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] ?? null;
-    setter(file);
-    if (file) previewSetter(URL.createObjectURL(file));
-    else previewSetter(null);
-  };
-
-  const formatStatus = (statusValue?: string | null) => {
-    if (!statusValue) return "Not Verified";
-    return statusValue
-      .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  };
-
-  const isDocumentFileTypeSupported = (file: File | null) => {
-    return !!file && ["image/jpeg", "image/png", "application/pdf"].includes(file.type);
-  };
-
-  // Camera Functions
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false,
-      });
-      streamRef.current = stream;
-      setCameraOpen(true);
-    } catch (error) {
-      console.error("Camera start error:", error);
-      // keep silent on failure to avoid blocking UI
-    }
-  };
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!cameraOpen || !video || !streamRef.current) return;
-
-    video.srcObject = streamRef.current;
-    video.muted = true;
-    video.playsInline = true;
-
-    const playVideo = async () => {
-      try {
-        await video.play();
-      } catch (err) {
-        console.warn("Video playback failed:", err);
-      }
-    };
-
-    if (video.readyState >= 2) {
-      playVideo();
-    } else {
-      video.onloadedmetadata = playVideo;
-    }
-
-    return () => {
-      if (video) {
-        video.onloadedmetadata = null;
-      }
-    };
-  }, [cameraOpen]);
-
-  const stopCamera = () => {
-    streamRef.current?.getTracks().forEach(track => track.stop());
-    streamRef.current = null;
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-      videoRef.current.onloadedmetadata = null;
-    }
-    setCameraOpen(false);
-  };
-
-  const capturePhoto = () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas) return;
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext("2d")?.drawImage(video, 0, 0);
-
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      const file = new File([blob], "selfie_with_id.jpg", { type: "image/jpeg" });
-      setSelfieWithId(file);
-      setSelfiePreview(URL.createObjectURL(file));
-      stopCamera();
-    }, "image/jpeg", 0.92);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!documentFront || !documentBack || !selfieWithId) {
       return;
     }
 
-    if (!isDocumentFileTypeSupported(documentFront) || !isDocumentFileTypeSupported(documentBack)) {
-      console.warn("Unsupported document file type. Only JPG, JPEG, PNG, PDF are allowed.");
+    if (currentStatus === "in_progress" && verificationUrl) {
+      redirectToVerification(verificationUrl);
       return;
     }
 
     try {
-      await dispatch(submitKyc({
-        document_type: documentType,
-        document_front: documentFront,
-        document_back: documentBack,
-        selfie_with_id: selfieWithId,
-      })).unwrap();
-    } catch (error) {
-      
-      console.warn("KYC submit failed", error);
+      const result = await dispatch(startKyc()).unwrap();
+      if (result.data.verification_url) {
+        redirectToVerification(result.data.verification_url);
+      }
+    } catch {
+      // Error is shown from Redux state below.
     }
   };
-
-  if (isPageLoading) {
-    return (
-      <PageShell title="KYC Verification" description="Complete your verification to unlock full trading features.">
-        <div className="space-y-6 animate-pulse" aria-label="Loading KYC details">
-          <div className="h-24 rounded-2xl border border-white/[0.07] bg-[#13141a] p-6">
-            <div className="h-4 w-64 max-w-full rounded bg-white/10" />
-          </div>
-          <div className="rounded-3xl border border-white/[0.07] bg-[#13141a] p-6 sm:p-10 space-y-8">
-            <div className="flex justify-between gap-4">
-              <div className="space-y-3">
-                <div className="h-7 w-72 max-w-full rounded bg-white/10" />
-                <div className="h-4 w-52 rounded bg-white/10" />
-              </div>
-              <div className="h-9 w-28 rounded-full bg-white/10" />
-            </div>
-            <div className="h-12 rounded-2xl bg-white/10" />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="h-64 rounded-3xl bg-white/10" />
-              <div className="h-64 rounded-3xl bg-white/10" />
-            </div>
-            <div className="h-52 rounded-3xl bg-white/10" />
-          </div>
-        </div>
-      </PageShell>
-    );
-  }
 
   return (
-    <PageShell title="KYC Verification" description="Complete your verification to unlock full trading features.">
-      {status === 'approved' && (
-        <div className="mb-6 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-6 flex gap-4">
-          <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 text-black text-2xl">
-            <Check />
-          </div>
-          <div>
-            <p className="text-emerald-500 font-medium">Your KYC is approved</p>
-            <p className="text-gray-400 text-sm mt-1">Thank you for verifying your identity. You now have access to increased limits and features.</p>
-          </div>
-        </div>
-      )}
-      {status === 'pending' && (
-        <div className="mb-6 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 flex gap-4">
-          <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center flex-shrink-0 text-black text-2xl">
-            <RotateCcw />
-          </div>
-          <div>
-            <p className="text-amber-500 font-medium">Your KYC is pending</p>
-            <p className="text-gray-400 text-sm mt-1">Your documents are currently under review. This process usually takes 24-48 hours. We'll notify you once it's complete.</p>
-          </div>
-        </div>
-      )}
- {
-  ((status === 'rejected') || (status === 'not_submitted')) && (
- <Card className="bg-[#0f0f17] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
-        <CardContent className="p-6 sm:p-10">
-          <form onSubmit={handleSubmit}>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8">
-              <div>
-                <h2 className="text-2xl font-semibold text-white">Level 2 – Identity Verification</h2>
-                <p className="text-gray-400 mt-1">Upload your documents to increase limits</p>
-              </div>
-              <div className={`px-6 py-2 rounded-full text-sm font-medium whitespace-nowrap
-                ${status === 'rejected' ? 'bg-red-500/10 text-red-500' : 
-                  'bg-amber-500/10 text-amber-500'}`}>
-                {formatStatus(status)}
-              </div>
-            </div>
-            <div className="mb-6 text-sm text-gray-300">
-              {statusLoading && <div className="h-4 w-64 max-w-full rounded bg-white/10 animate-pulse" aria-label="Loading KYC status" />}
-              {!statusLoading && statusError && <p className="text-red-400">{statusError}</p>}
-              {!statusLoading && !statusError && status && (
-                <p>
-                  Level: <span className="text-white">{kycLevel ?? "-"}</span> · Submitted: <span className="text-white">{submittedAt ?? "-"}</span>
-                  {reviewedAt && <> · Reviewed: <span className="text-white">{reviewedAt}</span></>}
-                </p>
-              )}
-            </div>
-
-            {/* Document Type */}
-            <div className="mb-8">
-              <label className="text-gray-300 text-sm mb-2 block">Document Type</label>
-              <select
-                value={documentType}
-                onChange={(e) => setDocumentType(e.target.value)}
-                className="w-full bg-[#16161f] border border-white/10 rounded-2xl px-5 py-3.5 text-white focus:outline-none focus:border-violet-500 transition-colors"
-              >
-                <option value="national_id">National ID</option>
-                <option value="passport">Passport</option>
-                <option value="driver_license">Driver's License</option>
-              </select>
-            </div>
-
-            {/* Front & Back Uploads */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
-              {/* Front Side */}
-              <div className="group">
-                <label className="block text-gray-300 text-sm mb-3">Front Side</label>
-                <label className="border-2 border-dashed border-white/20 hover:border-violet-500/50 rounded-3xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-white/5 min-h-[260px]">
-                  <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <Upload size={36} className="text-gray-400" />
-                  </div>
-                  <p className="text-white font-medium text-lg">Upload Front Side</p>
-                  <p className="text-gray-500 text-sm mt-1">Clear photo of front</p>
-
-                  <input
-                    ref={frontInputRef}
-                    type="file"
-                    accept=".jpg,.jpeg,.png,.pdf"
-                    className="hidden"
-                    onChange={handleFileChange(setDocumentFront, setFrontPreview)}
-                  />
-
-                  {frontPreview && (
-                    <img src={frontPreview} alt="Front" className="mt-6 w-full max-h-52 object-cover rounded-2xl border border-white/10" />
-                  )}
-                  {documentFront && (
-                    <p className="text-xs text-emerald-400 mt-3 truncate max-w-[250px]">{documentFront.name}</p>
-                  )}
-                </label>
-              </div>
-
-              {/* Back Side */}
-              <div className="group">
-                <label className="block text-gray-300 text-sm mb-3">Back Side</label>
-                <label className="border-2 border-dashed border-white/20 hover:border-violet-500/50 rounded-3xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-white/5 min-h-[260px]">
-                  <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <Upload size={36} className="text-gray-400" />
-                  </div>
-                  <p className="text-white font-medium text-lg">Upload Back Side</p>
-                  <p className="text-gray-500 text-sm mt-1">Clear photo of back</p>
-
-                  <input
-                    ref={backInputRef}
-                    type="file"
-                    accept=".jpg,.jpeg,.png,.pdf"
-                    className="hidden"
-                    onChange={handleFileChange(setDocumentBack, setBackPreview)}
-                  />
-
-                  {backPreview && (
-                    <img src={backPreview} alt="Back" className="mt-6 w-full max-h-52 object-cover rounded-2xl border border-white/10" />
-                  )}
-                  {documentBack && (
-                    <p className="text-xs text-emerald-400 mt-3 truncate max-w-[250px]">{documentBack.name}</p>
-                  )}
-                </label>
-              </div>
-            </div>
-
-            {/* Selfie Section */}
-            <div className="mb-10">
-              <label className="block text-gray-300 text-sm mb-3">Selfie with ID</label>
-              <div className="border-2 border-dashed border-white/20 rounded-3xl p-8 bg-[#0a0a0f]">
-                <div className="text-center mb-6">
-                  <p className="text-white text-xl font-medium">Hold your ID next to your face</p>
-                  <p className="text-gray-500 text-sm mt-1">Make sure your face and document are clearly visible</p>
+    <PageShell title="KYC Verification" description="Complete Didit verification to unlock P2P trading.">
+      <div className="max-w-3xl">
+        <Card className="bg-[#0f0f17] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+          <CardContent className="p-6 sm:p-10">
+            <div className={`mb-8 rounded-2xl border p-5 ${toneClasses}`}>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10">
+                  {currentStatus === "approved" ? <Check size={22} /> : <ShieldCheck size={22} />}
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <Button
-                    type="button"
-                    onClick={startCamera}
-                    className="bg-white/5 hover:bg-white/10 border border-white/10 py-6 text-lg"
-                  >
-                    <Camera className="mr-3" /> Open Camera
-                  </Button>
-
-                  <label className="cursor-pointer">
-                    <div className="bg-white/5 hover:bg-white/10 border border-white/10 py-6 text-lg rounded-2xl text-center transition-all">
-                      ⬆ Upload Selfie
-                    </div>
-                    <input
-                      ref={selfieInputRef}
-                      type="file"
-                      accept=".jpg,.jpeg,.png"
-                      className="hidden"
-                      onChange={handleFileChange(setSelfieWithId, setSelfiePreview)}
-                    />
-                  </label>
+                <div>
+                  <div className="mb-2 inline-flex rounded-full border border-current/30 px-3 py-1 text-xs font-semibold">
+                    {formatStatus(currentStatus)}
+                  </div>
+                  <h2 className="text-xl font-semibold text-white">{statusConfig.title}</h2>
+                  <p className="mt-2 text-sm text-white/65">{statusConfig.description}</p>
                 </div>
-
-                {/* Camera View */}
-                {cameraOpen && (
-                  <div className="mt-6 flex flex-col items-center">
-                    <div className="relative w-full max-w-md rounded-3xl overflow-hidden border border-white/10">
-                      <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        className="w-full aspect-video object-cover bg-black min-h-[240px]"
-                      />
-                      <canvas ref={canvasRef} className="hidden" />
-                    </div>
-
-                    <div className="flex gap-4 mt-6 w-full max-w-md">
-                      <Button onClick={capturePhoto} className="flex-1 bg-violet-600 hover:bg-violet-700">
-                        Capture Photo
-                      </Button>
-                      <Button onClick={stopCamera} variant="secondary" className="flex-1">
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Selfie Preview */}
-                {!cameraOpen && selfiePreview && (
-                  <div className="mt-6 flex flex-col items-center">
-                    <div className="relative w-full max-w-md">
-                      <img 
-                        src={selfiePreview} 
-                        alt="Selfie" 
-                        className="w-full rounded-3xl border border-white/10" 
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelfieWithId(null);
-                          setSelfiePreview(null);
-                          if (selfieInputRef.current) selfieInputRef.current.value = "";
-                        }}
-                        className="absolute top-4 right-4 bg-black/70 hover:bg-red-500/80 text-white p-2 rounded-xl transition-colors"
-                      >
-                        <X size={20} />
-                      </button>
-                    </div>
-                    {selfieWithId && <p className="text-emerald-400 text-sm mt-3">{selfieWithId.name}</p>}
-                  </div>
-                )}
               </div>
             </div>
 
-            {/* Submit Button */}
-            <div className="flex justify-end">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs uppercase tracking-wide text-white/40">Current status</p>
+                <p className="mt-2 text-lg font-semibold text-white">{formatStatus(currentStatus)}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs uppercase tracking-wide text-white/40">Verified at</p>
+                <p className="mt-2 text-lg font-semibold text-white">{verifiedAt || reviewedAt || "-"}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs uppercase tracking-wide text-white/40">Provider</p>
+                <p className="mt-2 text-lg font-semibold text-white">{provider || "didit"}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs uppercase tracking-wide text-white/40">Provider status</p>
+                <p className="mt-2 text-lg font-semibold text-white">{providerStatus || "-"}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs uppercase tracking-wide text-white/40">Submitted at</p>
+                <p className="mt-2 text-lg font-semibold text-white">{submittedAt || "-"}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs uppercase tracking-wide text-white/40">Session ID</p>
+                <p className="mt-2 truncate text-lg font-semibold text-white">{sessionId || "-"}</p>
+              </div>
+            </div>
+
+            {reviewNotes && (
+              <div className="mt-5 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+                {reviewNotes}
+              </div>
+            )}
+
+            {(error || statusError) && (
+              <div className="mt-5 flex gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+                <AlertTriangle className="mt-0.5 shrink-0" size={18} />
+                <span>{error || statusError}</span>
+              </div>
+            )}
+
+            {message && !error && !statusError && (
+              <p className="mt-5 text-sm text-white/50">{message}</p>
+            )}
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button
-                type="submit"
-                disabled={loading || !documentFront || !documentBack || !selfieWithId}
-                className="px-12 py-4 text-lg font-semibold bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 disabled:opacity-50"
+                onClick={handleStartOrContinue}
+                disabled={loading || statusLoading}
+                className="bg-violet-600 hover:bg-violet-500"
               >
-                {loading ? "Submitting for Review..." : "Submit for Verification"}
+                {loading || (statusLoading && currentStatus === "in_review")
+                  ? "Please wait..."
+                  : statusConfig.button}
+                {currentStatus !== "approved" && currentStatus !== "in_review" && <ExternalLink className="ml-2" size={16} />}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => dispatch(fetchKycStatus())}
+                disabled={statusLoading}
+              >
+                <RefreshCcw className="mr-2" size={16} />
+                {statusLoading ? "Refreshing..." : "Refresh Status"}
               </Button>
             </div>
 
-            {/* Messages */}
-            <div className="mt-6 text-center">
-              {error && <p className="text-red-500">{error}</p>}
-              {success && <p className="text-emerald-400 font-medium">{message || "KYC submitted successfully!"}</p>}
-              {kycId && <p className="text-gray-400 text-sm mt-1">Reference ID: {kycId}</p>}
-            </div>
-          </form>
-
-        </CardContent>
-      </Card>
-  ) 
- }
+            {currentStatus !== "approved" && (
+              <p className="mt-6 text-sm text-white/45">
+                P2P buying, selling, and offer creation remain locked until your KYC status is approved.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </PageShell>
   );
 }

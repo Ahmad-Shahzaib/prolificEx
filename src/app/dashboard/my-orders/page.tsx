@@ -11,10 +11,12 @@ import { setOrdersStatusFilter } from "@/redux/slices/p2pOrdersSlice";
 
 const statusOptions = [
   { value: "all", label: "All" },
-  { value: "awaiting_payment", label: "Awaiting Payment" },
+  { value: "pending_payment", label: "Pending Payment" },
   { value: "paid", label: "Paid" },
+  { value: "released", label: "Released" },
   { value: "completed", label: "Completed" },
   { value: "cancelled", label: "Cancelled" },
+  { value: "expired", label: "Expired" },
   { value: "disputed", label: "Disputed" },
 ];
 

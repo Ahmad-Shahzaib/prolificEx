@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, Send, Paperclip } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { fetchP2POrderMessages, sendP2POrderMessage } from "@/redux/thunk/p2pOrderMessagesThunk";
-import { cancelOrderPayment, confirmOrderPayment, fetchP2POrder } from "@/redux/thunk/p2pOrdersThunk";
+import { cancelOrderPayment, confirmOrderPayment, fetchP2POrder, reportPaymentNotReceived } from "@/redux/thunk/p2pOrdersThunk";
 import { submitP2PPaymentProof } from "@/redux/thunk/p2pOrderThunk";
 import { clearP2POrderMessages } from "@/redux/slices/p2pOrderMessagesSlice";
 import { createEcho } from "@/lib/echo";
@@ -21,9 +21,24 @@ export default function SellerOrderChatPage() {
   );
 
   const order = useAppSelector((state) => state.p2pOrders.orders.find((item: { id: number; }) => item.id === orderId));
-  const { confirmLoading, confirmingOrderId, confirmError, confirmMessage, cancelLoading, cancellingOrderId, cancelError, cancelMessage } = useAppSelector((state) => state.p2pOrders);
+  const {
+    confirmLoading,
+    confirmingOrderId,
+    confirmError,
+    confirmMessage,
+    cancelLoading,
+    cancellingOrderId,
+    cancelError,
+    cancelMessage,
+    paymentNotReceivedLoading,
+    paymentNotReceivedOrderId,
+    paymentNotReceivedError,
+    paymentNotReceivedMessage,
+  } = useAppSelector((state) => state.p2pOrders);
   const { paymentProofLoading, paymentProofError, paymentProofSuccessMessage } = useAppSelector((state) => state.p2pOrder);
-  const currentUserUuid = useAppSelector((state) => state.auth.user?.uuid);
+  const currentUser = useAppSelector((state) => state.auth.user);
+  const currentUserUuid = currentUser?.uuid;
+  const currentUserId = (currentUser as { id?: number } | null)?.id;
 
   const [inputMsg, setInputMsg] = useState("");
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
@@ -105,11 +120,23 @@ export default function SellerOrderChatPage() {
     setAttachmentFile(file);
   };
 
-  const normalizedStatus = order?.status?.toLowerCase().replace(/\s+/g, "_");
-  const isSeller = order?.seller?.uuid === currentUserUuid;
-  const showConfirmPaymentButton = isSeller && normalizedStatus === "paid";
-  const showCancelPaymentButton = isSeller && normalizedStatus === "paid";
-  const showSubmitPaymentProof = !isSeller && normalizedStatus === "awaiting_payment";
+  const normalizedStatus = order?.status?.toLowerCase().replace(/[\s-]+/g, "_");
+  const hasCurrentUserIdentity = Boolean(currentUserUuid || currentUserId);
+  const isSeller =
+    (Boolean(currentUserUuid) && order?.seller?.uuid === currentUserUuid) ||
+    (Boolean(currentUserId) && order?.seller_id === currentUserId);
+  const isBuyer =
+    (Boolean(currentUserUuid) && order?.buyer?.uuid === currentUserUuid) ||
+    (Boolean(currentUserId) && order?.buyer_id === currentUserId) ||
+    (!hasCurrentUserIdentity && Boolean(order) && !isSeller);
+  const pendingPaymentStatuses = new Set(["pending_payment", "awaiting_payment", "pending"]);
+  const paidStatuses = new Set(["paid", "payment_paid", "payment_sent", "payment_submitted", "awaiting_confirmation"]);
+  const isPendingPayment = normalizedStatus ? pendingPaymentStatuses.has(normalizedStatus) : false;
+  const isPaid = normalizedStatus ? paidStatuses.has(normalizedStatus) : false;
+  const showConfirmPaymentButton = isSeller && isPaid;
+  const showCancelOrderButton = isBuyer && isPendingPayment;
+  const showCancelPaymentButton = isSeller && isPaid;
+  const showSubmitPaymentProof = isBuyer && isPendingPayment;
 
   const sendMessage = () => {
     if ((!inputMsg.trim() && !attachmentFile) || !orderId) return;
@@ -149,10 +176,17 @@ export default function SellerOrderChatPage() {
     dispatch(fetchP2POrder(orderId));
   }, [dispatch, orderId, paymentProofSuccessMessage]);
 
-  const cancelPayment = () => {
+  const cancelOrder = () => {
     if (!cancelReason.trim() || !orderId) return;
 
     dispatch(cancelOrderPayment({ order_id: orderId, reason: cancelReason.trim() }));
+    setCancelReason("");
+  };
+
+  const cancelPayment = () => {
+    if (!cancelReason.trim() || !orderId) return;
+
+    dispatch(reportPaymentNotReceived({ order_id: orderId, reason: cancelReason.trim() }));
     setCancelReason("");
   };
 
@@ -229,6 +263,45 @@ export default function SellerOrderChatPage() {
                 <span className="text-white/40">Seller</span>
                 <span className="font-medium">{order?.seller.full_name || "-"}</span>
               </div>
+              {order?.payment_details && (
+                <>
+                  <div className="pt-3 border-t border-[#1f1f2e] mt-3">
+                    <h3 className="text-xs font-semibold text-white/60 mb-2 uppercase tracking-wider">Payment Details</h3>
+                    <div className="space-y-2">
+                      {order.payment_details.bank_name && (
+                        <div className="flex justify-between">
+                          <span className="text-white/40">Bank</span>
+                          <span className="font-medium">{order.payment_details.bank_name}</span>
+                        </div>
+                      )}
+                      {order.payment_details.account_name && (
+                        <div className="flex justify-between">
+                          <span className="text-white/40">Account Name</span>
+                          <span className="font-medium">{order.payment_details.account_name}</span>
+                        </div>
+                      )}
+                      {order.payment_details.account_number && (
+                        <div className="flex justify-between">
+                          <span className="text-white/40">Account Number</span>
+                          <span className="font-medium">{order.payment_details.account_number}</span>
+                        </div>
+                      )}
+                      {order.payment_details.iban_number && (
+                        <div className="flex justify-between">
+                          <span className="text-white/40">IBAN</span>
+                          <span className="font-medium">{order.payment_details.iban_number}</span>
+                        </div>
+                      )}
+                      {order.payment_details.instructions && (
+                        <div className="mt-2 p-3 bg-[#1a1a27] rounded-2xl border border-[#1f1f2e]">
+                          <span className="text-white/40 text-xs block mb-1">Instructions</span>
+                          <p className="text-white/80 text-sm">{order.payment_details.instructions}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
             <div className="mt-6 rounded-2xl border border-[#1f1f2e] bg-[#1a1a27] p-4">
               <h3 className="text-sm font-semibold text-white/80">Buyer payment proof</h3>
@@ -254,7 +327,7 @@ export default function SellerOrderChatPage() {
                 </p>
               )}
             </div>
-            {(showConfirmPaymentButton || showSubmitPaymentProof) && (
+            {(showConfirmPaymentButton || showSubmitPaymentProof || showCancelOrderButton || showCancelPaymentButton) && (
               <div className="mt-6 space-y-4">
                 {confirmMessage && (
                   <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-200">
@@ -281,19 +354,33 @@ export default function SellerOrderChatPage() {
                     {cancelMessage}
                   </div>
                 )}
+                {paymentNotReceivedMessage && (
+                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-200">
+                    {paymentNotReceivedMessage}
+                  </div>
+                )}
                 {cancelError && (
                   <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200">
                     {cancelError}
                   </div>
                 )}
+                {paymentNotReceivedError && (
+                  <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200">
+                    {paymentNotReceivedError}
+                  </div>
+                )}
                 {showConfirmPaymentButton && (
                   <button
                     type="button"
-                    onClick={() => dispatch(confirmOrderPayment({ order_id: orderId }))}
+                    onClick={() => {
+                      if (window.confirm("Are you sure you have received the payment and want to release crypto?")) {
+                        dispatch(confirmOrderPayment({ order_id: orderId }));
+                      }
+                    }}
                     disabled={confirmLoading && confirmingOrderId === orderId}
                     className="w-full rounded-2xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white hover:bg-violet-500 transition disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    {confirmLoading && confirmingOrderId === orderId ? "Confirming…" : "Confirm payment"}
+                    {confirmLoading && confirmingOrderId === orderId ? "Approving..." : "Approve Payment"}
                   </button>
                 )}
                 {showSubmitPaymentProof && (
@@ -318,9 +405,9 @@ export default function SellerOrderChatPage() {
                     </button>
                   </div>
                 )}
-                {showConfirmPaymentButton && (
+                {showCancelOrderButton && (
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-white/70">Reason payment was not received</label>
+                    <label className="block text-sm font-medium text-white/70">Cancellation reason</label>
                     <textarea
                       value={cancelReason}
                       onChange={(e) => setCancelReason(e.target.value)}
@@ -330,11 +417,31 @@ export default function SellerOrderChatPage() {
                     />
                     <button
                       type="button"
-                      onClick={cancelPayment}
-                      disabled={cancelLoading && cancellingOrderId === orderId}
+                      onClick={cancelOrder}
+                      disabled={!cancelReason.trim() || (cancelLoading && cancellingOrderId === orderId)}
                       className="w-full rounded-2xl bg-red-600 px-4 py-3 text-sm font-semibold text-white hover:bg-red-500 transition disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      {cancelLoading && cancellingOrderId === orderId ? "Reporting…" : "Report payment not received"}
+                      {cancelLoading && cancellingOrderId === orderId ? "Cancelling..." : "Cancel Order"}
+                    </button>
+                  </div>
+                )}
+                {showCancelPaymentButton && (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-white/70">Payment not received reason</label>
+                    <textarea
+                      value={cancelReason}
+                      onChange={(e) => setCancelReason(e.target.value)}
+                      rows={3}
+                      placeholder="I did not receive the payment in my bank account. Please send again or upload correct proof."
+                      className="w-full resize-none rounded-2xl border border-[#1f1f2e] bg-[#1a1a27] px-4 py-3 text-sm text-white/80 placeholder-white/40 outline-none focus:border-violet-500 transition"
+                    />
+                    <button
+                      type="button"
+                      onClick={cancelPayment}
+                      disabled={!cancelReason.trim() || (paymentNotReceivedLoading && paymentNotReceivedOrderId === orderId)}
+                      className="w-full rounded-2xl bg-red-600 px-4 py-3 text-sm font-semibold text-white hover:bg-red-500 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {paymentNotReceivedLoading && paymentNotReceivedOrderId === orderId ? "Submitting..." : "Cancel Payment"}
                     </button>
                   </div>
                 )}
@@ -446,3 +553,4 @@ export default function SellerOrderChatPage() {
     </div>
   );
 }
+

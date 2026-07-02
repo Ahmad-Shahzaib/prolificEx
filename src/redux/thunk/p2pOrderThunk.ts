@@ -3,6 +3,12 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 export interface CreateP2POrderPayload {
   offer_id: number;
   crypto_amount: string;
+  payment_method: string;
+  bank_name?: string;
+  account_name?: string;
+  account_number?: string;
+  iban_number?: string;
+  instructions?: string;
 }
 
 export interface P2POrderSeller {

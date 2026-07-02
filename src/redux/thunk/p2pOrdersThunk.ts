@@ -64,6 +64,14 @@ export interface P2POrderItem {
   offer: P2POrderOffer;
   buyer: P2POrderUser;
   seller: P2POrderUser;
+  payment_details?: {
+    bank_name?: string;
+    account_name?: string;
+    account_number?: string;
+    iban_number?: string;
+    instructions?: string;
+    source?: string;
+  } | null;
 }
 
 export interface P2POrderLink {
@@ -107,23 +115,40 @@ export interface ConfirmP2POrderResponse {
   data: P2POrderItem;
 }
 
-export interface ConfirmP2POrderPayload {
+export interface ReleaseP2POrderPayload {
   order_id: number;
 }
 
-export interface CancelP2POrderPaymentPayload {
+export interface CancelP2POrderPayload {
+  order_id: number;
+  reason?: string;
+}
+
+export interface CancelP2POrderResponse {
+  success: boolean;
+  message: string;
+  data: Partial<P2POrderItem> & {
+    status: string;
+    payment_attempts?: number;
+    last_payment_rejection_reason?: string | null;
+    payment_rejected_at?: string | null;
+  };
+}
+
+export interface PaymentNotReceivedPayload {
   order_id: number;
   reason: string;
 }
 
-export interface CancelP2POrderPaymentResponse {
+export interface PaymentNotReceivedResponse {
   success: boolean;
   message: string;
-  data: {
-    status: string;
-    payment_attempts: number;
-    last_payment_rejection_reason: string | null;
-    payment_rejected_at: string | null;
+  data: Partial<P2POrderItem> & {
+    id?: number;
+    status?: string;
+    payment_attempts?: number;
+    last_payment_rejection_reason?: string | null;
+    payment_rejected_at?: string | null;
   };
 }
 
@@ -204,12 +229,12 @@ export const fetchP2POrder = createAsyncThunk<
   }
 );
 
-export const confirmOrderPayment = createAsyncThunk<
+export const releaseOrderCrypto = createAsyncThunk<
   ConfirmP2POrderResponse,
-  ConfirmP2POrderPayload,
+  ReleaseP2POrderPayload,
   { rejectValue: string }
 >(
-  "p2pOrders/confirmOrderPayment",
+  "p2pOrders/releaseOrderCrypto",
   async ({ order_id }, { rejectWithValue }) => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -228,22 +253,68 @@ export const confirmOrderPayment = createAsyncThunk<
 
       const data = await response.json();
       if (!response.ok || !data?.success) {
-        return rejectWithValue(data?.message || `Failed to confirm payment (${response.status})`);
+        return rejectWithValue(data?.message || `Failed to release crypto (${response.status})`);
       }
 
       return data as ConfirmP2POrderResponse;
     } catch (error: any) {
-      return rejectWithValue(error?.message || "Network error while confirming payment");
+      return rejectWithValue(error?.message || "Network error while releasing crypto");
     }
   }
 );
 
-export const cancelOrderPayment = createAsyncThunk<
-  CancelP2POrderPaymentResponse,
-  CancelP2POrderPaymentPayload,
+export const cancelP2POrder = createAsyncThunk<
+  CancelP2POrderResponse,
+  CancelP2POrderPayload,
   { rejectValue: string }
 >(
-  "p2pOrders/cancelOrderPayment",
+  "p2pOrders/cancelP2POrder",
+  async ({ order_id, reason }, { rejectWithValue }) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      if (!baseUrl) {
+        return rejectWithValue("Missing NEXT_PUBLIC_API_BASE_URL in environment");
+      }
+
+      const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+      const response = await fetch(`${baseUrl}/p2p/orders/${order_id}/cancel`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(reason ? { reason } : {}),
+      });
+
+      let data: any;
+      try {
+        data = await response.json();
+      } catch {
+        const text = await response.text();
+        return rejectWithValue(
+          response.ok
+            ? `Unexpected response while cancelling payment`
+            : text || `Failed to cancel payment (${response.status})`
+        );
+      }
+
+      if (!response.ok || !data?.success) {
+        return rejectWithValue(data?.message || `Failed to cancel payment (${response.status})`);
+      }
+
+      return data as CancelP2POrderResponse;
+    } catch (error: any) {
+      return rejectWithValue(error?.message || "Network error while cancelling payment");
+    }
+  }
+);
+
+export const reportPaymentNotReceived = createAsyncThunk<
+  PaymentNotReceivedResponse,
+  PaymentNotReceivedPayload,
+  { rejectValue: string }
+>(
+  "p2pOrders/reportPaymentNotReceived",
   async ({ order_id, reason }, { rejectWithValue }) => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -268,18 +339,21 @@ export const cancelOrderPayment = createAsyncThunk<
         const text = await response.text();
         return rejectWithValue(
           response.ok
-            ? `Unexpected response while cancelling payment`
-            : text || `Failed to cancel payment (${response.status})`
+            ? "Unexpected response while reporting payment not received"
+            : text || `Failed to report payment not received (${response.status})`
         );
       }
 
       if (!response.ok || !data?.success) {
-        return rejectWithValue(data?.message || `Failed to cancel payment (${response.status})`);
+        return rejectWithValue(data?.message || `Failed to report payment not received (${response.status})`);
       }
 
-      return data as CancelP2POrderPaymentResponse;
+      return data as PaymentNotReceivedResponse;
     } catch (error: any) {
-      return rejectWithValue(error?.message || "Network error while cancelling payment");
+      return rejectWithValue(error?.message || "Network error while reporting payment not received");
     }
   }
 );
+
+export const confirmOrderPayment = releaseOrderCrypto;
+export const cancelOrderPayment = cancelP2POrder;

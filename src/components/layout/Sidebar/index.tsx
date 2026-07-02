@@ -36,6 +36,16 @@ const userLinks = [
     ),
   },
   {
+    label: "My Ads",
+    href: "/dashboard/create-offer",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <rect x="2.5" y="2.5" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M9 5.5V12.5M5.5 9H12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
     label: "My Orders",
     href: "/dashboard/my-orders",
     icon: (

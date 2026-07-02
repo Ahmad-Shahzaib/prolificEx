@@ -92,7 +92,7 @@ const p2pOrderSlice = createSlice({
         (state, action: PayloadAction<P2PPaymentProofResponseData>) => {
           state.paymentProofLoading = false;
           state.paymentProofError = null;
-          state.paymentProofSuccessMessage = "Payment proof submitted successfully. Waiting for seller confirmation.";
+          state.paymentProofSuccessMessage = "Payment marked as paid. Waiting for seller confirmation.";
           if (state.order) {
             state.order = {
               ...state.order,

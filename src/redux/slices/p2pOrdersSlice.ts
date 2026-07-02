@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { cancelOrderPayment, confirmOrderPayment, fetchMyOrders, fetchP2POrder, P2POrderItem, P2POrdersResponse } from "../thunk/p2pOrdersThunk";
+import { cancelOrderPayment, confirmOrderPayment, fetchMyOrders, fetchP2POrder, P2POrderItem, P2POrdersResponse, reportPaymentNotReceived } from "../thunk/p2pOrdersThunk";
 
 interface P2POrdersState {
   loading: boolean;
@@ -7,13 +7,17 @@ interface P2POrdersState {
   confirmingOrderId: number | null;
   cancelLoading: boolean;
   cancellingOrderId: number | null;
+  paymentNotReceivedLoading: boolean;
+  paymentNotReceivedOrderId: number | null;
   error: string | null;
   confirmError: string | null;
   cancelError: string | null;
+  paymentNotReceivedError: string | null;
   orders: P2POrderItem[];
   message: string | null;
   confirmMessage: string | null;
   cancelMessage: string | null;
+  paymentNotReceivedMessage: string | null;
   pagination: {
     currentPage: number;
     lastPage: number;
@@ -29,13 +33,17 @@ const initialState: P2POrdersState = {
   confirmingOrderId: null,
   cancelLoading: false,
   cancellingOrderId: null,
+  paymentNotReceivedLoading: false,
+  paymentNotReceivedOrderId: null,
   error: null,
   confirmError: null,
   cancelError: null,
+  paymentNotReceivedError: null,
   orders: [],
   message: null,
   confirmMessage: null,
   cancelMessage: null,
+  paymentNotReceivedMessage: null,
   pagination: {
     currentPage: 1,
     lastPage: 1,
@@ -175,7 +183,33 @@ const p2pOrdersSlice = createSlice({
       .addCase(cancelOrderPayment.rejected, (state, action) => {
         state.cancelLoading = false;
         state.cancellingOrderId = null;
-        state.cancelError = action.payload || "Failed to report payment not received";
+        state.cancelError = action.payload || "Failed to cancel order";
+      })
+      .addCase(reportPaymentNotReceived.pending, (state, action) => {
+        state.paymentNotReceivedLoading = true;
+        state.paymentNotReceivedOrderId = action.meta.arg.order_id;
+        state.paymentNotReceivedError = null;
+        state.paymentNotReceivedMessage = null;
+      })
+      .addCase(reportPaymentNotReceived.fulfilled, (state, action) => {
+        state.paymentNotReceivedLoading = false;
+        state.paymentNotReceivedOrderId = null;
+        state.paymentNotReceivedError = null;
+        state.paymentNotReceivedMessage = action.payload.message;
+
+        const updatedOrderId = action.payload.data.id ?? action.meta.arg.order_id;
+        const updatedOrderIndex = state.orders.findIndex((item) => item.id === updatedOrderId);
+        if (updatedOrderIndex !== -1) {
+          state.orders[updatedOrderIndex] = {
+            ...state.orders[updatedOrderIndex],
+            ...action.payload.data,
+          } as P2POrderItem;
+        }
+      })
+      .addCase(reportPaymentNotReceived.rejected, (state, action) => {
+        state.paymentNotReceivedLoading = false;
+        state.paymentNotReceivedOrderId = null;
+        state.paymentNotReceivedError = action.payload || "Failed to report payment not received";
       });
   },
 });

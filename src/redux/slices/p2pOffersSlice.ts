@@ -59,6 +59,7 @@ const p2pOffersSlice = createSlice({
       .addCase(fetchOffers.pending, (state) => {
         state.offersLoading = true;
         state.offersError = null;
+        state.offers = [];
       })
       .addCase(fetchOffers.fulfilled, (state, action: PayloadAction<P2POffer[]>) => {
         state.offersLoading = false;

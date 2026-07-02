@@ -28,8 +28,11 @@ import twoFactorReducer from "./slices/twoFactorSlice";
 import kycReducer from "./slices/kycSlice";
 import transactionsReducer from "./slices/transactionsSlice";
 
+import exchangeRateReducer from "./slices/exchangeRateSlice";
 import networkFeeReducer from "./slices/networkFeeSlice";
 import p2pOffersReducer from "./slices/p2pOffersSlice";
+import p2pCreateOfferReducer from "./slices/p2pCreateOfferSlice";
+import p2pPaymentMethodsReducer from "./slices/p2pPaymentMethodsSlice";
 import p2pOrderReducer from "./slices/p2pOrderSlice";
 import p2pOrderMessagesReducer from "./slices/p2pOrderMessagesSlice";
 import p2pOrdersReducer from "./slices/p2pOrdersSlice";
@@ -67,8 +70,11 @@ const appReducer = combineReducers({
   twoFactor: twoFactorReducer,
   kyc: kycReducer,
   transactions: transactionsReducer,
+  exchangeRate: exchangeRateReducer,
   networkFee: networkFeeReducer,
   p2pOffers: p2pOffersReducer,
+  p2pCreateOffer: p2pCreateOfferReducer,
+  p2pPaymentMethods: p2pPaymentMethodsReducer,
   p2pOrder: p2pOrderReducer,
   p2pOrderMessages: p2pOrderMessagesReducer,
   p2pOrderRating: p2pOrderRatingReducer,
