@@ -1,4 +1,11 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import type { RootState } from "../store";
+
+const TWO_FACTOR_STATUS_CACHE_MS = 60_000;
+
+export interface TwoFactorFetchOptions {
+  force?: boolean;
+}
 
 export interface TwoFactorStatus {
   enabled: boolean;
@@ -68,8 +75,8 @@ const parseJsonSafe = async (res: Response) => {
 
 export const fetchTwoFactorStatus = createAsyncThunk<
   TwoFactorStatusResponse,
-  void,
-  { rejectValue: string }
+  TwoFactorFetchOptions | void,
+  { rejectValue: string; state: RootState }
 >(
   "twoFactor/fetchStatus",
   async (_, { rejectWithValue }) => {
@@ -99,6 +106,18 @@ export const fetchTwoFactorStatus = createAsyncThunk<
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while fetching 2FA status");
     }
+  },
+  {
+    condition: (options, { getState }) => {
+      if (options?.force) return true;
+
+      const { twoFactor } = getState();
+      const isFresh =
+        twoFactor.loadedAt !== null &&
+        Date.now() - twoFactor.loadedAt < TWO_FACTOR_STATUS_CACHE_MS;
+
+      return !twoFactor.loading && (twoFactor.loadedAt === null || !isFresh);
+    },
   }
 );
 

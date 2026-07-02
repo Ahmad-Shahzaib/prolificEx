@@ -5,12 +5,14 @@ interface DashboardOverviewState {
   loading: boolean;
   error: string | null;
   data: DashboardOverviewResponse["data"] | null;
+  loadedAt: number | null;
 }
 
 const initialState: DashboardOverviewState = {
   loading: false,
   error: null,
   data: null,
+  loadedAt: null,
 };
 
 const dashboardOverviewSlice = createSlice({
@@ -21,6 +23,7 @@ const dashboardOverviewSlice = createSlice({
       state.loading = false;
       state.error = null;
       state.data = null;
+      state.loadedAt = null;
     },
   },
   extraReducers: (builder) => {
@@ -35,6 +38,7 @@ const dashboardOverviewSlice = createSlice({
           state.loading = false;
           state.error = null;
           state.data = action.payload.data;
+          state.loadedAt = Date.now();
         }
       )
       .addCase(fetchDashboardOverview.rejected, (state, action) => {

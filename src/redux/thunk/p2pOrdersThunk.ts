@@ -1,4 +1,12 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import type { RootState } from "../store";
+
+const P2P_ORDERS_CACHE_MS = 30_000;
+
+export const getP2POrdersRequestKey = ({ page = 1, per_page = 20, status }: P2POrdersRequest = {}) => {
+  const normalizedStatus = status && status !== "all" ? status : "all";
+  return `${page}:${per_page}:${normalizedStatus}`;
+};
 
 export interface P2POrderUser {
   id: number;
@@ -154,11 +162,11 @@ export interface PaymentNotReceivedResponse {
 
 export const fetchMyOrders = createAsyncThunk<
   P2POrdersResponse,
-  P2POrdersRequest,
-  { rejectValue: string }
+  P2POrdersRequest | undefined,
+  { rejectValue: string; state: RootState }
 >(
   "p2pOrders/fetchMyOrders",
-  async ({ page = 1, per_page = 20, status }, { rejectWithValue }) => {
+  async ({ page = 1, per_page = 20, status } = {}, { rejectWithValue }) => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
       if (!baseUrl) {
@@ -192,6 +200,18 @@ export const fetchMyOrders = createAsyncThunk<
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while fetching orders");
     }
+  },
+  {
+    condition: (request = {}, { getState }) => {
+      const { p2pOrders } = getState();
+      const requestKey = getP2POrdersRequestKey(request);
+      const isSameRequest = p2pOrders.lastRequestKey === requestKey;
+      const isFresh =
+        p2pOrders.loadedAt !== null &&
+        Date.now() - p2pOrders.loadedAt < P2P_ORDERS_CACHE_MS;
+
+      return !p2pOrders.loading && (!isSameRequest || !isFresh);
+    },
   }
 );
 

@@ -1,4 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import type { RootState } from "../store";
+
+const TRANSACTIONS_CACHE_MS = 60_000;
 
 export interface TransactionItem {
   id: number;
@@ -55,15 +58,19 @@ export interface TransactionsRequest {
   per_page?: number;
   type?: string;
   coin?: string;
+  force?: boolean;
 }
+
+export const getTransactionsRequestKey = ({ page = 1, per_page = 20, type = "", coin = "" }: TransactionsRequest = {}) =>
+  [page, per_page, type, coin].join(":");
 
 export const fetchTransactions = createAsyncThunk<
   TransactionsResponse,
-  TransactionsRequest,
-  { rejectValue: string }
+  TransactionsRequest | undefined,
+  { rejectValue: string; state: RootState }
 >(
   "transactions/fetchTransactions",
-  async ({ page = 1, per_page = 20, type, coin }, { rejectWithValue }) => {
+  async ({ page = 1, per_page = 20, type, coin } = {}, { rejectWithValue }) => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
       if (!baseUrl) {
@@ -100,5 +107,19 @@ export const fetchTransactions = createAsyncThunk<
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while fetching transactions");
     }
+  },
+  {
+    condition: (request = {}, { getState }) => {
+      if (request.force) return true;
+
+      const { transactions } = getState();
+      const requestKey = getTransactionsRequestKey(request);
+      const isSameRequest = transactions.lastRequestKey === requestKey;
+      const isFresh =
+        transactions.loadedAt !== null &&
+        Date.now() - transactions.loadedAt < TRANSACTIONS_CACHE_MS;
+
+      return !transactions.loading && (!isSameRequest || !isFresh);
+    },
   }
 );

@@ -699,7 +699,7 @@ export default function P2PCryptoTable() {
     <>
       <Toaster toasts={toasts} onDismiss={dismiss} />
       <div className="min-h-screen bg-[#0d0d14] text-white font-sans">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-8">
+        <div className="w-full px-2 sm:px-3 lg:px-4 py-5 md:py-6">
 
         {!kycStatusLoading && kycStatus !== 'approved' && (
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 flex gap-4 mb-6">
@@ -717,9 +717,9 @@ export default function P2PCryptoTable() {
           </div>
         )}
 
-        <div className="mb-3 rounded-2xl border border-white/10 bg-[#0f111b] p-2 shadow-[0_20px_70px_rgba(0,0,0,0.28)]">
+        <div className="mb-3 rounded-xl border border-[#24283a]/80 bg-[#10131d]/90 p-1.5 shadow-[0_18px_55px_rgba(0,0,0,0.24)]">
           <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="inline-flex w-full shrink-0 rounded-xl border border-white/5 bg-[#171927] p-1 sm:w-auto">
+            <div className="inline-flex w-full shrink-0 rounded-xl border border-[#262b3f] bg-[#151824] p-0.5 sm:w-auto">
               {(["buy", "sell"] as const).map((t) => (
                 <button
                   key={t}
@@ -728,10 +728,10 @@ export default function P2PCryptoTable() {
                     setTab(t);
                     setPage(1);
                   }}
-                  className={`flex-1 rounded-lg px-6 py-2.5 text-sm font-bold capitalize transition sm:flex-none ${
+                  className={`flex-1 rounded-lg px-5 py-2 text-xs font-bold capitalize transition sm:flex-none ${
                     tab === t
                       ? "bg-violet-600 text-white shadow-[0_10px_26px_rgba(124,58,237,0.35)]"
-                      : "text-white/45 hover:bg-white/5 hover:text-white"
+                      : "text-white/45 hover:bg-[#181c2a] hover:text-white"
                   }`}
                 >
                   {t}
@@ -748,10 +748,10 @@ export default function P2PCryptoTable() {
                     setSelectedCoinFilter(coinOption);
                     setPage(1);
                   }}
-                  className={`flex shrink-0 items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-semibold transition ${
+                  className={`flex shrink-0 items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-semibold transition ${
                     selectedCoinFilter === coinOption
-                      ? "border-violet-400/70 bg-violet-600/15 text-white shadow-[0_0_24px_rgba(124,58,237,0.18)]"
-                      : "border-white/8 bg-[#141621] text-white/70 hover:border-white/15 hover:bg-white/5 hover:text-white"
+                      ? "border-violet-400/60 bg-violet-600/15 text-white shadow-[0_0_18px_rgba(124,58,237,0.16)]"
+                      : "border-[#2a2f44] bg-[#121521] text-white/70 hover:border-violet-400/35 hover:bg-[#181c2a] hover:text-white"
                   }`}
                 >
                   <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black ${
@@ -776,7 +776,7 @@ export default function P2PCryptoTable() {
           </div>
         </div>
 
-        <div className="mb-5 rounded-2xl border border-white/10 bg-[#0f111b] p-2 shadow-[0_18px_55px_rgba(0,0,0,0.2)]">
+        <div className="mb-4 rounded-xl border border-[#24283a]/80 bg-[#10131d]/90 p-1.5 shadow-[0_16px_45px_rgba(0,0,0,0.2)]">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
             <input
               type="number"
@@ -786,7 +786,7 @@ export default function P2PCryptoTable() {
                 setPage(1);
               }}
               placeholder="Enter Amount"
-              className="h-12 w-full rounded-xl border border-white/8 bg-[#171927] px-4 text-sm text-white outline-none transition placeholder:text-white/40 focus:border-violet-400/60 xl:w-48"
+              className="h-10 w-full rounded-xl border border-[#2a2f44] bg-[#121521] px-3 text-xs text-white outline-none transition placeholder:text-white/35 focus:border-violet-400/55 xl:w-44"
             />
 
             <div ref={filterDropdownRef} className="relative w-full xl:w-64">
@@ -796,14 +796,14 @@ export default function P2PCryptoTable() {
                   setShowFilterDropdown(!showFilterDropdown);
                   setShowCoinDropdown(false);
                 }}
-                className="flex h-12 w-full items-center justify-between rounded-xl border border-white/8 bg-[#171927] px-4 text-sm text-white/75 transition hover:border-violet-400/40 hover:bg-[#1d2030]"
+                className="flex h-10 w-full items-center justify-between rounded-xl border border-[#2a2f44] bg-[#121521] px-3 text-xs text-white/75 transition hover:border-violet-400/40 hover:bg-[#181c2a]"
               >
                 <span>{paymentFilter === "All" ? "All Payment Methods" : formatPaymentMethod(paymentFilter)}</span>
                 <ChevronDown size={16} className="text-white/45" />
               </button>
 
               {showFilterDropdown && (
-                <div className="absolute left-0 top-full z-50 mt-2 max-h-72 w-full overflow-y-auto rounded-xl border border-white/10 bg-[#1e1e2e] shadow-2xl">
+                <div className="absolute left-0 top-full z-50 mt-2 max-h-72 w-full overflow-y-auto rounded-xl border border-[#24283a] bg-[#1e1e2e] shadow-2xl">
                   {paymentMethods.map((m) => (
                     <button
                       key={m}
@@ -833,12 +833,12 @@ export default function P2PCryptoTable() {
                   setPage(1);
                 }}
                 placeholder="Search merchants, price, limits, payment method"
-                className="h-12 min-w-0 flex-1 rounded-xl border border-white/8 bg-[#171927] px-4 text-sm text-white outline-none transition placeholder:text-white/40 focus:border-violet-400/60"
+                className="h-10 min-w-0 flex-1 rounded-xl border border-[#2a2f44] bg-[#121521] px-3 text-xs text-white outline-none transition placeholder:text-white/35 focus:border-violet-400/55"
               />
               <button
                 type="button"
                 onClick={handleSearch}
-                className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 text-sm font-semibold shadow-[0_12px_30px_rgba(124,58,237,0.35)] transition hover:bg-violet-500 active:scale-95"
+                className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-xs font-semibold shadow-[0_10px_24px_rgba(124,58,237,0.28)] transition hover:bg-violet-500 active:scale-95"
               >
                 <Search size={18} />
                 Search
@@ -847,7 +847,7 @@ export default function P2PCryptoTable() {
                 <button
                   type="button"
                   onClick={handleOpenOfferModal}
-                  className="hidden h-12 shrink-0 items-center justify-center gap-2 rounded-xl border border-violet-400/40 bg-violet-500/10 px-5 text-sm font-semibold text-violet-100 transition hover:border-violet-300/60 hover:bg-violet-500/20 xl:flex"
+                  className="hidden h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-violet-400/35 bg-violet-500/10 px-4 text-xs font-semibold text-violet-100 transition hover:border-violet-300/55 hover:bg-violet-500/20 xl:flex"
                 >
                   <Plus size={16} />
                   Create Offer
@@ -859,7 +859,7 @@ export default function P2PCryptoTable() {
         </div>
 
         {/* Buy / Sell Tabs */}
-        <div className="hidden gap-6 mb-6 border-b border-white/10 overflow-x-auto pb-1">
+        <div className="hidden gap-6 mb-6 border-b border-[#24283a] overflow-x-auto pb-1">
           {(["buy", "sell"] as const).map((t) => (
             <button
               key={t}
@@ -879,7 +879,7 @@ export default function P2PCryptoTable() {
         </div>
 
         {/* Filters & Search Bar */}
-        <div className="hidden flex-col lg:flex-row gap-3 mb-6 bg-[#16161f] rounded-2xl border border-white/10 p-3">
+        <div className="hidden flex-col lg:flex-row gap-3 mb-6 bg-[#16161f] rounded-2xl border border-[#24283a] p-3">
           {/* Coin Picker */}
           <div ref={coinDropdownRef} className="relative w-full lg:w-auto">
             <Button
@@ -897,7 +897,7 @@ export default function P2PCryptoTable() {
             </Button>
 
             {showCoinDropdown && (
-              <div className="absolute z-50 top-full mt-2 left-0 w-full lg:w-40 bg-[#1e1e2e] border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+              <div className="absolute z-50 top-full mt-2 left-0 w-full lg:w-40 bg-[#1e1e2e] border border-[#24283a] rounded-xl shadow-2xl overflow-hidden">
                 {COIN_FILTERS.map((c) => (
                   <button
                     key={c}
@@ -925,7 +925,7 @@ export default function P2PCryptoTable() {
               setPage(1);
             }}
             placeholder="Amount"
-            className="w-full lg:w-40 bg-[#1e1e2e] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none placeholder:text-white/40"
+            className="w-full lg:w-40 bg-[#1e1e2e] border border-[#24283a] rounded-xl px-4 py-3 text-sm outline-none placeholder:text-white/40"
           />
 
           {/* Search Input */}
@@ -937,7 +937,7 @@ export default function P2PCryptoTable() {
               setPage(1);
             }}
             placeholder="Search merchants, price, limits, payment method"
-            className="w-full lg:flex-1 bg-[#1e1e2e] border border-white/10 rounded-xl px-4 py-3 text-sm outline-none placeholder:text-white/40"
+            className="w-full lg:flex-1 bg-[#1e1e2e] border border-[#24283a] rounded-xl px-4 py-3 text-sm outline-none placeholder:text-white/40"
           />
 
           {/* Search Button */}
@@ -966,7 +966,7 @@ export default function P2PCryptoTable() {
             </button>
 
             {showFilterDropdown && (
-              <div className="absolute z-50 top-full mt-2 right-0 w-full lg:w-48 bg-[#1e1e2e] border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+              <div className="absolute z-50 top-full mt-2 right-0 w-full lg:w-48 bg-[#1e1e2e] border border-[#24283a] rounded-xl shadow-2xl overflow-hidden">
                 {paymentMethods.map((m) => (
                   <button
                     key={m}
@@ -992,7 +992,7 @@ export default function P2PCryptoTable() {
             <button
               type="button"
               onClick={handleOpenOfferModal}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-violet-400/40 bg-violet-500/10 px-4 text-sm font-semibold text-violet-100 transition hover:border-violet-300/60 hover:bg-violet-500/20 sm:w-auto"
+              className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-violet-400/35 bg-violet-500/10 px-4 text-xs font-semibold text-violet-100 transition hover:border-violet-300/55 hover:bg-violet-500/20 sm:w-auto"
             >
               <Plus size={16} />
               Create Offer
@@ -1001,10 +1001,10 @@ export default function P2PCryptoTable() {
         )}
 
         {/* Table / Card Layout */}
-        <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0f111b] shadow-[0_24px_70px_rgba(0,0,0,0.25)]">
+        <div className="overflow-hidden rounded-xl border border-[#24283a]/80 bg-[#10131b] shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
           {tab === "sell" ? (
             <>
-              <div className="hidden md:grid grid-cols-[1.35fr_0.85fr_1.05fr_0.8fr_1.2fr_0.8fr] px-6 py-4 bg-[#131622] border-b border-white/8 text-[11px] text-white/35 font-bold tracking-wider uppercase">
+              <div className="hidden md:grid grid-cols-[1.35fr_0.85fr_1.05fr_0.8fr_1.2fr_0.8fr] px-4 py-3 bg-[#131722] border-b border-[#24283a]/80 text-[10px] text-white/35 font-bold tracking-wider uppercase">
                 <span>Buyer</span>
                 <span>Price</span>
                 <span>Available</span>
@@ -1013,7 +1013,7 @@ export default function P2PCryptoTable() {
                 <span>Trade</span>
               </div>
 
-              {offersLoading ? (
+              {offersLoading && offers.length === 0 ? (
                 <div className="space-y-3 px-6 py-5 animate-pulse" aria-label="Loading sell offers">
                   {[0, 1, 2, 3].map((row) => (
                     <div key={row} className="grid grid-cols-2 md:grid-cols-6 gap-4">
@@ -1038,13 +1038,13 @@ export default function P2PCryptoTable() {
                   return (
                     <div
                       key={offer.id}
-                      className="group border-b border-white/8 last:border-none transition-all hover:bg-violet-500/[0.04]"
+                      className="group border-b border-[#202437]/80 last:border-none transition-all hover:bg-violet-500/[0.035]"
                     >
-                      <div className="hidden md:grid grid-cols-[1.35fr_0.85fr_1.05fr_0.8fr_1.2fr_0.8fr] items-center px-6 py-6">
+                      <div className="hidden md:grid grid-cols-[1.35fr_0.85fr_1.05fr_0.8fr_1.2fr_0.8fr] items-center px-4 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-[#171a27] text-base font-bold text-white shadow-inner shadow-white/5">
+                          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#2a3044] bg-[#171a27] text-sm font-bold text-white shadow-inner shadow-white/5">
                             {buyerName.charAt(0).toUpperCase()}
-                            <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#0f111b] bg-emerald-400" />
+                            <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#10131b] bg-emerald-400" />
                           </div>
                           <div>
                             <p className="flex items-center gap-1.5 font-semibold text-white">
@@ -1069,7 +1069,7 @@ export default function P2PCryptoTable() {
 
                         <div>
                           <p>
-                            <span className="font-mono text-xl font-bold text-white">{Number(getOfferPrice(offer)).toLocaleString(undefined, { maximumFractionDigits: 4 })}</span>
+                            <span className="font-mono text-lg font-bold text-white">{Number(getOfferPrice(offer)).toLocaleString(undefined, { maximumFractionDigits: 4 })}</span>
                             <span className="ml-1.5 text-xs text-white/70">{offer.fiat_currency}</span>
                           </p>
                           <p className="mt-1 text-[11px] text-white/35">~ {formatFiatAmount(getOfferPrice(offer), offer.fiat_currency)}</p>
@@ -1089,7 +1089,7 @@ export default function P2PCryptoTable() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3 border-l border-white/10 pl-3 text-xs">
+                        <div className="grid grid-cols-2 gap-3 border-l border-[#24283a] pl-3 text-xs">
                           <div>
                             <p className="text-white/35">Min</p>
                             <p className="mt-1 font-semibold text-white">{formatFiatAmount(offer.min_order_limit, offer.fiat_currency)}</p>
@@ -1102,7 +1102,7 @@ export default function P2PCryptoTable() {
 
                         <div className="flex flex-wrap gap-2">
                           {getOfferPaymentMethods(offer).slice(0, 3).map((method, index) => (
-                            <span key={method} className="inline-flex items-center gap-1.5 rounded-lg bg-[#1b2032] px-2.5 py-1.5 text-xs text-white/80">
+                            <span key={method} className="inline-flex items-center gap-1.5 rounded-md bg-[#1a2031] px-2 py-1 text-[11px] text-white/80">
                               <span className={`h-2 w-2 rounded-full ${index % 2 === 0 ? "bg-blue-400" : "bg-emerald-400"}`} />
                               {formatPaymentMethod(method)}
                             </span>
@@ -1113,7 +1113,7 @@ export default function P2PCryptoTable() {
                           <div className="text-right">
                             <Button
                               onClick={() => handleBuyOffer(offer)}
-                              className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-bold shadow-[0_12px_28px_rgba(124,58,237,0.28)] hover:bg-violet-500 active:scale-95"
+                              className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold shadow-[0_10px_22px_rgba(124,58,237,0.24)] hover:bg-violet-500 active:scale-95"
                             >
                               Sell {getOfferCrypto(offer)}
                             </Button>
@@ -1128,7 +1128,7 @@ export default function P2PCryptoTable() {
                       <div className="md:hidden p-5 space-y-4">
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border border-white/10" />
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border border-[#2a3044]" />
                             <div>
                               <p className="font-semibold">{buyerName}</p>
                               <div className="flex gap-0.5 mt-1">
@@ -1168,7 +1168,7 @@ export default function P2PCryptoTable() {
 
                         <Button
                           onClick={() => handleBuyOffer(offer)}
-                          className="w-full py-3.5 rounded-2xl bg-violet-600 hover:bg-violet-500 text-base font-semibold active:scale-[0.985]"
+                          className="w-full rounded-xl bg-violet-600 py-2.5 text-sm font-semibold hover:bg-violet-500 active:scale-[0.985]"
                         >
                           Sell Now
                         </Button>
@@ -1180,7 +1180,7 @@ export default function P2PCryptoTable() {
             </>
           ) : (
             <>
-              <div className="hidden md:grid grid-cols-[1.35fr_0.85fr_1.05fr_0.8fr_1.2fr_0.8fr] px-6 py-4 bg-[#131622] border-b border-white/8 text-[11px] text-white/35 font-bold tracking-wider uppercase">
+              <div className="hidden md:grid grid-cols-[1.35fr_0.85fr_1.05fr_0.8fr_1.2fr_0.8fr] px-4 py-3 bg-[#131722] border-b border-[#24283a]/80 text-[10px] text-white/35 font-bold tracking-wider uppercase">
                 <span>Merchant</span>
                 <span>Price</span>
                 <span>Available</span>
@@ -1189,7 +1189,7 @@ export default function P2PCryptoTable() {
                 <span>Trade</span>
               </div>
 
-              {offersLoading ? (
+              {offersLoading && offers.length === 0 ? (
                 <div className="space-y-3 px-6 py-5 animate-pulse" aria-label="Loading buy offers">
                   {[0, 1, 2, 3].map((row) => (
                     <div key={row} className="grid grid-cols-2 md:grid-cols-6 gap-4">
@@ -1214,14 +1214,14 @@ export default function P2PCryptoTable() {
                   return (
                     <div
                       key={offer.id}
-                      className="group border-b border-white/8 last:border-none transition-all hover:bg-violet-500/[0.04]"
+                      className="group border-b border-[#202437]/80 last:border-none transition-all hover:bg-violet-500/[0.035]"
                     >
                       {/* Desktop Row */}
-                      <div className="hidden md:grid grid-cols-[1.35fr_0.85fr_1.05fr_0.8fr_1.2fr_0.8fr] items-center px-6 py-6">
+                      <div className="hidden md:grid grid-cols-[1.35fr_0.85fr_1.05fr_0.8fr_1.2fr_0.8fr] items-center px-4 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-[#171a27] text-base font-bold text-white shadow-inner shadow-white/5">
+                          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#2a3044] bg-[#171a27] text-sm font-bold text-white shadow-inner shadow-white/5">
                             {sellerName.charAt(0).toUpperCase()}
-                            <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#0f111b] bg-emerald-400" />
+                            <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#10131b] bg-emerald-400" />
                           </div>
                           <div>
                             <p className="flex items-center gap-1.5 font-semibold text-white">
@@ -1246,7 +1246,7 @@ export default function P2PCryptoTable() {
 
                         <div>
                           <p>
-                            <span className="font-mono text-xl font-bold text-white">{Number(getOfferPrice(offer)).toLocaleString(undefined, { maximumFractionDigits: 4 })}</span>
+                            <span className="font-mono text-lg font-bold text-white">{Number(getOfferPrice(offer)).toLocaleString(undefined, { maximumFractionDigits: 4 })}</span>
                             <span className="ml-1.5 text-xs text-white/70">{offer.fiat_currency}</span>
                           </p>
                           <p className="mt-1 text-[11px] text-white/35">~ {formatFiatAmount(getOfferPrice(offer), offer.fiat_currency)}</p>
@@ -1266,7 +1266,7 @@ export default function P2PCryptoTable() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3 border-l border-white/10 pl-3 text-xs">
+                        <div className="grid grid-cols-2 gap-3 border-l border-[#24283a] pl-3 text-xs">
                           <div>
                             <p className="text-white/35">Min</p>
                             <p className="mt-1 font-semibold text-white">{formatFiatAmount(offer.min_order_limit, offer.fiat_currency)}</p>
@@ -1279,7 +1279,7 @@ export default function P2PCryptoTable() {
 
                         <div className="flex flex-wrap gap-2">
                           {getOfferPaymentMethods(offer).slice(0, 3).map((method, index) => (
-                            <span key={method} className="inline-flex items-center gap-1.5 rounded-lg bg-[#1b2032] px-2.5 py-1.5 text-xs text-white/80">
+                            <span key={method} className="inline-flex items-center gap-1.5 rounded-md bg-[#1a2031] px-2 py-1 text-[11px] text-white/80">
                               <span className={`h-2 w-2 rounded-full ${index % 2 === 0 ? "bg-blue-400" : "bg-emerald-400"}`} />
                               {formatPaymentMethod(method)}
                             </span>
@@ -1290,7 +1290,7 @@ export default function P2PCryptoTable() {
                           <div className="text-right">
                             <Button
                               onClick={() => handleBuyOffer(offer)}
-                              className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-bold shadow-[0_12px_28px_rgba(124,58,237,0.28)] hover:bg-violet-500 active:scale-95"
+                              className="rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold shadow-[0_10px_22px_rgba(124,58,237,0.24)] hover:bg-violet-500 active:scale-95"
                             >
                               Buy {getOfferCrypto(offer)}
                             </Button>
@@ -1306,7 +1306,7 @@ export default function P2PCryptoTable() {
                       <div className="md:hidden p-5 space-y-4">
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border border-white/10" />
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 border border-[#2a3044]" />
                             <div>
                               <p className="font-semibold">{sellerName}</p>
                               <div className="flex gap-0.5 mt-1">
@@ -1349,7 +1349,7 @@ export default function P2PCryptoTable() {
 
                         <Button
                           onClick={() => handleBuyOffer(offer)}
-                          className="w-full py-3.5 rounded-2xl bg-violet-600 hover:bg-violet-500 text-base font-semibold active:scale-[0.985]"
+                          className="w-full rounded-xl bg-violet-600 py-2.5 text-sm font-semibold hover:bg-violet-500 active:scale-[0.985]"
                         >
                           Buy Now
                         </Button>
@@ -1374,7 +1374,7 @@ export default function P2PCryptoTable() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#1e1e2e] border border-white/10 disabled:opacity-30 hover:bg-violet-600/20 transition"
+                className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#171b29] border border-[#2a2f44] disabled:opacity-30 hover:border-violet-400/40 hover:bg-violet-600/15 transition"
               >
                 <ChevronLeft size={18} />
               </button>
@@ -1382,7 +1382,7 @@ export default function P2PCryptoTable() {
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#1e1e2e] border border-white/10 disabled:opacity-30 hover:bg-violet-600/20 transition"
+                className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#171b29] border border-[#2a2f44] disabled:opacity-30 hover:border-violet-400/40 hover:bg-violet-600/15 transition"
               >
                 <ChevronRight size={18} />
               </button>
@@ -1393,11 +1393,11 @@ export default function P2PCryptoTable() {
 
       {selectedOrderOffer && (
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/80 p-3 sm:items-center sm:p-5">
-          <div className="relative my-3 grid max-h-[calc(100vh-1.5rem)] w-full max-w-[940px] min-w-0 gap-4 overflow-y-auto rounded-2xl border border-white/10 bg-[#11131d] p-3 shadow-2xl sm:my-4 sm:max-h-[calc(100vh-2rem)] sm:p-4 xl:grid-cols-[1fr_0.84fr] xl:gap-6">
+          <div className="relative my-3 grid max-h-[calc(100vh-1.5rem)] w-full max-w-[940px] min-w-0 gap-4 overflow-y-auto rounded-xl border border-[#24283a] bg-[#11131d] p-3 shadow-2xl sm:my-4 sm:max-h-[calc(100vh-2rem)] sm:p-4 xl:grid-cols-[1fr_0.84fr] xl:gap-6">
             <button
               type="button"
               onClick={closeOrderModal}
-              className="absolute right-4 top-4 z-10 rounded-full border border-white/10 bg-[#171926]/90 p-2 text-white/60 transition hover:bg-white/10 hover:text-white"
+              className="absolute right-4 top-4 z-10 rounded-full border border-[#24283a] bg-[#171926]/90 p-2 text-white/60 transition hover:bg-[#1b2030] hover:text-white"
               aria-label="Close P2P order modal"
             >
               <X size={20} />
@@ -1447,7 +1447,7 @@ export default function P2PCryptoTable() {
                   </div>
                 </div>
 
-                <div className="space-y-2.5 border-white/10 md:border-l md:pl-6">
+                <div className="space-y-2.5 border-[#24283a] md:border-l md:pl-6">
                   <div className="flex justify-between gap-4">
                     <span className="text-white/50">Completion Rate Within 30 Days</span>
                     <span className="font-semibold text-white">98%</span>
@@ -1471,13 +1471,13 @@ export default function P2PCryptoTable() {
 
               <div>
                 <p className="mb-2 text-sm font-semibold text-white">Advertiser Terms</p>
-                <div className="rounded-2xl border border-white/10 bg-[#171926] px-4 py-3 text-sm leading-relaxed text-white/65">
+                <div className="rounded-xl border border-[#24283a] bg-[#171926] px-4 py-3 text-sm leading-relaxed text-white/65">
                   {selectedOrderOffer.instructions || "Merchants may include additional terms in their advertiser instructions."}
                 </div>
               </div>
 
               {selectedOrderNeedsPaymentDetails ? (
-                <div className="rounded-2xl border border-white/10 bg-[#171926] p-3.5">
+                <div className="rounded-xl border border-[#24283a] bg-[#171926] p-3.5">
                   <p className="mb-2.5 text-sm font-semibold text-white">Your Payment Details</p>
                   <div className="grid gap-2.5 sm:grid-cols-2">
                     <label className="text-sm text-white/70">
@@ -1486,7 +1486,7 @@ export default function P2PCryptoTable() {
                         type="text"
                         value={orderBankName}
                         onChange={(event) => setOrderBankName(event.target.value)}
-                        className="mt-1.5 h-11 w-full rounded-xl border border-white/10 bg-[#11131d] px-3 text-sm text-white outline-none"
+                        className="mt-1.5 h-10 w-full rounded-xl border border-[#2a2f44] bg-[#11131d] px-3 text-sm text-white outline-none"
                       />
                     </label>
                     <label className="text-sm text-white/70">
@@ -1495,7 +1495,7 @@ export default function P2PCryptoTable() {
                         type="text"
                         value={orderAccountName}
                         onChange={(event) => setOrderAccountName(cleanAccountName(event.target.value))}
-                        className="mt-1.5 h-11 w-full rounded-xl border border-white/10 bg-[#11131d] px-3 text-sm text-white outline-none"
+                        className="mt-1.5 h-10 w-full rounded-xl border border-[#2a2f44] bg-[#11131d] px-3 text-sm text-white outline-none"
                       />
                     </label>
                     <label className="text-sm text-white/70">
@@ -1504,7 +1504,7 @@ export default function P2PCryptoTable() {
                         type="number"
                         value={orderAccountNumber}
                         onChange={(event) => setOrderAccountNumber(event.target.value)}
-                        className="mt-1.5 h-11 w-full rounded-xl border border-white/10 bg-[#11131d] px-3 text-sm text-white outline-none"
+                        className="mt-1.5 h-10 w-full rounded-xl border border-[#2a2f44] bg-[#11131d] px-3 text-sm text-white outline-none"
                       />
                     </label>
                     <label className="text-sm text-white/70">
@@ -1513,7 +1513,7 @@ export default function P2PCryptoTable() {
                         type="text"
                         value={orderIbanNumber}
                         onChange={(event) => setOrderIbanNumber(event.target.value)}
-                        className="mt-1.5 h-11 w-full rounded-xl border border-white/10 bg-[#11131d] px-3 text-sm text-white outline-none"
+                        className="mt-1.5 h-10 w-full rounded-xl border border-[#2a2f44] bg-[#11131d] px-3 text-sm text-white outline-none"
                       />
                     </label>
                     <label className="text-sm text-white/70 sm:col-span-2">
@@ -1521,13 +1521,13 @@ export default function P2PCryptoTable() {
                       <textarea
                         value={orderInstructions}
                         onChange={(event) => setOrderInstructions(event.target.value)}
-                        className="mt-1.5 min-h-[58px] w-full resize-none rounded-xl border border-white/10 bg-[#11131d] px-3 py-2.5 text-sm text-white outline-none"
+                        className="mt-1.5 min-h-[58px] w-full resize-none rounded-xl border border-[#24283a] bg-[#11131d] px-3 py-2.5 text-sm text-white outline-none"
                       />
                     </label>
                   </div>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-white/10 bg-[#171926] p-3.5">
+                <div className="rounded-xl border border-[#24283a] bg-[#171926] p-3.5">
                   <p className="mb-2.5 text-sm font-semibold text-white">Payment Details</p>
                   <div className="grid gap-2.5 text-sm sm:grid-cols-2">
                     {[
@@ -1554,7 +1554,7 @@ export default function P2PCryptoTable() {
                 </span>
               </div>
 
-              <label className="block rounded-2xl border border-white/10 bg-[#171926] px-4 py-3 transition focus-within:border-violet-500/50">
+              <label className="block rounded-xl border border-[#24283a] bg-[#171926] px-4 py-3 transition focus-within:border-violet-500/50">
                 <span className="text-sm text-white/70">
                   {selectedOrderOffer.type === "buy" ? "I will receive" : "I will pay"}
                 </span>
@@ -1570,7 +1570,7 @@ export default function P2PCryptoTable() {
                 </div>
               </label>
 
-              <div className="rounded-2xl border border-white/10 bg-[#171926] px-4 py-3">
+              <div className="rounded-xl border border-[#24283a] bg-[#171926] px-4 py-3">
                 <p className="text-sm text-white/70">
                   {selectedOrderOffer.type === "buy" ? "I will pay" : "I will receive"}
                 </p>
@@ -1585,12 +1585,12 @@ export default function P2PCryptoTable() {
                 </div>
               </div>
 
-              <label className="block rounded-2xl border border-white/10 bg-[#171926] px-4 py-3">
+              <label className="block rounded-xl border border-[#24283a] bg-[#171926] px-4 py-3">
                 <span className="text-sm text-white/70">Payment Method</span>
                 <select
                   value={orderPaymentMethod}
                   onChange={(event) => setOrderPaymentMethod(event.target.value)}
-                  className="mt-2 h-11 w-full rounded-xl border border-white/10 bg-[#11131d] px-3 text-sm font-semibold text-white outline-none"
+                  className="mt-2 h-10 w-full rounded-xl border border-[#2a2f44] bg-[#11131d] px-3 text-sm font-semibold text-white outline-none"
                 >
                   {selectedOrderPaymentMethods.map((method) => (
                     <option key={method} value={method}>
@@ -1625,7 +1625,7 @@ export default function P2PCryptoTable() {
                 type="button"
                 onClick={handleInitiateOrder}
                 disabled={!selectedOrderCanSubmit || orderLoading}
-                className="w-full rounded-2xl bg-violet-600 py-3.5 text-base font-bold shadow-lg shadow-violet-950/30 hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-xl bg-violet-600 py-2.5 text-sm font-bold shadow-lg shadow-violet-950/25 hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {orderLoading
                   ? "Creating order..."
@@ -1645,15 +1645,15 @@ export default function P2PCryptoTable() {
 
       {showOfferModal && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="w-full max-w-xl sm:max-w-2xl bg-[#0f1220] border border-white/10 rounded-3xl shadow-2xl overflow-hidden max-h-[90vh]">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
+          <div className="w-full max-w-xl sm:max-w-2xl bg-[#0f1220] border border-[#24283a] rounded-xl shadow-2xl overflow-hidden max-h-[90vh]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#24283a]">
               <div>
                 <h2 className="text-xl font-semibold">Create Sell Offer</h2>
                 <p className="text-sm text-white/50 mt-1">Fill in the offer details and submit to publish your sell offer.</p>
               </div>
               <button
                 onClick={() => setShowOfferModal(false)}
-                className="rounded-full p-2 text-white/70 hover:bg-white/5 hover:text-white transition"
+                className="rounded-full p-2 text-white/70 hover:bg-[#181c2a] hover:text-white transition"
               >
                 <X size={18} />
               </button>
@@ -1676,7 +1676,7 @@ export default function P2PCryptoTable() {
                     value={coin}
                     onChange={(e) => setCoin(e.target.value)}
                     autoComplete="off"
-                    className="w-full rounded-2xl bg-[#161724] border border-white/10 px-4 py-3 text-sm text-white outline-none"
+                    className="w-full rounded-lg bg-[#121521] border border-[#2a2f44] px-3 py-2.5 text-sm text-white outline-none"
                   >
                     {COINS.map((option) => (
                       <option key={option} value={option}>{option}</option>
@@ -1691,7 +1691,7 @@ export default function P2PCryptoTable() {
                     value={network}
                     onChange={(e) => setNetwork(e.target.value)}
                     autoComplete="off"
-                    className="w-full rounded-2xl bg-[#161724] border border-white/10 px-4 py-3 text-sm text-white outline-none"
+                    className="w-full rounded-lg bg-[#121521] border border-[#2a2f44] px-3 py-2.5 text-sm text-white outline-none"
                   >
                     {NETWORKS.map((option) => (
                       <option key={option} value={option}>{option}</option>
@@ -1710,7 +1710,7 @@ export default function P2PCryptoTable() {
                     onChange={(e) => setOfferAmount(e.target.value)}
                     placeholder="2500"
                     autoComplete="off"
-                    className="w-full rounded-2xl bg-[#161724] border border-white/10 px-4 py-3 text-sm text-white outline-none"
+                    className="w-full rounded-lg bg-[#121521] border border-[#2a2f44] px-3 py-2.5 text-sm text-white outline-none"
                   />
                 </label>
 
@@ -1724,7 +1724,7 @@ export default function P2PCryptoTable() {
                     onChange={(e) => setPricePerCoin(e.target.value)}
                     placeholder="1.01"
                     autoComplete="off"
-                    className="w-full rounded-2xl bg-[#161724] border border-white/10 px-4 py-3 text-sm text-white outline-none"
+                    className="w-full rounded-lg bg-[#121521] border border-[#2a2f44] px-3 py-2.5 text-sm text-white outline-none"
                   />
                 </label>
               </div>
@@ -1738,7 +1738,7 @@ export default function P2PCryptoTable() {
                     value={minOrderLimit}
                     onChange={(e) => setMinOrderLimit(e.target.value)}
                     autoComplete="off"
-                    className="w-full rounded-2xl bg-[#161724] border border-white/10 px-4 py-3 text-sm text-white outline-none"
+                    className="w-full rounded-lg bg-[#121521] border border-[#2a2f44] px-3 py-2.5 text-sm text-white outline-none"
                   />
                 </label>
 
@@ -1752,8 +1752,8 @@ export default function P2PCryptoTable() {
                     onChange={(e) => setMaxOrderLimit(e.target.value)}
                     aria-invalid={Boolean(maxOrderLimitError)}
                     autoComplete="off"
-                    className={`w-full rounded-2xl bg-[#161724] border px-4 py-3 text-sm text-white outline-none ${
-                      maxOrderLimitError ? "border-red-500/60" : "border-white/10"
+                    className={`w-full rounded-lg bg-[#121521] border px-3 py-2.5 text-sm text-white outline-none ${
+                      maxOrderLimitError ? "border-red-500/60" : "border-[#2a2f44]"
                     }`}
                   />
                   {maxOrderLimitError && (
@@ -1770,7 +1770,7 @@ export default function P2PCryptoTable() {
                     value={priceType}
                     onChange={(e) => setPriceType(e.target.value)}
                     autoComplete="off"
-                    className="w-full rounded-2xl bg-[#161724] border border-white/10 px-4 py-3 text-sm text-white outline-none"
+                    className="w-full rounded-lg bg-[#121521] border border-[#2a2f44] px-3 py-2.5 text-sm text-white outline-none"
                   >
                     {PRICE_TYPES.map((option) => (
                       <option key={option} value={option}>{option}</option>
@@ -1788,7 +1788,7 @@ export default function P2PCryptoTable() {
                       setFiatCurrency(nextFiat);
                     }}
                     autoComplete="off"
-                    className="w-full rounded-2xl bg-[#161724] border border-white/10 px-4 py-3 text-sm text-white outline-none"
+                    className="w-full rounded-lg bg-[#121521] border border-[#2a2f44] px-3 py-2.5 text-sm text-white outline-none"
                   >
                     {fiatCurrencies.map((option) => (
                       <option key={option} value={option}>{option}</option>
@@ -1809,7 +1809,7 @@ export default function P2PCryptoTable() {
                       setBankName(selectedMethod?.label ?? bankName);
                     }}
                     autoComplete="off"
-                    className="w-full rounded-2xl bg-[#161724] border border-white/10 px-4 py-3 text-sm text-white outline-none"
+                    className="w-full rounded-lg bg-[#121521] border border-[#2a2f44] px-3 py-2.5 text-sm text-white outline-none"
                   >
                     {paymentMethodsLoading && <option value={paymentMethod}>Loading...</option>}
                     {paymentMethodOptions.map((option) => (
@@ -1826,7 +1826,7 @@ export default function P2PCryptoTable() {
                     value={paymentWindow}
                     onChange={(e) => setPaymentWindow(e.target.value)}
                     autoComplete="off"
-                    className="w-full rounded-2xl bg-[#161724] border border-white/10 px-4 py-3 text-sm text-white outline-none"
+                    className="w-full rounded-lg bg-[#121521] border border-[#2a2f44] px-3 py-2.5 text-sm text-white outline-none"
                   />
                 </label>
               </div>
@@ -1840,7 +1840,7 @@ export default function P2PCryptoTable() {
                     value={bankName}
                     onChange={(e) => setBankName(e.target.value)}
                     autoComplete="organization"
-                    className="w-full rounded-2xl bg-[#161724] border border-white/10 px-4 py-3 text-sm text-white outline-none"
+                    className="w-full rounded-lg bg-[#121521] border border-[#2a2f44] px-3 py-2.5 text-sm text-white outline-none"
                   />
                 </label>
                 <label className="space-y-2 text-sm text-white/80">
@@ -1851,7 +1851,7 @@ export default function P2PCryptoTable() {
                     value={accountName}
                     onChange={(e) => setAccountName(cleanAccountName(e.target.value))}
                     autoComplete="name"
-                    className="w-full rounded-2xl bg-[#161724] border border-white/10 px-4 py-3 text-sm text-white outline-none"
+                    className="w-full rounded-lg bg-[#121521] border border-[#2a2f44] px-3 py-2.5 text-sm text-white outline-none"
                   />
                 </label>
               </div>
@@ -1865,7 +1865,7 @@ export default function P2PCryptoTable() {
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value)}
                     autoComplete="account-number"
-                    className="w-full rounded-2xl bg-[#161724] border border-white/10 px-4 py-3 text-sm text-white outline-none"
+                    className="w-full rounded-lg bg-[#121521] border border-[#2a2f44] px-3 py-2.5 text-sm text-white outline-none"
                   />
                 </label>
                 <label className="space-y-2 text-sm text-white/80">
@@ -1876,7 +1876,7 @@ export default function P2PCryptoTable() {
                     value={ibanNumber}
                     onChange={(e) => setIbanNumber(e.target.value)}
                     autoComplete="off"
-                    className="w-full rounded-2xl bg-[#161724] border border-white/10 px-4 py-3 text-sm text-white outline-none"
+                    className="w-full rounded-lg bg-[#121521] border border-[#2a2f44] px-3 py-2.5 text-sm text-white outline-none"
                   />
                 </label>
               </div>
@@ -1890,12 +1890,12 @@ export default function P2PCryptoTable() {
                     value={instructions}
                     onChange={(e) => setInstructions(e.target.value)}
                     autoComplete="off"
-                    className="w-full rounded-2xl bg-[#161724] border border-white/10 px-4 py-3 text-sm text-white outline-none resize-none"
+                    className="w-full rounded-lg bg-[#121521] border border-[#2a2f44] px-3 py-2.5 text-sm text-white outline-none resize-none"
                   />
                 </label>
               </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-white/10 bg-[#121428]">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3 border-t border-[#24283a] bg-[#121428]">
               <div className="text-sm text-white/60">Create your sell offer with payment details and limits.</div>
               <Button
                 type="submit"

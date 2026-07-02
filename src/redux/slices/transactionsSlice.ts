@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { fetchTransactions, TransactionItem, TransactionsResponse } from "../thunk/transactionsThunk";
+import { fetchTransactions, getTransactionsRequestKey, TransactionItem, TransactionsResponse } from "../thunk/transactionsThunk";
 
 interface TransactionsState {
   loading: boolean;
@@ -16,6 +16,8 @@ interface TransactionsState {
     type: string;
     coin: string;
   };
+  loadedAt: number | null;
+  lastRequestKey: string | null;
 }
 
 const initialState: TransactionsState = {
@@ -33,6 +35,8 @@ const initialState: TransactionsState = {
     type: "",
     coin: "",
   },
+  loadedAt: null,
+  lastRequestKey: null,
 };
 
 const transactionsSlice = createSlice({
@@ -60,7 +64,7 @@ const transactionsSlice = createSlice({
       })
       .addCase(
         fetchTransactions.fulfilled,
-        (state, action: PayloadAction<TransactionsResponse>) => {
+        (state, action) => {
           state.loading = false;
           state.error = null;
           state.message = action.payload.message;
@@ -71,6 +75,8 @@ const transactionsSlice = createSlice({
             perPage: action.payload.data.per_page,
             total: action.payload.data.total,
           };
+          state.loadedAt = Date.now();
+          state.lastRequestKey = getTransactionsRequestKey(action.meta.arg);
         }
       )
       .addCase(fetchTransactions.rejected, (state, action) => {

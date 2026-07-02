@@ -192,7 +192,7 @@ export function PriceChart() {
             <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 lg:col-span-1">
               <p className="text-xs text-slate-400">Total Activity</p>
               <p className="mt-2 text-3xl font-bold text-white">
-                {loading ? "..." : data?.value ?? 0}
+                {loading && !data ? "..." : data?.value ?? 0}
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 Range: {data?.range ?? activeTimeframe}

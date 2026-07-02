@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { cancelOrderPayment, confirmOrderPayment, fetchMyOrders, fetchP2POrder, P2POrderItem, P2POrdersResponse, reportPaymentNotReceived } from "../thunk/p2pOrdersThunk";
+import { cancelOrderPayment, confirmOrderPayment, fetchMyOrders, fetchP2POrder, getP2POrdersRequestKey, P2POrderItem, P2POrdersResponse, reportPaymentNotReceived } from "../thunk/p2pOrdersThunk";
 
 interface P2POrdersState {
   loading: boolean;
@@ -25,6 +25,8 @@ interface P2POrdersState {
     total: number;
   };
   statusFilter: string;
+  loadedAt: number | null;
+  lastRequestKey: string | null;
 }
 
 const initialState: P2POrdersState = {
@@ -51,6 +53,8 @@ const initialState: P2POrdersState = {
     total: 0,
   },
   statusFilter: "all",
+  loadedAt: null,
+  lastRequestKey: null,
 };
 
 const p2pOrdersSlice = createSlice({
@@ -83,6 +87,8 @@ const p2pOrdersSlice = createSlice({
         total: 0,
       };
       state.statusFilter = "all";
+      state.loadedAt = null;
+      state.lastRequestKey = null;
     },
   },
   extraReducers: (builder) => {
@@ -90,9 +96,8 @@ const p2pOrdersSlice = createSlice({
       .addCase(fetchMyOrders.pending, (state) => {
         state.loading = true;
         state.error = null;
-        state.orders = []; // Clear existing orders when fetching new ones
       })
-      .addCase(fetchMyOrders.fulfilled, (state, action: PayloadAction<P2POrdersResponse>) => {
+      .addCase(fetchMyOrders.fulfilled, (state, action) => {
         state.loading = false;
         state.error = null;
         state.message = action.payload.message;
@@ -103,6 +108,8 @@ const p2pOrdersSlice = createSlice({
           perPage: action.payload.data.per_page,
           total: action.payload.data.total,
         };
+        state.loadedAt = Date.now();
+        state.lastRequestKey = getP2POrdersRequestKey(action.meta.arg);
       })
       .addCase(fetchMyOrders.rejected, (state, action) => {
         state.loading = false;

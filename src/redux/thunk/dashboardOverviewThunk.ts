@@ -1,4 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import type { RootState } from "../store";
+
+const DASHBOARD_OVERVIEW_CACHE_MS = 60_000;
 
 export interface DashboardWalletEntry {
   id: number;
@@ -57,7 +60,7 @@ export interface DashboardOverviewResponse {
 export const fetchDashboardOverview = createAsyncThunk<
   DashboardOverviewResponse,
   void,
-  { rejectValue: string }
+  { rejectValue: string; state: RootState }
 >(
   "dashboardOverview/fetchDashboardOverview",
   async (_, { rejectWithValue }) => {
@@ -85,5 +88,16 @@ export const fetchDashboardOverview = createAsyncThunk<
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while fetching dashboard overview");
     }
+  },
+  {
+    condition: (_, { getState }) => {
+      const { dashboardOverview } = getState();
+      const hasCachedData = Boolean(dashboardOverview.data);
+      const isFresh =
+        dashboardOverview.loadedAt !== null &&
+        Date.now() - dashboardOverview.loadedAt < DASHBOARD_OVERVIEW_CACHE_MS;
+
+      return !dashboardOverview.loading && (!hasCachedData || !isFresh);
+    },
   }
 );

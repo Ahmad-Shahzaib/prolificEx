@@ -8,6 +8,7 @@ interface SessionsState {
   revokeError: string | null;
   sessions: SessionItem[];
   message: string | null;
+  loadedAt: number | null;
 }
 
 const initialState: SessionsState = {
@@ -17,6 +18,7 @@ const initialState: SessionsState = {
   revokeError: null,
   sessions: [],
   message: null,
+  loadedAt: null,
 };
 
 const sessionsSlice = createSlice({
@@ -30,6 +32,7 @@ const sessionsSlice = createSlice({
       state.revokeLoadingId = null;
       state.revokeError = null;
       state.message = null;
+      state.loadedAt = null;
     },
   },
   extraReducers: (builder) => {
@@ -46,6 +49,7 @@ const sessionsSlice = createSlice({
           state.error = null;
           state.sessions = action.payload.data;
           state.message = action.payload.message;
+          state.loadedAt = Date.now();
         }
       )
       .addCase(fetchSessions.rejected, (state, action) => {
@@ -63,6 +67,7 @@ const sessionsSlice = createSlice({
           state.sessions = state.sessions.filter((session) => session.id !== action.meta.arg.id);
         }
         state.message = action.payload.message;
+        state.loadedAt = Date.now();
       })
       .addCase(revokeSession.rejected, (state, action) => {
         state.revokeLoadingId = null;

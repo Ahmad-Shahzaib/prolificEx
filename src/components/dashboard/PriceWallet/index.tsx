@@ -14,7 +14,7 @@ export function PriceWallet() {
 
     const intervalId = window.setInterval(() => {
       dispatch(fetchWalletPrices());
-    }, 1000);
+    }, 30_000);
 
     return () => {
       window.clearInterval(intervalId);

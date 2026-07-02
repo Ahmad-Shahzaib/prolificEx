@@ -1,4 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import type { RootState } from "../store";
+
+const USER_ACTIVITY_CHART_CACHE_MS = 60_000;
 
 export type UserActivityChartRange = "1h" | "3h" | "1d" | "1w" | "1m";
 
@@ -53,7 +56,7 @@ export interface FetchUserActivityChartParams {
 export const fetchUserActivityChart = createAsyncThunk<
   UserActivityChartResponse,
   FetchUserActivityChartParams,
-  { rejectValue: string }
+  { rejectValue: string; state: RootState }
 >(
   "userActivityChart/fetch",
   async ({ range }, { rejectWithValue }) => {
@@ -79,5 +82,17 @@ export const fetchUserActivityChart = createAsyncThunk<
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while fetching user activity chart data");
     }
+  },
+  {
+    condition: ({ range }, { getState }) => {
+      const { userActivityChart } = getState();
+      const isSameRange = userActivityChart.currentRange === range;
+      const hasCachedData = Boolean(userActivityChart.data);
+      const isFresh =
+        userActivityChart.loadedAt !== null &&
+        Date.now() - userActivityChart.loadedAt < USER_ACTIVITY_CHART_CACHE_MS;
+
+      return !userActivityChart.loading && (!isSameRange || !hasCachedData || !isFresh);
+    },
   }
 );

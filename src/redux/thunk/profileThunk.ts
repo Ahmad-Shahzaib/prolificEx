@@ -1,4 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import type { RootState } from "../store";
+
+const PROFILE_CACHE_MS = 5 * 60_000;
 
 export interface UserProfile {
   uuid: string;
@@ -65,7 +68,7 @@ const parseJsonSafe = async (res: Response) => {
 export const fetchUserProfile = createAsyncThunk<
   UserProfileResponse,
   void,
-  { rejectValue: string }
+  { rejectValue: string; state: RootState }
 >(
   "profile/fetchUserProfile",
   async (_, { rejectWithValue }) => {
@@ -95,13 +98,24 @@ export const fetchUserProfile = createAsyncThunk<
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while fetching user profile");
     }
+  },
+  {
+    condition: (_, { getState }) => {
+      const { profile } = getState();
+      const hasCachedProfile = Boolean(profile.profile);
+      const isFresh =
+        profile.loadedAt !== null &&
+        Date.now() - profile.loadedAt < PROFILE_CACHE_MS;
+
+      return !profile.loading && (!hasCachedProfile || !isFresh);
+    },
   }
 );
 
 export const updateUserProfile = createAsyncThunk<
   UserProfileResponse,
   UserProfileUpdatePayload,
-  { rejectValue: string }
+  { rejectValue: string; state: RootState }
 >(
   "profile/updateUserProfile",
   async (payload, { rejectWithValue }) => {
@@ -138,7 +152,7 @@ export const updateUserProfile = createAsyncThunk<
 export const uploadUserAvatar = createAsyncThunk<
   UserAvatarUploadResponse,
   File,
-  { rejectValue: string }
+  { rejectValue: string; state: RootState }
 >(
   "profile/uploadUserAvatar",
   async (avatarFile, { rejectWithValue }) => {
@@ -177,7 +191,7 @@ export const uploadUserAvatar = createAsyncThunk<
 export const changeUserPassword = createAsyncThunk<
   ChangePasswordResponse,
   ChangePasswordPayload,
-  { rejectValue: string }
+  { rejectValue: string; state: RootState }
 >(
   "profile/changeUserPassword",
   async (payload, { rejectWithValue }) => {
@@ -222,7 +236,7 @@ export interface DeactivateAccountResponse {
 export const deactivateUserAccount = createAsyncThunk<
   DeactivateAccountResponse,
   DeactivateAccountPayload,
-  { rejectValue: string }
+  { rejectValue: string; state: RootState }
 >(
   "profile/deactivateUserAccount",
   async (payload, { rejectWithValue }) => {

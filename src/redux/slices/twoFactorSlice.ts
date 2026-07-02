@@ -27,6 +27,7 @@ interface TwoFactorState {
   setupManualEntryKey: string | null;
   setupIssuer: string | null;
   setupAccount: string | null;
+  loadedAt: number | null;
 }
 
 const initialState: TwoFactorState = {
@@ -48,6 +49,7 @@ const initialState: TwoFactorState = {
   setupManualEntryKey: null,
   setupIssuer: null,
   setupAccount: null,
+  loadedAt: null,
 };
 
 const twoFactorSlice = createSlice({
@@ -61,6 +63,7 @@ const twoFactorSlice = createSlice({
       state.confirmedAt = null;
       state.backupCodesRemaining = 0;
       state.message = null;
+      state.loadedAt = null;
     },
   },
   extraReducers: (builder) => {
@@ -79,6 +82,7 @@ const twoFactorSlice = createSlice({
           state.confirmedAt = action.payload.data.confirmed_at;
           state.backupCodesRemaining = action.payload.data.backup_codes_remaining;
           state.message = action.payload.message;
+          state.loadedAt = Date.now();
         }
       )
       .addCase(fetchTwoFactorStatus.rejected, (state, action) => {
@@ -119,6 +123,7 @@ const twoFactorSlice = createSlice({
         state.enabled = action.payload.data?.enabled ?? true;
         state.confirmedAt = action.payload.data?.confirmed_at ?? state.confirmedAt;
         state.backupCodesRemaining = action.payload.data?.backup_codes_remaining ?? state.backupCodesRemaining;
+        state.loadedAt = Date.now();
       })
       .addCase(confirmTwoFactor.rejected, (state, action) => {
         state.confirmLoading = false;
@@ -141,6 +146,7 @@ const twoFactorSlice = createSlice({
         state.setupManualEntryKey = null;
         state.setupIssuer = null;
         state.setupAccount = null;
+        state.loadedAt = Date.now();
       })
       .addCase(disableTwoFactor.rejected, (state, action) => {
         state.disableLoading = false;

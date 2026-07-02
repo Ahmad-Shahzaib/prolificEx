@@ -1,4 +1,12 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import type { RootState } from "../store";
+
+const P2P_OFFERS_CACHE_MS = 30_000;
+const P2P_MY_OFFERS_CACHE_MS = 60_000;
+
+export interface FetchMyOffersOptions {
+  force?: boolean;
+}
 
 export interface P2POffer {
   id: number;
@@ -216,20 +224,45 @@ export const createOffer = createAsyncThunk<
   }
 );
 
+export interface FetchP2POffersParams {
+  page?: number;
+  per_page?: number;
+  type?: "buy" | "sell";
+  coin?: string;
+  crypto_currency?: string;
+  fiat_currency?: string;
+  network?: string;
+  payment_method?: string;
+  amount?: string;
+}
+
+export const getP2POffersRequestKey = ({
+  page = 1,
+  per_page = 20,
+  type,
+  coin,
+  crypto_currency,
+  fiat_currency,
+  network,
+  payment_method,
+  amount,
+}: FetchP2POffersParams = {}) =>
+  [
+    page,
+    per_page,
+    type ?? "all",
+    coin ?? "all",
+    crypto_currency ?? "all",
+    fiat_currency ?? "all",
+    network ?? "all",
+    payment_method ?? "all",
+    amount ?? "",
+  ].join(":");
+
 export const fetchOffers = createAsyncThunk<
   P2POffer[],
-  {
-    page?: number;
-    per_page?: number;
-    type?: "buy" | "sell";
-    coin?: string;
-    crypto_currency?: string;
-    fiat_currency?: string;
-    network?: string;
-    payment_method?: string;
-    amount?: string;
-  },
-  { rejectValue: string }
+  FetchP2POffersParams,
+  { rejectValue: string; state: RootState }
 >(
   "p2pOffers/fetchOffers",
   async (
@@ -287,13 +320,25 @@ export const fetchOffers = createAsyncThunk<
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while fetching offers");
     }
+  },
+  {
+    condition: (request, { getState }) => {
+      const { p2pOffers } = getState();
+      const requestKey = getP2POffersRequestKey(request);
+      const isSameRequest = p2pOffers.lastOffersRequestKey === requestKey;
+      const isFresh =
+        p2pOffers.offersLoadedAt !== null &&
+        Date.now() - p2pOffers.offersLoadedAt < P2P_OFFERS_CACHE_MS;
+
+      return !p2pOffers.offersLoading && (!isSameRequest || !isFresh);
+    },
   }
 );
 
 export const fetchMyOffers = createAsyncThunk<
   P2POffer[],
-  void,
-  { rejectValue: string }
+  FetchMyOffersOptions | void,
+  { rejectValue: string; state: RootState }
 >(
   "p2pOffers/fetchMyOffers",
   async (_, { rejectWithValue }) => {
@@ -321,5 +366,17 @@ export const fetchMyOffers = createAsyncThunk<
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while fetching offers");
     }
+  },
+  {
+    condition: (options, { getState }) => {
+      if (options?.force) return true;
+
+      const { p2pOffers } = getState();
+      const isFresh =
+        p2pOffers.myOffersLoadedAt !== null &&
+        Date.now() - p2pOffers.myOffersLoadedAt < P2P_MY_OFFERS_CACHE_MS;
+
+      return !p2pOffers.loading && (p2pOffers.myOffersLoadedAt === null || !isFresh);
+    },
   }
 );

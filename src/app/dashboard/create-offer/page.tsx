@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCcw } from "lucide-react";
 import { PageShell } from "@/components/dashboard/PageShell";
 import { Card, CardContent } from "@/components/common/Card";
@@ -10,6 +10,19 @@ import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { fetchMyOffers, P2POffer } from "@/redux/thunk/p2pOffersThunk";
 
 type OfferTab = "buy" | "sell";
+
+const MY_ADS_UI_STATE_KEY = "dashboard.myAds.ui";
+const MY_ADS_SCROLL_KEY = "dashboard.myAds.scrollY";
+
+const readMyAdsTab = (): OfferTab => {
+  if (typeof window === "undefined") return "buy";
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(MY_ADS_UI_STATE_KEY) || "{}") as { activeTab?: OfferTab };
+    return stored.activeTab === "sell" ? "sell" : "buy";
+  } catch {
+    return "buy";
+  }
+};
 
 const statusClassName: Record<string, string> = {
   active: "bg-emerald-500/10 text-emerald-400 border-emerald-500/25",
@@ -43,8 +56,8 @@ const getOfferPaymentMethod = (offer: P2POffer) =>
 
 export default function CreateOfferPage() {
   const dispatch = useAppDispatch();
-  const { myOffers, loading, error } = useAppSelector((state) => state.p2pOffers);
-  const [activeTab, setActiveTab] = useState<OfferTab>("buy");
+  const { myOffers, loading, error, myOffersLoadedAt } = useAppSelector((state) => state.p2pOffers);
+  const [activeTab, setActiveTab] = useState<OfferTab>(() => readMyAdsTab());
   const [modalType, setModalType] = useState<OfferTab>("buy");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -52,26 +65,45 @@ export default function CreateOfferPage() {
     dispatch(fetchMyOffers());
   }, [dispatch]);
 
+  useEffect(() => {
+    sessionStorage.setItem(MY_ADS_UI_STATE_KEY, JSON.stringify({ activeTab }));
+  }, [activeTab]);
+
+  useEffect(() => {
+    const savedScroll = Number(sessionStorage.getItem(MY_ADS_SCROLL_KEY) || 0);
+    if (savedScroll > 0) window.requestAnimationFrame(() => window.scrollTo(0, savedScroll));
+
+    const saveScroll = () => sessionStorage.setItem(MY_ADS_SCROLL_KEY, String(window.scrollY));
+    window.addEventListener("beforeunload", saveScroll);
+    return () => {
+      saveScroll();
+      window.removeEventListener("beforeunload", saveScroll);
+    };
+  }, []);
+
   const visibleOffers = useMemo(
     () => myOffers.filter((offer) => offer.type === activeTab),
     [myOffers, activeTab]
   );
 
-  const openOfferModal = (type: OfferTab) => {
+  const openOfferModal = useCallback((type: OfferTab) => {
     setModalType(type);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const closeOfferModal = () => {
+  const closeOfferModal = useCallback(() => {
     setIsModalOpen(false);
-  };
+  }, []);
 
-  const refreshOffers = () => {
-    dispatch(fetchMyOffers());
-  };
+  const refreshOffers = useCallback(() => {
+    dispatch(fetchMyOffers({ force: true }));
+  }, [dispatch]);
+
+  const showOffersSkeleton = loading && myOffersLoadedAt === null && myOffers.length === 0;
+  const isRefreshingOffers = loading && !showOffersSkeleton;
 
   const renderTableBody = () => {
-    if (loading) {
+    if (showOffersSkeleton) {
       return (
         <div className="space-y-3 p-5 animate-pulse">
           {[0, 1, 2, 3].map((row) => (
@@ -85,7 +117,7 @@ export default function CreateOfferPage() {
       );
     }
 
-    if (error) {
+    if (error && myOffers.length === 0) {
       return (
         <div className="px-5 py-14 text-center">
           <p className="text-sm font-medium text-red-400">{error}</p>
@@ -215,8 +247,8 @@ export default function CreateOfferPage() {
                   disabled={loading}
                   className="border-white/10"
                 >
-                  <RefreshCcw size={16} className={loading ? "animate-spin" : ""} />
-                  Refresh
+                  <RefreshCcw size={16} className={isRefreshingOffers ? "animate-spin" : ""} />
+                  {isRefreshingOffers ? "Refreshing" : "Refresh"}
                 </Button>
 
                 <Button onClick={() => openOfferModal(activeTab)} className="bg-violet-600 hover:bg-violet-500">
@@ -224,6 +256,12 @@ export default function CreateOfferPage() {
                 </Button>
               </div>
             </div>
+
+            {isRefreshingOffers && (
+              <div className="border-b border-white/10 bg-violet-500/5 px-5 py-2 text-xs font-medium text-violet-300">
+                Refreshing offers in the background...
+              </div>
+            )}
 
             <div className="hidden grid-cols-[1fr_0.8fr_0.8fr_0.9fr_1fr_1.2fr_1fr_0.8fr] gap-4 border-b border-white/10 bg-[#151722] px-5 py-4 text-xs font-semibold uppercase tracking-wide text-white/40 lg:grid">
               <span>Offer ID</span>

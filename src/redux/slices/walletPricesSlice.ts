@@ -7,6 +7,7 @@ interface WalletPricesState {
   prices: Record<string, WalletPriceItem>;
   updatedAt: string | null;
   message: string | null;
+  loadedAt: number | null;
 }
 
 const initialState: WalletPricesState = {
@@ -15,6 +16,7 @@ const initialState: WalletPricesState = {
   prices: {},
   updatedAt: null,
   message: null,
+  loadedAt: null,
 };
 
 const walletPricesSlice = createSlice({
@@ -27,6 +29,7 @@ const walletPricesSlice = createSlice({
       state.prices = {};
       state.updatedAt = null;
       state.message = null;
+      state.loadedAt = null;
     },
   },
   extraReducers: (builder) => {
@@ -44,6 +47,7 @@ const walletPricesSlice = createSlice({
           state.message = action.payload.message;
           state.prices = action.payload.data.prices;
           state.updatedAt = action.payload.data.updated_at ?? null;
+          state.loadedAt = Date.now();
         }
       )
       .addCase(fetchWalletPrices.rejected, (state, action) => {

@@ -1,4 +1,12 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import type { RootState } from "../store";
+
+const KYC_STATUS_CACHE_MS = 60_000;
+const KYC_DOCUMENTS_CACHE_MS = 5 * 60_000;
+
+export interface KycFetchOptions {
+  force?: boolean;
+}
 
 export type KycStatus =
   | "not_started"
@@ -235,7 +243,7 @@ export const submitKyc = createAsyncThunk<KycStartResponse, void, { rejectValue:
   }
 );
 
-export const fetchKycStatus = createAsyncThunk<KycStatusResponse, void, { rejectValue: string }>(
+export const fetchKycStatus = createAsyncThunk<KycStatusResponse, KycFetchOptions | void, { rejectValue: string; state: RootState }>(
   "kyc/fetchStatus",
   async (_, { rejectWithValue }) => {
     try {
@@ -263,10 +271,22 @@ export const fetchKycStatus = createAsyncThunk<KycStatusResponse, void, { reject
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while fetching KYC status");
     }
+  },
+  {
+    condition: (options, { getState }) => {
+      if (options?.force) return true;
+      const { kyc } = getState();
+      const hasCachedStatus = Boolean(kyc.status);
+      const isFresh =
+        kyc.statusLoadedAt !== null &&
+        Date.now() - kyc.statusLoadedAt < KYC_STATUS_CACHE_MS;
+
+      return !kyc.statusLoading && (!hasCachedStatus || !isFresh);
+    },
   }
 );
 
-export const fetchKycDocuments = createAsyncThunk<KycDocumentsResponse, void, { rejectValue: string }>(
+export const fetchKycDocuments = createAsyncThunk<KycDocumentsResponse, KycFetchOptions | void, { rejectValue: string; state: RootState }>(
   "kyc/fetchDocuments",
   async (_, { rejectWithValue }) => {
     try {

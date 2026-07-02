@@ -1,4 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import type { RootState } from "../store";
+
+const P2P_PAYMENT_METHODS_CACHE_MS = 5 * 60_000;
 
 export interface P2PPaymentMethod {
   id: number;
@@ -12,6 +15,9 @@ export interface P2PPaymentMethod {
 export interface FetchP2PPaymentMethodsParams {
   fiat_currency?: string;
 }
+
+export const getP2PPaymentMethodsRequestKey = (params?: FetchP2PPaymentMethodsParams | void) =>
+  params?.fiat_currency?.toUpperCase() ?? "all";
 
 const extractPaymentMethods = (payload: any): P2PPaymentMethod[] => {
   const methods =
@@ -37,7 +43,7 @@ const extractPaymentMethods = (payload: any): P2PPaymentMethod[] => {
 export const fetchP2PPaymentMethods = createAsyncThunk<
   P2PPaymentMethod[],
   FetchP2PPaymentMethodsParams | void,
-  { rejectValue: string }
+  { rejectValue: string; state: RootState }
 >(
   "p2pPaymentMethods/fetch",
   async (params, { rejectWithValue }) => {
@@ -74,5 +80,17 @@ export const fetchP2PPaymentMethods = createAsyncThunk<
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while loading payment methods");
     }
+  },
+  {
+    condition: (params, { getState }) => {
+      const { p2pPaymentMethods } = getState();
+      const requestKey = getP2PPaymentMethodsRequestKey(params);
+      const isSameRequest = p2pPaymentMethods.lastRequestKey === requestKey;
+      const isFresh =
+        p2pPaymentMethods.loadedAt !== null &&
+        Date.now() - p2pPaymentMethods.loadedAt < P2P_PAYMENT_METHODS_CACHE_MS;
+
+      return !p2pPaymentMethods.loading && (!isSameRequest || !isFresh);
+    },
   }
 );

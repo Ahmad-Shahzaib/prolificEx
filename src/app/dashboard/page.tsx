@@ -12,7 +12,7 @@ import { Transactions } from "@/components/dashboard/Transactions";
 export default function DashboardPage() {
   const { profile, loading: profileLoading } = useAppSelector((state) => state.profile);
   const displayName = profile?.full_name || profile?.username || "there";
-  const isPageLoading = profileLoading;
+  const isPageLoading = profileLoading && !profile;
 
   if (isPageLoading) {
     return (

@@ -178,29 +178,83 @@ function CoinSelect({ value, onChange, exclude }: CoinSelectProps) {
   );
 }
 
+const DEFAULT_RATES: Record<string, number> = {
+  USD: 1,
+  BTC: 60000,
+  ETH: 2500,
+  USDT: 1,
+  USDC: 1,
+  SOL: 140,
+  BNB: 580,
+};
+
+const WALLET_UI_STATE_KEY = "dashboard.wallet.ui";
+const WALLET_SCROLL_KEY = "dashboard.wallet.scrollY";
+const WALLET_RATE_CACHE_KEY = "dashboard.wallet.rates";
+const WALLET_RATES_CACHE_MS = 5 * 60_000;
+
+interface WalletUiState {
+  selectedAction?: "deposit" | "withdraw";
+  fromAmount?: string;
+  fromCurrency?: string;
+  toCurrency?: string;
+}
+
+const readWalletUiState = (): WalletUiState => {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(sessionStorage.getItem(WALLET_UI_STATE_KEY) || "{}") as WalletUiState;
+  } catch {
+    return {};
+  }
+};
+
+const readCachedRates = () => {
+  if (typeof window === "undefined") return null;
+  try {
+    const cached = JSON.parse(localStorage.getItem(WALLET_RATE_CACHE_KEY) || "null") as
+      | { rates: Record<string, number>; cachedAt: number }
+      | null;
+
+    if (!cached?.rates || Date.now() - cached.cachedAt > WALLET_RATES_CACHE_MS) {
+      return null;
+    }
+
+    return cached.rates;
+  } catch {
+    return null;
+  }
+};
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function WalletPage() {
   const router   = useRouter();
   const dispatch = useAppDispatch();
-  const { loading, error, wallets, totalPortfolioUsd, convertLoading } = useAppSelector((s) => s.wallet);
+  const { loading, error, wallets, totalPortfolioUsd, convertLoading, loadedAt } = useAppSelector((s) => s.wallet);
   const { toast, toasts, dismiss } = useToast();
 
   // Converter state
-  const [fromAmount,   setFromAmount]   = useState("1");
+  const walletUiState = useMemo(readWalletUiState, []);
+  const [fromAmount,   setFromAmount]   = useState(walletUiState.fromAmount ?? "1");
   const [toAmount,     setToAmount]     = useState("");
-  const [fromCurrency, setFromCurrency] = useState("ETH");
-  const [toCurrency,   setToCurrency]   = useState("USDT");
-  const [rates,        setRates]        = useState<Record<string, number>>({
-    USD: 1, BTC: 60000, ETH: 2500, USDT: 1, USDC: 1, SOL: 140, BNB: 580,
-  });
-  const [ratesLoading, setRatesLoading] = useState(true);
+  const [fromCurrency, setFromCurrency] = useState(walletUiState.fromCurrency ?? "ETH");
+  const [toCurrency,   setToCurrency]   = useState(walletUiState.toCurrency ?? "USDT");
+  const cachedRates = useMemo(readCachedRates, []);
+  const [rates,        setRates]        = useState<Record<string, number>>(cachedRates ?? DEFAULT_RATES);
+  const [ratesLoading, setRatesLoading] = useState(!cachedRates);
   const [ratesError,   setRatesError]   = useState(false);
 
   // Filter state
-  const [selectedAction, setSelectedAction] = useState<"deposit" | "withdraw">("deposit");
+  const [selectedAction, setSelectedAction] = useState<"deposit" | "withdraw">(walletUiState.selectedAction ?? "deposit");
 
   // ── Live exchange-rate fetch ──────────────────────────────────────────────
-  const fetchRates = async () => {
+  const fetchRates = async (force = false) => {
+    const cached = readCachedRates();
+    if (!force && cached) {
+      setRates(cached);
+      setRatesLoading(false);
+      return;
+    }
+
     try {
       const ids = "bitcoin,ethereum,tether,usd-coin,solana,binancecoin";
       const res  = await fetch(
@@ -209,15 +263,20 @@ export default function WalletPage() {
       );
       if (!res.ok) throw new Error("bad response");
       const data = await res.json();
-      setRates({
+      const freshRates = {
         USD:  1,
-        BTC:  data.bitcoin?.usd        ?? 60000,
-        ETH:  data.ethereum?.usd       ?? 2500,
-        USDT: data.tether?.usd         ?? 1,
-        USDC: data["usd-coin"]?.usd    ?? 1,
-        SOL:  data.solana?.usd         ?? 140,
-        BNB:  data.binancecoin?.usd    ?? 580,
-      });
+        BTC:  data.bitcoin?.usd        ?? DEFAULT_RATES.BTC,
+        ETH:  data.ethereum?.usd       ?? DEFAULT_RATES.ETH,
+        USDT: data.tether?.usd         ?? DEFAULT_RATES.USDT,
+        USDC: data["usd-coin"]?.usd    ?? DEFAULT_RATES.USDC,
+        SOL:  data.solana?.usd         ?? DEFAULT_RATES.SOL,
+        BNB:  data.binancecoin?.usd    ?? DEFAULT_RATES.BNB,
+      };
+      setRates(freshRates);
+      localStorage.setItem(
+        WALLET_RATE_CACHE_KEY,
+        JSON.stringify({ rates: freshRates, cachedAt: Date.now() })
+      );
       setRatesError(false);
     } catch {
       setRatesError(true);
@@ -225,11 +284,29 @@ export default function WalletPage() {
       setRatesLoading(false);
     }
   };
-
   useEffect(() => {
     fetchRates();
-    const timer = setInterval(fetchRates, 60_000);
+    const timer = setInterval(() => fetchRates(), 60_000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    sessionStorage.setItem(
+      WALLET_UI_STATE_KEY,
+      JSON.stringify({ selectedAction, fromAmount, fromCurrency, toCurrency })
+    );
+  }, [selectedAction, fromAmount, fromCurrency, toCurrency]);
+
+  useEffect(() => {
+    const savedScroll = Number(sessionStorage.getItem(WALLET_SCROLL_KEY) || 0);
+    if (savedScroll > 0) window.requestAnimationFrame(() => window.scrollTo(0, savedScroll));
+
+    const saveScroll = () => sessionStorage.setItem(WALLET_SCROLL_KEY, String(window.scrollY));
+    window.addEventListener("beforeunload", saveScroll);
+    return () => {
+      saveScroll();
+      window.removeEventListener("beforeunload", saveScroll);
+    };
   }, []);
 
   // ── Wallet data ───────────────────────────────────────────────────────────
@@ -310,7 +387,7 @@ export default function WalletPage() {
         setToAmount(result.data.converted_amount);
       }
 
-      dispatch(fetchWallets());
+      dispatch(fetchWallets({ force: true }));
     } catch (error: any) {
       toast({
         title: "Conversion failed",
@@ -321,6 +398,9 @@ export default function WalletPage() {
   };
 
   // ── Asset list ────────────────────────────────────────────────────────────
+  const showWalletSkeleton = loading && loadedAt === null && wallets.length === 0;
+  const isRefreshingWallets = loading && !showWalletSkeleton;
+
   const walletAssets = useMemo(
     () =>
       wallets.map((asset) => {
@@ -363,35 +443,38 @@ export default function WalletPage() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div
-      className="min-h-screen w-full p-4 sm:p-6"
+      className="min-h-screen w-full px-2 py-3 sm:px-3 sm:py-4 lg:px-4"
       style={{ background: "#0d0e17", fontFamily: "'Inter', sans-serif" }}
     >
-      <h1 className="text-white text-2xl font-semibold mb-6">Wallets</h1>
+      <h1 className="text-white text-xl font-semibold mb-3">Wallets</h1>
 
-      <div className="flex flex-col xl:flex-row gap-6">
+      <div className="flex flex-col xl:flex-row gap-4">
         {/* ── Left Column ── */}
-        <div className="flex-1 flex flex-col gap-5">
+        <div className="flex-1 flex flex-col gap-4">
 
           {/* Portfolio Card */}
           <div
-            className="rounded-2xl p-5 sm:p-6"
-            style={{ background: "#161722", border: "1px solid rgba(255,255,255,0.06)" }}
+            className="rounded-xl p-4"
+            style={{ background: "#14151f", border: "1px solid rgba(255,255,255,0.055)" }}
           >
-            <p className="text-gray-400 text-sm mb-1">Total Portfolio Value</p>
-            <p className="text-white text-3xl font-bold mb-2">
-              {loading ? <span className="block h-9 w-44 rounded-xl bg-white/10 animate-pulse" /> : formattedTotalPortfolio}
+            <p className="text-gray-400 text-xs mb-1">Total Portfolio Value</p>
+            <p className="text-white text-2xl font-bold mb-2">
+              {showWalletSkeleton ? <span className="block h-8 w-40 rounded-lg bg-white/10 animate-pulse" /> : formattedTotalPortfolio}
             </p>
-            {error && (
+            {isRefreshingWallets && (
+              <p className="text-xs text-violet-300 mb-2">Refreshing balances...</p>
+            )}
+            {error && wallets.length === 0 && (
               <p className="text-sm text-red-400 mb-4">
                 Unable to load wallet balances: {error}
               </p>
             )}
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2.5">
               {(["deposit", "withdraw"] as const).map((action) => (
                 <Button
                   key={action}
                   onClick={() => setSelectedAction(action)}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all hover:opacity-90"
                   style={{
                     background: selectedAction === action ? "#7c3aed" : "transparent",
                     border:
@@ -415,7 +498,7 @@ export default function WalletPage() {
               ))}
               <Button
                 onClick={() => router.push("/dashboard/p2p")}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:opacity-90"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all hover:opacity-90"
                 style={{
                   background: "transparent",
                   border: "1px solid rgba(255,255,255,0.15)",
@@ -432,12 +515,12 @@ export default function WalletPage() {
 
           {/* Assets Table */}
           <div
-            className="rounded-2xl overflow-hidden"
-            style={{ background: "#161722", border: "1px solid rgba(255,255,255,0.06)" }}
+            className="rounded-xl overflow-hidden"
+            style={{ background: "#14151f", border: "1px solid rgba(255,255,255,0.055)" }}
           >
             {/* Desktop header */}
             <div
-              className="hidden md:grid px-6 py-3 text-xs text-gray-500 uppercase tracking-wide"
+              className="hidden md:grid px-4 py-2.5 text-[11px] text-gray-500 uppercase tracking-wide"
               style={{
                 gridTemplateColumns: "2fr 1.2fr 1.2fr 1.2fr 1fr",
                 borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -450,27 +533,27 @@ export default function WalletPage() {
               <span>Actions</span>
             </div>
 
-            {loading ? (
-              <div className="space-y-3 px-6 py-5 animate-pulse" aria-label="Loading wallets">
+            {showWalletSkeleton ? (
+              <div className="space-y-2.5 px-4 py-4 animate-pulse" aria-label="Loading wallets">
                 {[0, 1, 2, 3].map((row) => (
-                  <div key={row} className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div key={row} className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     {[0, 1, 2, 3, 4].map((cell) => (
-                      <div key={cell} className="h-10 rounded-xl bg-white/5" />
+                      <div key={cell} className="h-8 rounded-lg bg-white/5" />
                     ))}
                   </div>
                 ))}
               </div>
-            ) : error ? (
-              <div className="px-6 py-8 text-red-400 text-sm">{error}</div>
+            ) : error && wallets.length === 0 ? (
+              <div className="px-4 py-6 text-red-400 text-sm">{error}</div>
             ) : depositAssets.length === 0 && withdrawAssets.length === 0 ? (
-              <div className="px-6 py-8 text-gray-400 text-sm">No wallet records found.</div>
+              <div className="px-4 py-6 text-gray-400 text-sm">No wallet records found.</div>
             ) : (
               <>
                 {/* ── Deposit Section ── */}
                 {selectedAction === "deposit" && depositAssets.length > 0 && (
                   <>
                     <div
-                      className="flex items-center gap-2 px-6 py-2.5"
+                      className="flex items-center gap-2 px-4 py-2"
                       style={{ background: "rgba(124,58,237,0.08)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
                     >
                       <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#7c3aed" strokeWidth={2.5}>
@@ -484,17 +567,17 @@ export default function WalletPage() {
                     {depositAssets.map((asset) => (
                       <div
                         key={asset.id}
-                        className="border-b border-white/[0.04] last:border-none hover:bg-white/[0.02] transition-colors px-4 sm:px-6 py-5 md:py-4"
+                        className="border-b border-white/[0.04] last:border-none hover:bg-white/[0.025] transition-colors px-4 py-4 md:py-3"
                       >
                         {/* Mobile layout */}
-                        <div className="md:hidden flex flex-col gap-4">
+                        <div className="md:hidden flex flex-col gap-3">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-9 h-9 rounded-full ${asset.iconBg} flex items-center justify-center text-white text-base font-bold flex-shrink-0`}>
+                            <div className="flex items-center gap-2.5">
+                              <div className={`w-7 h-7 rounded-full ${asset.iconBg} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
                                 {asset.iconLetter}
                               </div>
                               <div>
-                                <p className="text-white font-medium">{asset.name}</p>
+                                <p className="text-white text-sm font-medium">{asset.name}</p>
                                 <p className="text-xs text-gray-500">{asset.ticker}</p>
                               </div>
                             </div>
@@ -513,7 +596,7 @@ export default function WalletPage() {
                           <div className="pt-2">
                             <Button
                               onClick={() => router.push(`/dashboard/deposit?coin=${asset.ticker}`)}
-                              className="w-full px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-all hover:opacity-90"
+                              className="w-full px-4 py-2 rounded-lg text-white text-xs font-semibold transition-all hover:opacity-90"
                               style={{ background: "#7c3aed" }}
                             >
                               Deposit
@@ -522,8 +605,8 @@ export default function WalletPage() {
                         </div>
                         {/* Desktop row */}
                         <div className="hidden md:grid items-center" style={{ gridTemplateColumns: "2fr 1.2fr 1.2fr 1.2fr 1fr" }}>
-                          <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full ${asset.iconBg} flex items-center justify-center text-white text-sm font-bold flex-shrink-0`}>
+                          <div className="flex items-center gap-2.5">
+                            <div className={`w-7 h-7 rounded-full ${asset.iconBg} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
                               {asset.iconLetter}
                             </div>
                             <span className="text-white text-sm font-medium">{asset.name}</span>
@@ -533,7 +616,7 @@ export default function WalletPage() {
                           <span className="text-gray-300 text-sm">{asset.total}</span>
                           <Button
                             onClick={() => router.push(`/dashboard/deposit?coin=${asset.ticker}`)}
-                            className="px-5 py-1.5 rounded-xl text-white text-xs font-medium transition-all hover:opacity-90 justify-self-end"
+                            className="px-4 py-1.5 rounded-lg text-white text-xs font-semibold transition-all hover:opacity-90 justify-self-end"
                             style={{ background: "#7c3aed" }}
                           >
                             Deposit
@@ -548,7 +631,7 @@ export default function WalletPage() {
                 {selectedAction === "withdraw" && withdrawAssets.length > 0 && (
                   <>
                     <div
-                      className="flex items-center gap-2 px-6 py-2.5"
+                      className="flex items-center gap-2 px-4 py-2"
                       style={{
                         background: "rgba(16,185,129,0.07)",
                         borderTop: undefined,
@@ -566,17 +649,17 @@ export default function WalletPage() {
                     {withdrawAssets.map((asset) => (
                       <div
                         key={asset.id}
-                        className="border-b border-white/[0.04] last:border-none hover:bg-white/[0.02] transition-colors px-4 sm:px-6 py-5 md:py-4"
+                        className="border-b border-white/[0.04] last:border-none hover:bg-white/[0.025] transition-colors px-4 py-4 md:py-3"
                       >
                         {/* Mobile layout */}
-                        <div className="md:hidden flex flex-col gap-4">
+                        <div className="md:hidden flex flex-col gap-3">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-9 h-9 rounded-full ${asset.iconBg} flex items-center justify-center text-white text-base font-bold flex-shrink-0`}>
+                            <div className="flex items-center gap-2.5">
+                              <div className={`w-7 h-7 rounded-full ${asset.iconBg} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
                                 {asset.iconLetter}
                               </div>
                               <div>
-                                <p className="text-white font-medium">{asset.name}</p>
+                                <p className="text-white text-sm font-medium">{asset.name}</p>
                                 <p className="text-xs text-gray-500">{asset.ticker}</p>
                               </div>
                             </div>
@@ -595,7 +678,7 @@ export default function WalletPage() {
                           <div className="pt-2">
                             <Button
                               onClick={() => router.push(`/dashboard/withdraw?coin=${asset.ticker}`)}
-                              className="w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-white/10"
+                              className="w-full px-4 py-2 rounded-lg text-xs font-semibold transition-all hover:bg-white/10"
                               style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "#d1d5db" }}
                             >
                               Withdraw
@@ -604,8 +687,8 @@ export default function WalletPage() {
                         </div>
                         {/* Desktop row */}
                         <div className="hidden md:grid items-center" style={{ gridTemplateColumns: "2fr 1.2fr 1.2fr 1.2fr 1fr" }}>
-                          <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full ${asset.iconBg} flex items-center justify-center text-white text-sm font-bold flex-shrink-0`}>
+                          <div className="flex items-center gap-2.5">
+                            <div className={`w-7 h-7 rounded-full ${asset.iconBg} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
                               {asset.iconLetter}
                             </div>
                             <span className="text-white text-sm font-medium">{asset.name}</span>
@@ -615,7 +698,7 @@ export default function WalletPage() {
                           <span className="text-gray-300 text-sm">{asset.total}</span>
                           <Button
                             onClick={() => router.push(`/dashboard/withdraw?coin=${asset.ticker}`)}
-                            className="px-5 py-1.5 rounded-xl text-xs font-medium transition-all hover:bg-white/10 justify-self-end"
+                            className="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all hover:bg-white/10 justify-self-end"
                             style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "#d1d5db" }}
                           >
                             Withdraw
@@ -632,21 +715,21 @@ export default function WalletPage() {
 
         {/* ── Right Column — Convert Panel ── */}
         <div
-          className="w-full xl:w-72 rounded-2xl p-5 flex-shrink-0"
-          style={{ background: "#161722", border: "1px solid rgba(255,255,255,0.06)" }}
+          className="w-full xl:w-[17rem] rounded-xl p-4 flex-shrink-0"
+          style={{ background: "#14151f", border: "1px solid rgba(255,255,255,0.055)" }}
         >
-          <h2 className="text-white text-base font-semibold text-center mb-5">Convert</h2>
+          <h2 className="text-white text-sm font-semibold text-center mb-4">Convert</h2>
 
           {/* From field */}
           <div
-            className="flex items-center px-4 py-3.5 rounded-xl mb-2 gap-2"
+            className="flex items-center px-3 py-3 rounded-lg mb-2 gap-2"
             style={{ background: "#0d0e17", border: "1px solid rgba(255,255,255,0.08)" }}
           >
             <input
               type="text"
               value={fromAmount}
               onChange={(e) => setFromAmount(e.target.value)}
-              className="bg-transparent text-white text-lg font-semibold flex-1 w-0 outline-none"
+              className="bg-transparent text-white text-base font-semibold flex-1 w-0 outline-none"
               placeholder="0"
             />
             <CoinSelect
@@ -657,11 +740,11 @@ export default function WalletPage() {
           </div>
 
           {/* Swap button */}
-          <div className="flex justify-center my-3">
+          <div className="flex justify-center my-2.5">
             <button
               type="button"
               onClick={handleSwap}
-              className="w-8 h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
+              className="w-7 h-7 rounded-full flex items-center justify-center transition-opacity hover:opacity-80"
               style={{ background: "#7c3aed", border: "none", cursor: "pointer" }}
             >
               <svg width="14" height="14" fill="none" stroke="#fff" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -672,14 +755,14 @@ export default function WalletPage() {
 
           {/* To field */}
           <div
-            className="flex items-center px-4 py-3.5 rounded-xl mb-2 gap-2"
+            className="flex items-center px-3 py-3 rounded-lg mb-2 gap-2"
             style={{ background: "#0d0e17", border: "1px solid rgba(255,255,255,0.08)" }}
           >
             <input
               type="text"
               value={toAmount}
               readOnly
-              className="bg-transparent text-lg font-semibold flex-1 w-0 outline-none"
+              className="bg-transparent text-base font-semibold flex-1 w-0 outline-none"
               style={{ color: "#aaa" }}
               placeholder="0"
             />
@@ -691,7 +774,7 @@ export default function WalletPage() {
           </div>
 
           {/* Rate row */}
-          <div className="flex items-center justify-between mb-5 mt-2 px-1">
+          <div className="flex items-center justify-between mb-4 mt-2 px-1">
             {ratesLoading ? (
               <div className="h-3 w-36 rounded bg-white/10 animate-pulse" aria-label="Loading conversion rate" />
             ) : (
@@ -729,7 +812,7 @@ export default function WalletPage() {
             type="button"
             onClick={handleConvert}
             disabled={convertLoading}
-            className="w-full py-3.5 rounded-xl text-white text-sm font-semibold transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full py-2.5 rounded-lg text-white text-sm font-semibold transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             style={{ background: "#7c3aed", border: "none", cursor: convertLoading ? "not-allowed" : "pointer" }}
           >
             {convertLoading ? "Converting…" : "Convert"}

@@ -10,7 +10,8 @@ import { fetchWallets } from "@/redux/thunk/walletThunk";
 export function PortfolioOverview() {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { totalPortfolioUsd, loading } = useAppSelector((state) => state.wallet);
+  const { totalPortfolioUsd, loading, loadedAt } = useAppSelector((state) => state.wallet);
+  const showSkeleton = loading && loadedAt === null;
 
   useEffect(() => {
     dispatch(fetchWallets());
@@ -36,7 +37,7 @@ export function PortfolioOverview() {
           </Button>
         </div>
         <h2 className="[font-family:'Inter',Helvetica] font-bold text-white text-2xl sm:text-[32px] leading-[44px] tracking-tight mb-5">
-          {loading ? (
+          {showSkeleton ? (
             <span className="block h-9 w-40 rounded-xl bg-white/10 animate-pulse" />
           ) : (
             formattedValue

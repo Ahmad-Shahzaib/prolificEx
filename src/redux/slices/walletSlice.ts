@@ -14,6 +14,7 @@ interface WalletState {
   convertSuccess: boolean;
   convertMessage: string | null;
   convertResult: Record<string, any> | null;
+  loadedAt: number | null;
 }
 
 const initialState: WalletState = {
@@ -29,6 +30,7 @@ const initialState: WalletState = {
   convertSuccess: false,
   convertMessage: null,
   convertResult: null,
+  loadedAt: null,
 };
 
 const walletSlice = createSlice({
@@ -43,6 +45,7 @@ const walletSlice = createSlice({
       state.error = null;
       state.message = null;
       state.loading = false;
+      state.loadedAt = null;
       state.convertLoading = false;
       state.convertError = null;
       state.convertSuccess = false;
@@ -74,6 +77,7 @@ const walletSlice = createSlice({
           state.prices = action.payload.data.prices || {};
           state.coinBalances = action.payload.data.coin_balances || {};
           state.wallets = Object.values(action.payload.data.wallets).flat();
+          state.loadedAt = Date.now();
         }
       )
       .addCase(fetchWallets.rejected, (state, action) => {

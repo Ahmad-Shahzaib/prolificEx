@@ -3,7 +3,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { fetchNetworkFee } from "@/redux/thunk/networkFeeThunk";
-import { clearNetworkFeeState } from "@/redux/slices/networkFeeSlice";
 
 const networkOptionsByCoin: Record<string, string[]> = {
   BTC: ["BTC"],
@@ -21,15 +20,34 @@ const COIN_NAMES: Record<string, string> = {
   SOL: "Solana",
 };
 
+const NETWORK_FEE_UI_STATE_KEY = "dashboard.networkFee.ui";
+const NETWORK_FEE_SCROLL_KEY = "dashboard.networkFee.scrollY";
+
+const readNetworkFeeUiState = () => {
+  if (typeof window === "undefined") {
+    return { selectedCoin: "BTC", selectedNetwork: "BTC", amount: "100" };
+  }
+
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(NETWORK_FEE_UI_STATE_KEY) || "{}");
+    return {
+      selectedCoin: typeof stored.selectedCoin === "string" ? stored.selectedCoin : "BTC",
+      selectedNetwork: typeof stored.selectedNetwork === "string" ? stored.selectedNetwork : "BTC",
+      amount: typeof stored.amount === "string" ? stored.amount : "100",
+    };
+  } catch {
+    return { selectedCoin: "BTC", selectedNetwork: "BTC", amount: "100" };
+  }
+};
+
 export function NetworkFeeCalculator() {
   const dispatch = useAppDispatch();
   const { loading, error, feeData } = useAppSelector((state) => state.networkFee);
-  const [selectedCoin, setSelectedCoin] = useState("BTC");
-  const [selectedNetwork, setSelectedNetwork] = useState("BTC");
-  const [amount, setAmount] = useState("100");
+  const initialUiState = readNetworkFeeUiState();
+  const [selectedCoin, setSelectedCoin] = useState(initialUiState.selectedCoin);
+  const [selectedNetwork, setSelectedNetwork] = useState(initialUiState.selectedNetwork);
+  const [amount, setAmount] = useState(initialUiState.amount);
   const [validationError, setValidationError] = useState<string | null>(null);
-
-  const availableNetworks = networkOptionsByCoin[selectedCoin] ?? [selectedCoin];
 
   useEffect(() => {
     const networks = networkOptionsByCoin[selectedCoin] ?? [selectedCoin];
@@ -56,10 +74,23 @@ export function NetworkFeeCalculator() {
   }, [dispatch, selectedCoin, selectedNetwork, amount]);
 
   useEffect(() => {
+    sessionStorage.setItem(
+      NETWORK_FEE_UI_STATE_KEY,
+      JSON.stringify({ selectedCoin, selectedNetwork, amount })
+    );
+  }, [selectedCoin, selectedNetwork, amount]);
+
+  useEffect(() => {
+    const savedScroll = Number(sessionStorage.getItem(NETWORK_FEE_SCROLL_KEY) || 0);
+    if (savedScroll > 0) window.requestAnimationFrame(() => window.scrollTo(0, savedScroll));
+
+    const saveScroll = () => sessionStorage.setItem(NETWORK_FEE_SCROLL_KEY, String(window.scrollY));
+    window.addEventListener("beforeunload", saveScroll);
     return () => {
-      dispatch(clearNetworkFeeState());
+      saveScroll();
+      window.removeEventListener("beforeunload", saveScroll);
     };
-  }, [dispatch]);
+  }, []);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -71,7 +102,7 @@ export function NetworkFeeCalculator() {
       return;
     }
 
-    dispatch(fetchNetworkFee({ coin: selectedCoin, network: selectedNetwork, amount: numericAmount }));
+    dispatch(fetchNetworkFee({ coin: selectedCoin, network: selectedNetwork, amount: numericAmount, force: true }));
   };
 
   return (
@@ -157,18 +188,20 @@ export function NetworkFeeCalculator() {
           ) : null}
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-           
             <div className="text-sm text-white/60">
-              {COIN_NAMES[selectedCoin]} · {selectedNetwork}
+              {COIN_NAMES[selectedCoin]} - {selectedNetwork}
             </div>
           </div>
         </form>
       </div>
 
       <div className="rounded-3xl border border-white/10 bg-[#13141a] p-6 shadow-sm">
-        <p className="text-white text-lg font-semibold mb-4">Fee estimate</p>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <p className="text-white text-lg font-semibold">Fee estimate</p>
+          {loading && feeData ? <span className="text-xs font-medium text-violet-300">Refreshing...</span> : null}
+        </div>
 
-        {loading ? (
+        {loading && !feeData ? (
           <div className="grid gap-4 sm:grid-cols-2 animate-pulse" aria-label="Loading fee details">
             {[0, 1].map((item) => (
               <div key={item} className="h-36 rounded-3xl border border-white/10 bg-white/5" />

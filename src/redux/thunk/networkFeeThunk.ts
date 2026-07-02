@@ -1,9 +1,13 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import type { RootState } from "../store";
+
+const NETWORK_FEE_CACHE_MS = 60_000;
 
 export interface NetworkFeeRequest {
   coin: string;
   network: string;
   amount: number;
+  force?: boolean;
 }
 
 export interface NetworkFeeData {
@@ -19,10 +23,13 @@ export interface NetworkFeeResponse {
   data: NetworkFeeData;
 }
 
+export const getNetworkFeeRequestKey = ({ coin, network, amount }: NetworkFeeRequest) =>
+  `${coin.toUpperCase()}:${network.toUpperCase()}:${amount}`;
+
 export const fetchNetworkFee = createAsyncThunk<
   NetworkFeeResponse,
   NetworkFeeRequest,
-  { rejectValue: string }
+  { rejectValue: string; state: RootState }
 >(
   "networkFee/fetchNetworkFee",
   async ({ coin, network, amount }, { rejectWithValue }) => {
@@ -56,5 +63,19 @@ export const fetchNetworkFee = createAsyncThunk<
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while fetching fee information");
     }
+  },
+  {
+    condition: (request, { getState }) => {
+      if (request.force) return true;
+
+      const { networkFee } = getState();
+      const requestKey = getNetworkFeeRequestKey(request);
+      const isSameRequest = networkFee.lastRequestKey === requestKey;
+      const isFresh =
+        networkFee.loadedAt !== null &&
+        Date.now() - networkFee.loadedAt < NETWORK_FEE_CACHE_MS;
+
+      return !networkFee.loading && (!isSameRequest || !isFresh);
+    },
   }
 );

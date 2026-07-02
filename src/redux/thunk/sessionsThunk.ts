@@ -1,4 +1,11 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import type { RootState } from "../store";
+
+const SESSIONS_CACHE_MS = 60_000;
+
+export interface SessionsFetchOptions {
+  force?: boolean;
+}
 
 export interface SessionItem {
   id: number;
@@ -43,8 +50,8 @@ const parseJsonSafe = async (res: Response) => {
 
 export const fetchSessions = createAsyncThunk<
   SessionsResponse,
-  void,
-  { rejectValue: string }
+  SessionsFetchOptions | void,
+  { rejectValue: string; state: RootState }
 >(
   "sessions/fetchSessions",
   async (_, { rejectWithValue }) => {
@@ -74,6 +81,18 @@ export const fetchSessions = createAsyncThunk<
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while fetching sessions");
     }
+  },
+  {
+    condition: (options, { getState }) => {
+      if (options?.force) return true;
+
+      const { sessions } = getState();
+      const isFresh =
+        sessions.loadedAt !== null &&
+        Date.now() - sessions.loadedAt < SESSIONS_CACHE_MS;
+
+      return !sessions.loading && (sessions.loadedAt === null || !isFresh);
+    },
   }
 );
 

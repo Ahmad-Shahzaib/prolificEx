@@ -16,6 +16,7 @@ interface ProfileState {
   deactivateLoading: boolean;
   deactivateError: string | null;
   deactivateMessage: string | null;
+  loadedAt: number | null;
 }
 
 const initialState: ProfileState = {
@@ -31,6 +32,7 @@ const initialState: ProfileState = {
   deactivateLoading: false,
   deactivateError: null,
   deactivateMessage: null,
+  loadedAt: null,
 };
 
 const profileSlice = createSlice({
@@ -45,6 +47,7 @@ const profileSlice = createSlice({
       state.message = null;
       state.error = null;
       state.loading = false;
+      state.loadedAt = null;
     },
     clearProfileMessages(state) {
       state.error = null;
@@ -71,6 +74,7 @@ const profileSlice = createSlice({
           state.error = null;
           state.profile = action.payload.data;
           state.message = action.payload.message;
+          state.loadedAt = Date.now();
         }
       )
       .addCase(fetchUserProfile.rejected, (state, action) => {
@@ -89,6 +93,7 @@ const profileSlice = createSlice({
           state.error = null;
           state.profile = action.payload.data;
           state.message = action.payload.message;
+          state.loadedAt = Date.now();
         }
       )
       .addCase(updateUserProfile.rejected, (state, action) => {

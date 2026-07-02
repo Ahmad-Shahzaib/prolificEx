@@ -29,13 +29,14 @@ const coinColors: Record<string, string> = {
 export function ActiveOrders() {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { orders, loading } = useAppSelector((state) => state.p2pOrders);
+  const { orders, loading, loadedAt } = useAppSelector((state) => state.p2pOrders);
 
   useEffect(() => {
     dispatch(fetchMyOrders({ page: 1, per_page: 5 }));
   }, [dispatch]);
 
   const latestFive = orders.slice(0, 5);
+  const showSkeleton = loading && loadedAt === null && latestFive.length === 0;
 
   return (
     <Card className="bg-[#1a1b23] border border-white/5 rounded-2xl">
@@ -55,7 +56,7 @@ export function ActiveOrders() {
           </Button>
         </div>
 
-        {loading && (
+        {showSkeleton && (
           <div className="space-y-3 py-2 animate-pulse" aria-label="Loading orders">
             <div className="grid grid-cols-4 gap-4 border-b border-white/5 pb-3">
               {[0, 1, 2, 3].map((item) => (
@@ -72,11 +73,11 @@ export function ActiveOrders() {
           </div>
         )}
 
-        {!loading && latestFive.length === 0 && (
+        {!showSkeleton && latestFive.length === 0 && (
           <p className="text-[#6b7280] text-sm [font-family:'Inter',Helvetica] py-4">No orders found.</p>
         )}
 
-        {!loading && latestFive.length > 0 && (
+        {!showSkeleton && latestFive.length > 0 && (
           <div className="overflow-x-auto -mx-4 sm:mx-0">
             <table className="w-full min-w-[400px]">
               <thead>

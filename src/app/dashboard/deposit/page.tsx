@@ -3,7 +3,6 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { fetchDepositInfo } from "@/redux/thunk/depositThunk";
-import { clearDepositState } from "@/redux/slices/depositSlice";
 import { fetchKycStatus } from "@/redux/thunk/kycThunk";
 import { PageShell } from "@/components/dashboard/PageShell";
 
@@ -152,17 +151,22 @@ function DepositContent() {
   useEffect(() => {
     const networks = networkOptionsByCoin[selectedCoin] ?? [selectedCoin];
     const network = networks.includes(selectedNetwork) ? selectedNetwork : networks[0];
-    dispatch(clearDepositState());
     dispatch(fetchDepositInfo({ coin: selectedCoin, network }));
   }, [dispatch, selectedCoin, selectedNetwork, kycStatus]);
 
-  const isPageLoading = depositLoading && kycStatus === 'approved';
-  const currentAddress = !depositLoading && !depositError ? depositInfo?.address ?? "" : "";
-  const qrValue = !depositLoading && !depositError ? depositInfo?.qr_data ?? currentAddress : undefined;
-  const minDepositLabel = depositInfo?.min_deposit != null ? depositInfo.min_deposit : "—";
-  const confirmationLabel = depositInfo?.confirmations != null ? depositInfo.confirmations : "—";
-  const recentDeposits = depositInfo?.recent_deposits ?? [];
-  const warningText = depositInfo?.warning ?? `Only send ${selectedCoin} to this address. Sending other coins may result in permanent loss.`;
+  const activeDepositInfo =
+    depositInfo?.coin?.toUpperCase() === selectedCoin &&
+    depositInfo?.network?.toUpperCase() === selectedNetwork
+      ? depositInfo
+      : null;
+  const isPageLoading = depositLoading && kycStatus === 'approved' && !activeDepositInfo;
+  const isRefreshingDeposit = depositLoading && Boolean(activeDepositInfo);
+  const currentAddress = !depositError ? activeDepositInfo?.address ?? "" : "";
+  const qrValue = !depositError ? activeDepositInfo?.qr_data ?? currentAddress : undefined;
+  const minDepositLabel = activeDepositInfo?.min_deposit != null ? activeDepositInfo.min_deposit : "-";
+  const confirmationLabel = activeDepositInfo?.confirmations != null ? activeDepositInfo.confirmations : "-";
+  const recentDeposits = activeDepositInfo?.recent_deposits ?? [];
+  const warningText = activeDepositInfo?.warning ?? `Only send ${selectedCoin} to this address. Sending other coins may result in permanent loss.`;
 
   const handleCopy = () => {
     if (!currentAddress) return;
@@ -219,6 +223,11 @@ function DepositContent() {
         )}
 
         <div className="bg-[#13141a] border border-white/[0.07] rounded-2xl p-5 sm:p-6 space-y-5">
+          {isRefreshingDeposit && (
+            <div className="rounded-xl border border-violet-500/20 bg-violet-500/10 px-4 py-2 text-xs font-medium text-violet-200">
+              Refreshing deposit details in the background...
+            </div>
+          )}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <p className="text-white/70 text-sm font-medium">Select Coin</p>
@@ -318,7 +327,7 @@ function DepositContent() {
         <div className="bg-[#13141a] border border-white/[0.07] rounded-2xl p-5 sm:p-6">
           <p className="text-white font-semibold text-base mb-5">Recent Deposits</p>
 
-          {depositLoading ? (
+          {depositLoading && recentDeposits.length === 0 ? (
             <div className="space-y-3 py-2 animate-pulse" aria-label="Loading recent deposits">
               {[0, 1, 2, 3].map((row) => (
                 <div key={row} className="grid grid-cols-2 md:grid-cols-7 gap-3">

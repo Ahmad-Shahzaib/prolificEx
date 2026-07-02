@@ -1,4 +1,11 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import type { RootState } from "../store";
+
+const WALLET_CACHE_MS = 60_000;
+
+export interface FetchWalletsOptions {
+  force?: boolean;
+}
 
 export interface PriceData {
   coin: string;
@@ -50,8 +57,8 @@ export interface WalletsResponse {
 
 export const fetchWallets = createAsyncThunk<
   WalletsResponse,
-  void,
-  { rejectValue: string }
+  FetchWalletsOptions | void,
+  { rejectValue: string; state: RootState }
 >(
   "wallet/fetchWallets",
   async (_, { rejectWithValue }) => {
@@ -79,6 +86,19 @@ export const fetchWallets = createAsyncThunk<
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while fetching wallets");
     }
+  },
+  {
+    condition: (options, { getState }) => {
+      if (options?.force) return true;
+
+      const { wallet } = getState();
+      const hasCachedData = wallet.loadedAt !== null;
+      const isFresh =
+        wallet.loadedAt !== null &&
+        Date.now() - wallet.loadedAt < WALLET_CACHE_MS;
+
+      return !wallet.loading && (!hasCachedData || !isFresh);
+    },
   }
 );
 
@@ -97,7 +117,7 @@ export interface WalletConvertResponse {
 export const convertWallet = createAsyncThunk<
   WalletConvertResponse,
   WalletConvertPayload,
-  { rejectValue: string }
+  { rejectValue: string; state: RootState }
 >(
   "wallet/convertWallet",
   async (payload, { rejectWithValue }) => {

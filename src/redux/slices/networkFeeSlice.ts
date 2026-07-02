@@ -1,11 +1,13 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { fetchNetworkFee, NetworkFeeData, NetworkFeeResponse } from "../thunk/networkFeeThunk";
+import { createSlice } from "@reduxjs/toolkit";
+import { fetchNetworkFee, getNetworkFeeRequestKey, NetworkFeeData } from "../thunk/networkFeeThunk";
 
 interface NetworkFeeState {
   loading: boolean;
   error: string | null;
   feeData: NetworkFeeData | null;
   message: string | null;
+  loadedAt: number | null;
+  lastRequestKey: string | null;
 }
 
 const initialState: NetworkFeeState = {
@@ -13,6 +15,8 @@ const initialState: NetworkFeeState = {
   error: null,
   feeData: null,
   message: null,
+  loadedAt: null,
+  lastRequestKey: null,
 };
 
 const networkFeeSlice = createSlice({
@@ -24,6 +28,8 @@ const networkFeeSlice = createSlice({
       state.error = null;
       state.feeData = null;
       state.message = null;
+      state.loadedAt = null;
+      state.lastRequestKey = null;
     },
   },
   extraReducers: (builder) => {
@@ -33,15 +39,14 @@ const networkFeeSlice = createSlice({
         state.error = null;
         state.message = null;
       })
-      .addCase(
-        fetchNetworkFee.fulfilled,
-        (state, action: PayloadAction<NetworkFeeResponse>) => {
-          state.loading = false;
-          state.error = null;
-          state.message = action.payload.message;
-          state.feeData = action.payload.data;
-        }
-      )
+      .addCase(fetchNetworkFee.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+        state.message = action.payload.message;
+        state.feeData = action.payload.data;
+        state.loadedAt = Date.now();
+        state.lastRequestKey = getNetworkFeeRequestKey(action.meta.arg);
+      })
       .addCase(fetchNetworkFee.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to fetch network fee";

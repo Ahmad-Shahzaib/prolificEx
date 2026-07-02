@@ -1,16 +1,20 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { fetchUserActivityChart, UserActivityChartResponse } from "../thunk/userActivityChartThunk";
+import { fetchUserActivityChart, UserActivityChartRange, UserActivityChartResponse } from "../thunk/userActivityChartThunk";
 
 interface UserActivityChartState {
   loading: boolean;
   error: string | null;
   data: UserActivityChartResponse["data"] | null;
+  loadedAt: number | null;
+  currentRange: UserActivityChartRange | null;
 }
 
 const initialState: UserActivityChartState = {
   loading: false,
   error: null,
   data: null,
+  loadedAt: null,
+  currentRange: null,
 };
 
 const userActivityChartSlice = createSlice({
@@ -21,6 +25,8 @@ const userActivityChartSlice = createSlice({
       state.loading = false;
       state.error = null;
       state.data = null;
+      state.loadedAt = null;
+      state.currentRange = null;
     },
   },
   extraReducers: (builder) => {
@@ -35,6 +41,8 @@ const userActivityChartSlice = createSlice({
           state.loading = false;
           state.error = null;
           state.data = action.payload.data;
+          state.loadedAt = Date.now();
+          state.currentRange = action.payload.data.range;
         }
       )
       .addCase(fetchUserActivityChart.rejected, (state, action) => {

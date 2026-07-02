@@ -1,11 +1,13 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { fetchDepositInfo, DepositInfoData, DepositInfoResponse } from "../thunk/depositThunk";
+import { createSlice } from "@reduxjs/toolkit";
+import { fetchDepositInfo, getDepositInfoRequestKey, DepositInfoData } from "../thunk/depositThunk";
 
 interface DepositState {
   loading: boolean;
   error: string | null;
   info: DepositInfoData | null;
   message: string | null;
+  loadedAt: number | null;
+  lastRequestKey: string | null;
 }
 
 const initialState: DepositState = {
@@ -13,6 +15,8 @@ const initialState: DepositState = {
   error: null,
   info: null,
   message: null,
+  loadedAt: null,
+  lastRequestKey: null,
 };
 
 const depositSlice = createSlice({
@@ -24,6 +28,8 @@ const depositSlice = createSlice({
       state.error = null;
       state.info = null;
       state.message = null;
+      state.loadedAt = null;
+      state.lastRequestKey = null;
     },
   },
   extraReducers: (builder) => {
@@ -32,15 +38,14 @@ const depositSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(
-        fetchDepositInfo.fulfilled,
-        (state, action: PayloadAction<DepositInfoResponse>) => {
-          state.loading = false;
-          state.error = null;
-          state.info = action.payload.data;
-          state.message = action.payload.message;
-        }
-      )
+      .addCase(fetchDepositInfo.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+        state.info = action.payload.data;
+        state.message = action.payload.message;
+        state.loadedAt = Date.now();
+        state.lastRequestKey = getDepositInfoRequestKey(action.meta.arg);
+      })
       .addCase(fetchDepositInfo.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to load deposit info";

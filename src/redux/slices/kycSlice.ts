@@ -29,6 +29,8 @@ interface KycState {
   verificationUrl: string | null;
   sessionId: string | null;
   verifiedAt: string | null;
+  statusLoadedAt: number | null;
+  documentsLoadedAt: number | null;
 }
 
 const initialState: KycState = {
@@ -51,6 +53,8 @@ const initialState: KycState = {
   verificationUrl: null,
   sessionId: null,
   verifiedAt: null,
+  statusLoadedAt: null,
+  documentsLoadedAt: null,
 };
 
 const kycSlice = createSlice({
@@ -77,6 +81,8 @@ const kycSlice = createSlice({
       state.verificationUrl = null;
       state.sessionId = null;
       state.verifiedAt = null;
+      state.statusLoadedAt = null;
+      state.documentsLoadedAt = null;
     },
   },
   extraReducers: (builder) => {
@@ -143,6 +149,7 @@ const kycSlice = createSlice({
         state.verificationUrl = action.payload.data.verification_url;
         state.sessionId = action.payload.data.session_id;
         state.verifiedAt = action.payload.data.kyc_verified_at;
+        state.statusLoadedAt = Date.now();
       })
       .addCase(fetchKycStatus.rejected, (state, action) => {
         state.statusLoading = false;
@@ -160,6 +167,7 @@ const kycSlice = createSlice({
         state.providerStatus = action.payload.data.provider_status;
         state.verificationUrl = state.verificationUrl ?? action.payload.data.verification_url;
         state.submittedAt = state.submittedAt ?? action.payload.data.submitted_at;
+        state.documentsLoadedAt = Date.now();
       })
       .addCase(fetchKycDocuments.rejected, (state, action) => {
         state.documentsLoading = false;

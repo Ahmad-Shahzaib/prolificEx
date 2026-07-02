@@ -22,6 +22,8 @@ const getChangeColor = (change: number) =>
 export function MyPortfolio() {
   const wallets = useAppSelector((state) => state.wallet.wallets);
   const loading = useAppSelector((state) => state.wallet.loading);
+  const loadedAt = useAppSelector((state) => state.wallet.loadedAt);
+  const showSkeleton = loading && loadedAt === null;
 
   return (
     <Card className="bg-[#1a1b23] border border-white/5 rounded-2xl h-full">
@@ -30,7 +32,7 @@ export function MyPortfolio() {
           Quick Alerts
         </h3>
 
-        {loading && (
+        {showSkeleton && (
           <div className="space-y-4 animate-pulse" aria-label="Loading wallets">
             {[0, 1, 2].map((item) => (
               <div key={item} className="flex items-center justify-between">
@@ -50,11 +52,11 @@ export function MyPortfolio() {
           </div>
         )}
 
-        {!loading && wallets.length === 0 && (
+        {!showSkeleton && wallets.length === 0 && (
           <p className="text-[#6b7280] text-sm [font-family:'Inter',Helvetica]">No wallets found.</p>
         )}
 
-        <div className={loading ? "hidden" : "space-y-4"}>
+        <div className={showSkeleton ? "hidden" : "space-y-4"}>
           {wallets.map((wallet) => {
             const iconBg = coinColors[wallet.coin.toUpperCase()] || "bg-[#6b7280]";
             const iconLetter = wallet.coin.slice(0, 1).toUpperCase();

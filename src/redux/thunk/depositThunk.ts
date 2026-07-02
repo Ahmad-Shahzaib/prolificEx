@@ -1,4 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import type { RootState } from "../store";
+
+const DEPOSIT_INFO_CACHE_MS = 60_000;
 
 export interface DepositRecent {
   coin: string;
@@ -27,10 +30,19 @@ export interface DepositInfoResponse {
   data: DepositInfoData;
 }
 
+export interface DepositInfoRequest {
+  coin: string;
+  network: string;
+  force?: boolean;
+}
+
+export const getDepositInfoRequestKey = ({ coin, network }: DepositInfoRequest) =>
+  `${coin.toUpperCase()}:${network.toUpperCase()}`;
+
 export const fetchDepositInfo = createAsyncThunk<
   DepositInfoResponse,
-  { coin: string; network: string },
-  { rejectValue: string }
+  DepositInfoRequest,
+  { rejectValue: string; state: RootState }
 >(
   "deposit/fetchDepositInfo",
   async ({ coin, network }, { rejectWithValue }) => {
@@ -61,5 +73,19 @@ export const fetchDepositInfo = createAsyncThunk<
     } catch (error: any) {
       return rejectWithValue(error?.message || "Network error while fetching deposit info");
     }
+  },
+  {
+    condition: (request, { getState }) => {
+      if (request.force) return true;
+
+      const { deposit } = getState();
+      const requestKey = getDepositInfoRequestKey(request);
+      const isSameRequest = deposit.lastRequestKey === requestKey;
+      const isFresh =
+        deposit.loadedAt !== null &&
+        Date.now() - deposit.loadedAt < DEPOSIT_INFO_CACHE_MS;
+
+      return !deposit.loading && (!isSameRequest || !isFresh);
+    },
   }
 );
